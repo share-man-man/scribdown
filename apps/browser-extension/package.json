@@ -1,0 +1,31 @@
+{
+  "name": "@scribdown/browser-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "echo 'lint placeholder for @scribdown/browser-extension'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@scribdown/markdown-renderer": "workspace:*",
+    "@scribdown/shared": "workspace:*",
+    "@scribdown/ui-handdrawn": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.1",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4",
+    "vitest": "^3.2.4"
+  }
+}

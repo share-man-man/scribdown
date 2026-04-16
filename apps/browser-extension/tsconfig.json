@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@scribdown/markdown-renderer": [
+        "../../packages/markdown-renderer/src"
+      ],
+      "@scribdown/ui-handdrawn": [
+        "../../packages/ui-handdrawn/src"
+      ],
+      "@scribdown/shared": [
+        "../../packages/shared/src"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "vite.config.ts"
+  ]
+}

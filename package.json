@@ -1,0 +1,32 @@
+{
+  "name": "scribdown",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev:packages": "turbo run dev --filter='./packages/*' --filter='./tools/*'",
+    "dev:apps": "turbo run dev --filter='./apps/*'",
+    "dev": "pnpm run dev:packages & sleep 1 && pnpm run dev:apps",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "e2e": "playwright test",
+    "lint": "turbo run lint",
+    "format": "prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
+    "clean": "find . -type d \\( -name .turbo -o -name dist -o -name build -o -name coverage -o -name node_modules \\) -prune -exec rm -rf '{}' +"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.5",
+    "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.54.2",
+    "@types/node": "^22.16.5",
+    "eslint": "^9.32.0",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

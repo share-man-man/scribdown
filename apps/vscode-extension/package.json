@@ -1,0 +1,36 @@
+{
+  "name": "@scribdown/vscode-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/extension.js",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "scribdown.openPreview",
+        "title": "Scribdown: Open Preview"
+      }
+    ]
+  },
+  "scripts": {
+    "dev": "tsc -p tsconfig.json --watch",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "echo 'lint placeholder for @scribdown/vscode-extension'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@scribdown/markdown-renderer": "workspace:*",
+    "@scribdown/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

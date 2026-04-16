@@ -1,0 +1,11 @@
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: "Comic Sans MS", "Bradley Hand", cursive;
+  background: radial-gradient(circle at top, #fff6dd, #eadfbf);
+}
+
+.scribdown-app {
+  max-width: 640px;
+  margin: 0 auto;
+}

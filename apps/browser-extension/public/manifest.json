@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Scribdown",
+  "version": "0.0.0",
+  "description": "Handdrawn markdown rendering experience.",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "storage"
+  ]
+}

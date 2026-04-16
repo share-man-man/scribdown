@@ -1,0 +1,32 @@
+{
+  "name": "@scribdown/ui-handdrawn",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "dev": "tsc -p tsconfig.json --watch",
+    "build": "tsc -p tsconfig.json && cp src/styles.css dist/styles.css",
+    "test": "vitest run",
+    "lint": "echo 'lint placeholder for @scribdown/ui-handdrawn'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@scribdown/shared": "workspace:*",
+    "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
