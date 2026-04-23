@@ -10,7 +10,7 @@
 
 **操作**
 
-- 在 Pencil 中建立 Variables 面板，按 [../spec/ui-spec.md](../spec/ui-spec.md)「浅色主题」表逐条录入颜色 Token
+- 在 Pencil 中建立 Variables 面板，按 [../../apps/docs/spec/tokens.md](../../apps/docs/spec/tokens.md)「浅色主题」表逐条录入颜色 Token
 - 录入字体、圆角、间距、动效 Token（深浅主题共用）
 - 录入暗色主题颜色 Token
 
@@ -24,7 +24,7 @@
 
 **操作**
 
-- 按 [../spec/ui-spec.md](../spec/ui-spec.md) Typography 表，在 Pencil 中建立文本样式
+- 按 [../../apps/docs/spec/tokens.md](../../apps/docs/spec/tokens.md) Typography 表，在 Pencil 中建立文本样式
 - 样式命名与表中「样式」列一致（`body-md`、`h1`、`code-block` 等）
 
 **完成标志**
@@ -171,7 +171,7 @@
 
 **操作**
 
-- 按 [../spec/component-spec.md](../spec/component-spec.md) `LoadingSkeleton` 规格搭建占位结构
+- 按 [../../apps/docs/spec/components.md](../../apps/docs/spec/components.md) `LoadingSkeleton` 规格搭建占位结构
 - 骨架块依次排列：大标题占位（宽 `60%`，高 `28px`）→ 段落三行组（宽 `100% / 96% / 72%`，高 `16px`，行间距 `10px`）→ 代码块占位（宽 `100%`，高 `96px`）→ 段落两行组，循环到内容高度填满
 - 骨架色使用 `--scribdown-color-border`，所有占位块圆角 `--scribdown-radius-sm`
 - 用透明度标注动画区间（`0.4`–`0.8`），在画板中以注释说明脉冲周期 `1.4s`、缓动 `ease-in-out`；标注 `prefers-reduced-motion` 静态降级

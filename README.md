@@ -86,6 +86,6 @@ pnpm dev
 
 | 类型 | 入口 | 说明 |
 | --- | --- | --- |
-| 文档站 | [`apps/docs`](./apps/docs) | VitePress 文档站，含产品介绍、设计系统、开发文档 |
-| 设计文档 | [`design/README.md`](./design/README.md) | UI 规范、组件规范、Pencil 出图手册 |
+| 文档站 | [`apps/docs`](./apps/docs) | VitePress 文档站，含产品介绍、规范正文、开发文档 |
+| 设计资产 | [`design/README.md`](./design/README.md) | Pencil 出图手册、设计源文件、Markdown 样例 |
 | 开发 Wiki | [`wiki/Home.md`](./wiki/Home.md) | 架构、模块、快速上手、发布流程等内部文档 |

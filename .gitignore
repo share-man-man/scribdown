@@ -7,3 +7,5 @@ coverage
 .vscode-test
 *.log
 .DS_Store
+apps/docs/.vitepress/cache
+apps/docs/.vitepress/dist

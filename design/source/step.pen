@@ -4589,217 +4589,175 @@
     },
     {
       "type": "frame",
-      "id": "5C1LV",
-      "x": 13680,
-      "y": 3320,
-      "name": "StateRenderer/Empty",
-      "reusable": true,
-      "width": 860,
-      "height": 360,
-      "fill": "$--scribdown-color-surface",
-      "cornerRadius": [
-        14,
-        16,
-        13,
-        17
-      ],
-      "stroke": {
-        "align": "inside",
-        "thickness": 1,
-        "fill": "$--scribdown-color-border"
-      },
-      "layout": "vertical",
-      "gap": "$--scribdown-space-3",
-      "justifyContent": "center",
-      "alignItems": "center",
-      "children": [
-        {
-          "type": "ellipse",
-          "id": "eG5hj",
-          "name": "emptyIcon",
-          "fill": "$--scribdown-color-text-secondary",
-          "width": 48,
-          "height": 48
-        },
-        {
-          "id": "lmXbG",
-          "type": "ref",
-          "ref": "TUU5K",
-          "content": "无可渲染内容",
-          "fill": "$--scribdown-color-text-secondary",
-          "name": "emptyTitle"
-        },
-        {
-          "id": "K0UVX",
-          "type": "ref",
-          "ref": "O5jSy",
-          "content": "请粘贴或打开一段 Markdown 后重试。",
-          "width": 560,
-          "name": "emptyDesc"
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "I88GX",
-      "x": 13680,
-      "y": 3720,
-      "name": "StateRenderer/Error",
-      "reusable": true,
-      "width": 860,
-      "height": 360,
-      "fill": "$--scribdown-color-surface",
-      "cornerRadius": [
-        14,
-        16,
-        13,
-        17
-      ],
-      "stroke": {
-        "align": "inside",
-        "thickness": 1,
-        "fill": "$--scribdown-color-border"
-      },
-      "layout": "vertical",
-      "gap": "$--scribdown-space-3",
-      "justifyContent": "center",
-      "alignItems": "center",
-      "children": [
-        {
-          "type": "ellipse",
-          "id": "GYMqs",
-          "name": "errorIcon",
-          "fill": "$--scribdown-color-danger",
-          "width": 48,
-          "height": 48
-        },
-        {
-          "id": "5IyZ6",
-          "type": "ref",
-          "ref": "TUU5K",
-          "content": "渲染失败",
-          "fill": "$--scribdown-color-danger",
-          "name": "errorTitle"
-        },
-        {
-          "id": "kVXW1",
-          "type": "ref",
-          "ref": "O5jSy",
-          "content": "Mermaid parse failed: Unexpected token near line 2.",
-          "width": 560,
-          "name": "errorDesc"
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "Npr40",
-      "x": 13680,
-      "y": 4120,
-      "name": "StateRenderer/Unsupported",
-      "reusable": true,
-      "width": 860,
-      "height": 360,
-      "fill": "$--scribdown-color-surface",
-      "cornerRadius": [
-        14,
-        16,
-        13,
-        17
-      ],
-      "stroke": {
-        "align": "inside",
-        "thickness": 1,
-        "fill": "$--scribdown-color-border"
-      },
-      "layout": "vertical",
-      "gap": "$--scribdown-space-3",
-      "justifyContent": "center",
-      "alignItems": "center",
-      "children": [
-        {
-          "type": "ellipse",
-          "id": "no0YU",
-          "name": "unsupportedIcon",
-          "fill": "$--scribdown-color-warning",
-          "width": 48,
-          "height": 48
-        },
-        {
-          "id": "Zkhst",
-          "type": "ref",
-          "ref": "TUU5K",
-          "content": "暂不支持该语法",
-          "fill": "$--scribdown-color-warning",
-          "name": "unsupportedTitle"
-        },
-        {
-          "id": "VxDKW",
-          "type": "ref",
-          "ref": "O5jSy",
-          "content": "当前环境未启用该扩展能力，可切换到支持模式后重试。",
-          "width": 560,
-          "name": "unsupportedDesc"
-        }
-      ]
-    },
-    {
-      "type": "frame",
       "id": "yjtgp",
       "x": 13620,
       "y": 4480,
       "name": "Step 16 - State Screens",
       "width": 5360,
-      "height": 820,
       "fill": "$--scribdown-color-bg",
       "stroke": {
         "align": "inside",
         "thickness": 1,
         "fill": "$--scribdown-color-border"
       },
-      "gap": "$--scribdown-space-5",
+      "layout": "vertical",
+      "gap": 56,
       "padding": "$--scribdown-space-5",
       "children": [
         {
           "type": "frame",
-          "id": "RigyT",
-          "name": "State / Loading",
-          "clip": true,
-          "width": 1280,
-          "height": 720,
-          "fill": "$--scribdown-color-bg",
-          "layout": "vertical",
-          "padding": "$--scribdown-space-6",
+          "id": "RCBQz",
+          "name": "Row / Renderer Components",
+          "width": "fill_container",
+          "gap": 40,
           "children": [
             {
               "type": "frame",
-              "id": "V723M",
-              "name": "loadingWrap",
-              "width": "fill_container",
-              "height": "fill_container",
+              "id": "5C1LV",
+              "name": "StateRenderer/Empty",
+              "reusable": true,
+              "width": 860,
+              "height": 360,
+              "fill": "$--scribdown-color-surface",
+              "cornerRadius": [
+                14,
+                16,
+                13,
+                17
+              ],
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--scribdown-color-border"
+              },
               "layout": "vertical",
-              "gap": "$--scribdown-space-4",
+              "gap": "$--scribdown-space-3",
               "justifyContent": "center",
               "alignItems": "center",
               "children": [
                 {
-                  "id": "SlgoP",
-                  "type": "ref",
-                  "ref": "Akk2Q",
-                  "width": 860,
-                  "name": "loadingSk"
+                  "type": "ellipse",
+                  "id": "eG5hj",
+                  "name": "emptyIcon",
+                  "fill": "$--scribdown-color-text-secondary",
+                  "width": 48,
+                  "height": 48
                 },
                 {
-                  "type": "text",
-                  "id": "504VI",
-                  "name": "loadingHint",
+                  "id": "lmXbG",
+                  "type": "ref",
+                  "ref": "TUU5K",
+                  "content": "无可渲染内容",
                   "fill": "$--scribdown-color-text-secondary",
-                  "textGrowth": "fixed-width",
-                  "width": 860,
-                  "content": "LoadingSkeleton 使用脉冲动画（1200ms，ease-in-out，infinite）",
-                  "fontFamily": "Source Serif 4",
-                  "fontSize": 16,
-                  "fontWeight": "normal"
+                  "name": "emptyTitle"
+                },
+                {
+                  "id": "K0UVX",
+                  "type": "ref",
+                  "ref": "O5jSy",
+                  "content": "请粘贴或打开一段 Markdown 后重试。",
+                  "width": 560,
+                  "name": "emptyDesc"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "I88GX",
+              "name": "StateRenderer/Error",
+              "reusable": true,
+              "width": 860,
+              "height": 360,
+              "fill": "$--scribdown-color-surface",
+              "cornerRadius": [
+                14,
+                16,
+                13,
+                17
+              ],
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--scribdown-color-border"
+              },
+              "layout": "vertical",
+              "gap": "$--scribdown-space-3",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "GYMqs",
+                  "name": "errorIcon",
+                  "fill": "$--scribdown-color-danger",
+                  "width": 48,
+                  "height": 48
+                },
+                {
+                  "id": "5IyZ6",
+                  "type": "ref",
+                  "ref": "TUU5K",
+                  "content": "渲染失败",
+                  "fill": "$--scribdown-color-danger",
+                  "name": "errorTitle"
+                },
+                {
+                  "id": "kVXW1",
+                  "type": "ref",
+                  "ref": "O5jSy",
+                  "content": "Mermaid parse failed: Unexpected token near line 2.",
+                  "width": 560,
+                  "name": "errorDesc"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Npr40",
+              "name": "StateRenderer/Unsupported",
+              "reusable": true,
+              "width": 860,
+              "height": 360,
+              "fill": "$--scribdown-color-surface",
+              "cornerRadius": [
+                14,
+                16,
+                13,
+                17
+              ],
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--scribdown-color-border"
+              },
+              "layout": "vertical",
+              "gap": "$--scribdown-space-3",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "no0YU",
+                  "name": "unsupportedIcon",
+                  "fill": "$--scribdown-color-warning",
+                  "width": 48,
+                  "height": 48
+                },
+                {
+                  "id": "Zkhst",
+                  "type": "ref",
+                  "ref": "TUU5K",
+                  "content": "暂不支持该语法",
+                  "fill": "$--scribdown-color-warning",
+                  "name": "unsupportedTitle"
+                },
+                {
+                  "id": "VxDKW",
+                  "type": "ref",
+                  "ref": "O5jSy",
+                  "content": "当前环境未启用该扩展能力，可切换到支持模式后重试。",
+                  "width": 560,
+                  "name": "unsupportedDesc"
                 }
               ]
             }
@@ -4807,100 +4765,597 @@
         },
         {
           "type": "frame",
-          "id": "kSxq5",
-          "name": "State / Empty",
-          "clip": true,
-          "width": 1280,
-          "height": 720,
-          "fill": "$--scribdown-color-bg",
-          "layout": "vertical",
-          "padding": "$--scribdown-space-6",
+          "id": "ShD3I",
+          "name": "Row / State Screens",
+          "width": "fill_container",
+          "gap": 40,
           "children": [
             {
               "type": "frame",
-              "id": "Enci4",
-              "name": "emptyWrap",
-              "width": "fill_container",
-              "height": "fill_container",
+              "id": "RigyT",
+              "name": "State / Loading",
+              "clip": true,
+              "width": 1280,
+              "height": 720,
+              "fill": "$--scribdown-color-bg",
               "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
+              "padding": "$--scribdown-space-6",
               "children": [
                 {
-                  "id": "3jhWP",
+                  "type": "frame",
+                  "id": "V723M",
+                  "name": "loadingWrap",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": "$--scribdown-space-4",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "SlgoP",
+                      "type": "ref",
+                      "ref": "Akk2Q",
+                      "width": 860,
+                      "name": "loadingSk"
+                    },
+                    {
+                      "type": "text",
+                      "id": "504VI",
+                      "name": "loadingHint",
+                      "fill": "$--scribdown-color-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": 860,
+                      "content": "LoadingSkeleton 使用脉冲动画（1200ms，ease-in-out，infinite）",
+                      "fontFamily": "Source Serif 4",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "kSxq5",
+              "name": "State / Empty",
+              "clip": true,
+              "width": 1280,
+              "height": 720,
+              "fill": "$--scribdown-color-bg",
+              "layout": "vertical",
+              "padding": "$--scribdown-space-6",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Enci4",
+                  "name": "emptyWrap",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "3jhWP",
+                      "type": "ref",
+                      "ref": "5C1LV",
+                      "width": 860,
+                      "height": 360,
+                      "name": "emptyInst"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hrQxc",
+              "name": "State / Error",
+              "clip": true,
+              "width": 1280,
+              "height": 720,
+              "fill": "$--scribdown-color-bg",
+              "layout": "vertical",
+              "padding": "$--scribdown-space-6",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TloXq",
+                  "name": "errorWrap",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "ho6jl",
+                      "type": "ref",
+                      "ref": "I88GX",
+                      "width": 860,
+                      "height": 360,
+                      "name": "errorInst"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lMKuK",
+              "name": "State / Unsupported",
+              "clip": true,
+              "width": 1280,
+              "height": 720,
+              "fill": "$--scribdown-color-bg",
+              "layout": "vertical",
+              "padding": "$--scribdown-space-6",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "mSVr6",
+                  "name": "unsupportedWrap",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "QFaOx",
+                      "type": "ref",
+                      "ref": "Npr40",
+                      "width": 860,
+                      "height": 360,
+                      "name": "unsupportedInst"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "yS16H",
+      "x": 0,
+      "y": 7440,
+      "name": "Step 17 - Components / Core Blocks",
+      "clip": true,
+      "width": 1600,
+      "height": 1200,
+      "fill": "$--scribdown-color-bg",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--scribdown-color-border"
+      },
+      "layout": "vertical",
+      "gap": "$--scribdown-space-4",
+      "padding": "$--scribdown-space-4",
+      "children": [
+        {
+          "type": "text",
+          "id": "rzr4x",
+          "name": "title",
+          "fill": "$--scribdown-color-text-primary",
+          "content": "Step 17 - Components / Core Blocks",
+          "lineHeight": 1.2,
+          "fontFamily": "Caveat",
+          "fontSize": 32,
+          "fontWeight": "700"
+        },
+        {
+          "type": "frame",
+          "id": "nhgva",
+          "name": "Components Grid",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": "$--scribdown-space-4",
+          "children": [
+            {
+              "type": "frame",
+              "id": "GAeor",
+              "name": "Row 1",
+              "width": "fill_container",
+              "height": "fill_container",
+              "gap": "$--scribdown-space-4",
+              "children": [
+                {
+                  "id": "vXf45",
+                  "type": "ref",
+                  "ref": "lpdq3",
+                  "name": "DocumentShell",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "lXwpO",
+                  "type": "ref",
+                  "ref": "zSd4n",
+                  "name": "HeadingRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "DrHsf",
+                  "type": "ref",
+                  "ref": "tOsEZ",
+                  "name": "ParagraphRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "uWoWK",
+                  "type": "ref",
+                  "ref": "4p9AF",
+                  "name": "ListRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "3VfhI",
+                  "type": "ref",
+                  "ref": "kXwGZ",
+                  "name": "TaskListRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "eaZJX",
+              "name": "Row 2",
+              "width": "fill_container",
+              "height": "fill_container",
+              "gap": "$--scribdown-space-4",
+              "children": [
+                {
+                  "id": "4yDt6",
+                  "type": "ref",
+                  "ref": "gDcFs",
+                  "name": "Blockquote",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "S1Ox0",
+                  "type": "ref",
+                  "ref": "GS6GE",
+                  "name": "HanddrawnDivider",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "9T7GH",
+                  "type": "ref",
+                  "ref": "WwBrB",
+                  "name": "CodeBlock",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "SjWEd",
+                  "type": "ref",
+                  "ref": "mjWG8",
+                  "name": "InlineCode",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "srtRi",
+                  "type": "ref",
+                  "ref": "CQBEd",
+                  "name": "LinkRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cqKna",
+              "name": "Row 3",
+              "width": "fill_container",
+              "height": "fill_container",
+              "gap": "$--scribdown-space-4",
+              "children": [
+                {
+                  "id": "F2InQ",
+                  "type": "ref",
+                  "ref": "jNzWO",
+                  "name": "ImageRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "iinrt",
+                  "type": "ref",
+                  "ref": "lp13B",
+                  "name": "MermaidBlock",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "x5Y3s",
+                  "type": "ref",
+                  "ref": "GT23K",
+                  "name": "VideoRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "PHXQj",
+                  "type": "ref",
+                  "ref": "drgWN",
+                  "name": "FullscreenViewer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "EqQjW",
+              "name": "Row 4",
+              "width": "fill_container",
+              "height": "fill_container",
+              "gap": "$--scribdown-space-4",
+              "children": [
+                {
+                  "id": "6JhhP",
+                  "type": "ref",
+                  "ref": "xEcem",
+                  "name": "TableRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "El6Vi",
+                  "type": "ref",
+                  "ref": "0UyrY",
+                  "name": "HtmlRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "HEUGF",
+                  "type": "ref",
+                  "ref": "Akk2Q",
+                  "name": "LoadingSkeleton",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
+                },
+                {
+                  "id": "XRM6p",
                   "type": "ref",
                   "ref": "5C1LV",
-                  "width": 860,
-                  "height": 360,
-                  "name": "emptyInst"
+                  "name": "StateRenderer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "clip": true,
+                  "fill": "$--scribdown-color-surface",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--scribdown-color-border"
+                  },
+                  "cornerRadius": 0
                 }
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VsrsP",
+      "x": 0,
+      "y": 8760,
+      "name": "Step 18 - Fullscreen Viewer",
+      "clip": true,
+      "width": 1440,
+      "height": 960,
+      "fill": "$--scribdown-color-bg",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--scribdown-color-border"
+      },
+      "layout": "vertical",
+      "gap": "$--scribdown-space-4",
+      "padding": "$--scribdown-space-4",
+      "children": [
+        {
+          "type": "text",
+          "id": "Z1Qy8",
+          "name": "heading",
+          "fill": "$--scribdown-color-text-primary",
+          "content": "Step 18 - Fullscreen Viewer",
+          "lineHeight": 1.2,
+          "fontFamily": "Caveat",
+          "fontSize": 32,
+          "fontWeight": "700"
         },
         {
           "type": "frame",
-          "id": "hrQxc",
-          "name": "State / Error",
-          "clip": true,
-          "width": 1280,
-          "height": 720,
-          "fill": "$--scribdown-color-bg",
+          "id": "K0o8t",
+          "name": "Fullscreen Variants",
+          "width": "fill_container",
+          "height": "fill_container",
           "layout": "vertical",
-          "padding": "$--scribdown-space-6",
           "children": [
             {
-              "type": "frame",
-              "id": "TloXq",
-              "name": "errorWrap",
+              "id": "ffPiq",
+              "type": "ref",
+              "ref": "drgWN",
+              "name": "FullscreenViewer / 3-up",
+              "layout": "horizontal",
+              "gap": "$--scribdown-space-4",
               "width": "fill_container",
               "height": "fill_container",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "id": "ho6jl",
-                  "type": "ref",
-                  "ref": "I88GX",
-                  "width": 860,
-                  "height": 360,
-                  "name": "errorInst"
+              "descendants": {
+                "sSGik": {
+                  "name": "Variant - Image Fullscreen",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--scribdown-color-overlay"
+                },
+                "dwKDY": {
+                  "name": "Variant - Mermaid Fullscreen",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--scribdown-color-overlay"
+                },
+                "LQPm0": {
+                  "name": "Variant - Video Fullscreen",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--scribdown-color-overlay"
                 }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "lMKuK",
-          "name": "State / Unsupported",
-          "clip": true,
-          "width": 1280,
-          "height": 720,
-          "fill": "$--scribdown-color-bg",
-          "layout": "vertical",
-          "padding": "$--scribdown-space-6",
-          "children": [
-            {
-              "type": "frame",
-              "id": "mSVr6",
-              "name": "unsupportedWrap",
-              "width": "fill_container",
-              "height": "fill_container",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "id": "QFaOx",
-                  "type": "ref",
-                  "ref": "Npr40",
-                  "width": 860,
-                  "height": 360,
-                  "name": "unsupportedInst"
-                }
-              ]
+              }
             }
           ]
         }
@@ -5701,6 +6156,40 @@
     "--scribdown-radius-sm-num": {
       "type": "number",
       "value": 10
+    },
+    "--scribdown-color-overlay": {
+      "type": "color",
+      "value": [
+        {
+          "value": "#2D241FB8",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#000000B8",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
+    },
+    "--scribdown-color-shadow": {
+      "type": "color",
+      "value": [
+        {
+          "value": "#2D241F29",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#00000066",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     }
   }
 }
