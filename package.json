@@ -6,17 +6,17 @@
   "scripts": {
     "dev:packages": "turbo run dev --filter='./packages/*' --filter='./tools/*'",
     "dev:apps": "turbo run dev --filter='./apps/*'",
-    "dev": "pnpm run dev:packages & sleep 1 && pnpm run dev:apps",
+    "dev": "turbo watch dev",
     "build": "turbo run build",
     "test": "turbo run test",
     "e2e": "playwright test",
     "lint": "turbo run lint",
-    "format": "prettier --check .",
+    "format": "prettier --write .",
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",
-    "clean": "find . -type d \\( -name .turbo -o -name dist -o -name build -o -name coverage -o -name node_modules \\) -prune -exec rm -rf '{}' +"
+    "clean": "find . \\( -name node_modules -o -name dist -o -name .turbo \\) -type d -prune -exec rm -rf {} +"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
@@ -27,6 +27,7 @@
     "prettier": "^3.6.2",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.59.2",
     "vitest": "^3.2.4"
   }
 }

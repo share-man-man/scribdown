@@ -108,7 +108,9 @@ invalid mermaid syntax @@@@
 
 被过滤 HTML（降级占位）：
 
+```html
 <script>alert("unsafe")</script>
+```
 
 ## 引用式链接与图片
 

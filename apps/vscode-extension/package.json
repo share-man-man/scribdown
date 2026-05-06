@@ -20,9 +20,8 @@
     "dev": "tsc -p tsconfig.json --watch",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "lint": "echo 'lint placeholder for @scribdown/vscode-extension'",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf dist"
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@scribdown/markdown-renderer": "workspace:*",
