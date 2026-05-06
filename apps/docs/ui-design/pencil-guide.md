@@ -4,19 +4,21 @@
 
 按顺序执行，每步对照「完成标志」确认后再继续。
 
+浅色主题出图时，先参考 [./overview.md#视觉基线](./overview.md#视觉基线) 中的 Image2.0 示例图。该图用于确定整体方向，具体颜色、间距、圆角、字体仍以 [./tokens.md](./tokens.md) 和 [./components.md](./components.md) 为准。
+
 ---
 
 ### Step 1：设置 Token 变量
 
 **操作**
 
-- 在 Pencil 中建立 Variables 面板，按 [../../apps/docs/spec/tokens.md](../../apps/docs/spec/tokens.md)「浅色主题」表逐条录入颜色 Token
+- 在 Pencil 中建立 Variables 面板，按 [./tokens.md](./tokens.md)「浅色主题」表逐条录入颜色 Token
 - 录入字体、圆角、间距、动效 Token（深浅主题共用）
 - 录入暗色主题颜色 Token
 
 **完成标志**
 
-- Variables 面板中可见所有 `--scribdown-*` Token，无遗漏、无拼写错误
+- Variables 面板中可见全部 `--scribdown-*` Token，无遗漏、无拼写错误
 
 ---
 
@@ -24,7 +26,7 @@
 
 **操作**
 
-- 按 [../../apps/docs/spec/tokens.md](../../apps/docs/spec/tokens.md) Typography 表，在 Pencil 中建立文本样式
+- 按 [./tokens.md](./tokens.md) Typography 表，在 Pencil 中建立文本样式
 - 样式命名与表中「样式」列一致（`body-md`、`h1`、`code-block` 等）
 
 **完成标志**
@@ -54,6 +56,7 @@
 **操作**
 
 - 创建可复用的 `DocumentShell` 组件，背景使用 `--scribdown-color-bg`
+- 浅色主题叠加低噪声纸感纹理和轻量纸张外框；纹理只放在页面背景层，内容块内部保持平整以保证代码、表格和图表可读
 - 正文文本列最大宽度 `840px`，左右内边距最少 `--scribdown-space-7`（`48px`）
 - 顶部留白 `--scribdown-space-8`（`64px`），底部留白 `96px`
 - 出一个 Typography 展示子画板：从 `h1` 到 `h6`、`body-md`、`body-sm` 按垂直顺序排列，标注字号、行高、字重，作为后续画板正文的视觉参照
@@ -171,7 +174,7 @@
 
 **操作**
 
-- 按 [../../apps/docs/spec/components.md](../../apps/docs/spec/components.md) `LoadingSkeleton` 规格搭建占位结构
+- 按 [./components.md](./components.md) `LoadingSkeleton` 规格搭建占位结构
 - 骨架块依次排列：大标题占位（宽 `60%`，高 `28px`）→ 段落三行组（宽 `100% / 96% / 72%`，高 `16px`，行间距 `10px`）→ 代码块占位（宽 `100%`，高 `96px`）→ 段落两行组，循环到内容高度填满
 - 骨架色使用 `--scribdown-color-border`，所有占位块圆角 `--scribdown-radius-sm`
 - 用透明度标注动画区间（`0.4`–`0.8`），在画板中以注释说明脉冲周期 `1.4s`、缓动 `ease-in-out`；标注 `prefers-reduced-motion` 静态降级
@@ -187,24 +190,43 @@
 
 **画布**：`1440 × 1080`，内容区 `960px`
 
+**画板壳层结构**
+
+```
+Frame (1440px, layout: vertical, gap: space-4, padding: space-4)
+├── Light Toolbar (h: 44, layout: horizontal, justifyContent: space_between, padding: 8 12)
+│   ├── 左侧：插件图标 + 名称
+│   └── 右侧：主题切换、设置等轻量控件
+└── Preview Canvas (layout: vertical, padding: 8 0 0 0, alignItems: center)
+    └── DocumentShell（内容区）
+```
+
+背景叠加两层：`--scribdown-color-bg` 底色 + 渐变叠加（`linear-gradient`，从 `--scribdown-color-border` 到透明，`opacity: 0.22`，方向向下），营造轻量纸张深度感。
+
 **操作**
 
-- 使用 `DocumentShell` 组件作为容器
-- 使用 [../fixtures/markdown-fixture.md](../fixtures/markdown-fixture.md) 中的标准 Markdown 样例填充正文，至少包含以下 8 类元素中的 6 类：标题、段落、列表、引用、代码块、链接、行内代码、图片
+- 使用 `DocumentShell` 组件作为内容容器
+- 使用 [./markdown-fixture.md](./markdown-fixture.md) 中的标准 Markdown 样例填充正文，至少包含以下 8 类元素中的 6 类：标题、段落、列表、引用、代码块、链接、行内代码、图片
 - 确保 fixture 中的三类失败态在画板中可见：图片失败态（`broken-image-404.png`）、Mermaid 错误态（`invalid mermaid syntax`）、HTML 降级占位（`<script>` 被过滤）
-- 背景使用纸感纹理，壳层可带轻量工具区
+- 构图参考 Image2.0 示例图，第一屏需要同时露出主标题、引用块和正文开头
+- h2 标题使用手写风格标题与短横线涂抹感分隔，颜色必须来自 Token 派生值
+- 代码块、图片、Mermaid、视频、HTML 和表格至少覆盖 4 类，形成长文档的信息密度基线
 
 **完成标志**
 
 - 正文文本列宽 `≤840px`，左右内边距 `≥48px`
+- Toolbar 与 Preview Canvas 结构清晰，壳层权重低于正文内容
 - 手绘感与可读性并存，装饰未压过正文
 - 所有颜色来自浅色主题 Token
+- 视觉节奏与 [./overview.md#视觉基线](./overview.md#视觉基线) 一致，但没有脱离 Token 体系做逐像素复刻
 
 ---
 
 ### Step 13：出 Browser Preview / Long Content 画板
 
 **画布**：`1440 × 1600`，内容区 `960px`
+
+**画板壳层结构**：与 Step 12 相同，复制后修改内容。
 
 **操作**
 
@@ -219,22 +241,30 @@
 
 ### Step 14：出 VS Code Preview / Default 画板
 
-**画布**：`1280 × 960`，内容区 `860px`
+**画布**：`1280 × 960`（固定高度，开启 `clip: true`），内容区 `860px`
+
+**画板壳层结构**：与 Browser 版一致，但有以下差异：
+
+- 背景渐变叠加 `opacity` 降为 `0.08`（Browser 版为 `0.22`），整体更克制，适配 VS Code 深色宿主对比度
+- 开启 `clip: true`，裁切超出画布的内容
 
 **操作**
 
-- 使用同一份标准 Markdown 样例（见 [../fixtures/markdown-fixture.md](../fixtures/markdown-fixture.md)）
+- 使用同一份标准 Markdown 样例（见 [./markdown-fixture.md](./markdown-fixture.md)）
 - 背景比 Browser 版更克制，减少纹理强度，适配宿主主题对比度
 
 **完成标志**
 
-- 与 Browser 版使用相同渲染组件，仅壳层和背景策略不同
+- 与 Browser 版使用相同渲染组件，仅壳层背景渐变强度不同
+- 画布高度固定 `960px`，超出内容被裁切（体现宿主窗口边界）
 
 ---
 
 ### Step 15：出 VS Code Preview / Narrow 画板
 
-**画布**：`960 × 960`，内容区 `680px`
+**画布**：`960 × 960`（固定高度，开启 `clip: true`），内容区 `680px`
+
+**画板壳层结构**：与 Step 14 相同，仅画布宽度缩减至 `960px`。
 
 **操作**
 
@@ -255,14 +285,15 @@
   - `Empty` 变体：中性色图标，标题「无可渲染内容」，颜色 `--scribdown-color-text-secondary`
   - `Error` 变体：图标与标题颜色 `--scribdown-color-danger`，展示错误摘要
   - `Unsupported` 变体：图标与标题颜色 `--scribdown-color-warning`，说明能力限制
-- 出四张 State 画板（`1280 × 720`）：
-  - `State / Loading`：展示 `LoadingSkeleton`，标注脉冲动画说明
-  - `State / Empty` / `State / Error` / `State / Unsupported`：各用 `StateRenderer` 对应变体实例
+- 出一张宽画板（`5360px` 宽，高度自适应），内部采用**双行布局**：
+  - 第一行（`Row / Renderer Components`）：按列并排展示各渲染组件的实例缩略
+  - 第二行（`Row / State Screens`）：并排展示 Loading / Empty / Error / Unsupported 四个状态画板
 
 **完成标志**
 
 - `StateRenderer` 三个变体可独立复用
-- 四张画板语义清晰，不混入正文内容
+- Loading 态使用 `LoadingSkeleton` 实例，配注脉冲动画说明
+- 四张状态语义清晰，不混入正文内容
 - Error 和 Unsupported 使用对应语义色
 
 ---
@@ -308,8 +339,9 @@
 - [ ] 严格遵守「只做渲染，不做编辑」的产品边界
 - [ ] 所有颜色、尺寸、动效均来自 `--scribdown-*` Token，无硬编码
 - [ ] 纸感、手绘感与可读性并存，装饰未压过正文
+- [ ] 浅色主题 Preview 画板已对照 [./overview.md#视觉基线](./overview.md#视觉基线) 检查页面壳层、标题、媒体块和失败态
 - [ ] Browser 与 VS Code 使用相同渲染组件，壳层差异不影响正文规则
-- [ ] 标准 Markdown 样例（见 [../fixtures/markdown-fixture.md](../fixtures/markdown-fixture.md)）覆盖所有节点类型，含失败态（图片加载失败、Mermaid 语法错误、HTML 降级占位）和引用式链接 / 图片
+- [ ] 标准 Markdown 样例（见 [./markdown-fixture.md](./markdown-fixture.md)）覆盖所有节点类型，含失败态（图片加载失败、Mermaid 语法错误、HTML 降级占位）和引用式链接 / 图片
 - [ ] Mermaid、图片、视频的全屏交互完整表达
 - [ ] State 画板语义色正确，未混入正文内容，Loading 骨架结构完整
 - [ ] 全部 18 个视觉组件中，适用交互的组件均展示了 `focus-visible` 态

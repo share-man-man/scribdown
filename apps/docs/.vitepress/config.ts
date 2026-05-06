@@ -10,7 +10,7 @@ export default defineConfig({
 
     nav: [
       { text: "指南", link: "/guide/introduction" },
-      { text: "规范", link: "/spec/overview" },
+      { text: "UI设计", link: "/ui-design/overview" },
       { text: "开发文档", link: "/dev/architecture" },
     ],
 
@@ -24,13 +24,30 @@ export default defineConfig({
           ],
         },
       ],
-      "/spec/": [
+      "/ui-design/": [
         {
-          text: "规范",
+          text: "总览",
           items: [
-            { text: "产品与渲染概览", link: "/spec/overview" },
-            { text: "Token 系统", link: "/spec/tokens" },
-            { text: "组件规范", link: "/spec/components" },
+            { text: "设计导览", link: "/ui-design/overview" },
+          ],
+        },
+        {
+          text: "设计基础",
+          items: [
+            { text: "Token 系统", link: "/ui-design/tokens" },
+          ],
+        },
+        {
+          text: "组件与交互",
+          items: [
+            { text: "组件规范", link: "/ui-design/components" },
+          ],
+        },
+        {
+          text: "设计执行",
+          items: [
+            { text: "Pencil 执行规范", link: "/ui-design/pencil-guide" },
+            { text: "Markdown 样例", link: "/ui-design/markdown-fixture" },
           ],
         },
       ],

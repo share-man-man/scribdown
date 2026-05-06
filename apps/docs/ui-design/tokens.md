@@ -1,6 +1,6 @@
 # Token 系统
 
-所有公开 CSS 变量统一使用 `--scribdown-` 前缀，避免与宿主环境或第三方样式发生命名冲突。产品边界与宿主约束见 [产品与渲染概览](./overview.md)，组件消费方式见 [组件规范](./components.md)。
+所有公开 CSS 变量统一使用 `--scribdown-` 前缀，避免与宿主环境或第三方样式发生命名冲突。整体设计入口见 [设计导览](./overview.md)，组件消费方式见 [组件规范](./components.md)。
 
 ## 浅色主题
 
@@ -11,9 +11,13 @@
 | `--scribdown-color-text-primary` | `#2D241F` | 正文主文字 |
 | `--scribdown-color-text-secondary` | `#6A5B53` | 辅助说明、次标题 |
 | `--scribdown-color-accent` | `#2F6A5F` | 链接、重点强调 |
+| `--scribdown-color-accent-visited` | `#24574E` | 链接 visited 态（accent 加深约 15%） |
+| `--scribdown-color-mark` | `#D7A339` | `<mark>` 高亮背景色 |
 | `--scribdown-color-border` | `#CDBEAE` | 轻描边与分隔线 |
 | `--scribdown-color-danger` | `#A94A3F` | 错误态 |
 | `--scribdown-color-warning` | `#8B6B2E` | Unsupported 态 |
+| `--scribdown-color-overlay` | `rgba(45, 36, 31, 0.72)` | 全屏查看器遮罩背景 |
+| `--scribdown-color-shadow` | `rgba(45, 36, 31, 0.16)` | 阴影颜色（对应 shadow-md 的颜色通道） |
 | `--scribdown-shadow-sm` | `2px 3px 0 rgba(45, 36, 31, 0.12)` | 轻浮起感 |
 | `--scribdown-shadow-md` | `4px 6px 0 rgba(45, 36, 31, 0.16)` | 卡片与代码块 |
 
@@ -28,9 +32,13 @@
 | `--scribdown-color-text-primary` | `#E8DDD4` | 正文主文字 |
 | `--scribdown-color-text-secondary` | `#9B8C82` | 辅助说明、次标题 |
 | `--scribdown-color-accent` | `#5FBFAD` | 链接、重点强调（浅色以保证对比度） |
+| `--scribdown-color-accent-visited` | `#4DA595` | 链接 visited 态 |
+| `--scribdown-color-mark` | `#C49A4A` | `<mark>` 高亮背景色 |
 | `--scribdown-color-border` | `#3D3028` | 轻描边与分隔线 |
 | `--scribdown-color-danger` | `#D4706A` | 错误态 |
 | `--scribdown-color-warning` | `#C49A4A` | Unsupported 态 |
+| `--scribdown-color-overlay` | `rgba(0, 0, 0, 0.72)` | 全屏查看器遮罩背景 |
+| `--scribdown-color-shadow` | `rgba(0, 0, 0, 0.4)` | 阴影颜色（对应 shadow-md 的颜色通道） |
 | `--scribdown-shadow-sm` | `2px 3px 0 rgba(0, 0, 0, 0.3)` | 轻浮起感 |
 | `--scribdown-shadow-md` | `4px 6px 0 rgba(0, 0, 0, 0.4)` | 卡片与代码块 |
 
