@@ -1,0 +1,80 @@
+/* popup 窗口固定宽度，Chrome 扩展 popup 不自动撑开。 */
+body {
+  margin: 0;
+  width: 300px;
+  background: var(--scribdown-color-bg);
+  font-family: var(--scribdown-font-body);
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-popup {
+  padding: var(--scribdown-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--scribdown-space-4);
+}
+
+.scribdown-popup__header {
+  display: flex;
+  align-items: center;
+  gap: var(--scribdown-space-2);
+  padding-bottom: var(--scribdown-space-3);
+  border-bottom: 1px solid var(--scribdown-color-border);
+}
+
+.scribdown-popup__logo {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.scribdown-popup__title {
+  font-family: var(--scribdown-font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-popup__section-title {
+  font-family: var(--scribdown-font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--scribdown-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 var(--scribdown-space-2);
+}
+
+.scribdown-popup__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--scribdown-space-1);
+}
+
+.scribdown-popup__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--scribdown-space-2) var(--scribdown-space-3);
+  border-radius: var(--scribdown-radius-sm);
+  background: var(--scribdown-color-surface);
+  border: 1px solid var(--scribdown-color-border);
+}
+
+.scribdown-popup__item-label {
+  font-size: 14px;
+  color: var(--scribdown-color-text-primary);
+}
+
+/* 占位徽章，参数规划确定后替换为实际控件。 */
+.scribdown-popup__item-badge {
+  font-size: 11px;
+  font-family: var(--scribdown-font-code);
+  color: var(--scribdown-color-text-secondary);
+  background: color-mix(in srgb, var(--scribdown-color-border) 40%, transparent);
+  border-radius: var(--scribdown-radius-sm);
+  padding: 2px 6px;
+}

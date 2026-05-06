@@ -4,9 +4,16 @@
   "version": "0.0.0",
   "description": "Handdrawn markdown rendering experience.",
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "popup.html"
   },
   "permissions": [
     "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["file://**/*.md"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
   ]
 }

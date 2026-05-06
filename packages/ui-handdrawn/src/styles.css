@@ -1,14 +1,247 @@
+/* ─── Token 定义 ───────────────────────────────────────────────────── */
+/* 浅色主题，与 tokens.md 保持一致。 */
 :root {
-  --scribdown-paper-bg: linear-gradient(145deg, #fef7e8, #f7ead6);
-  --scribdown-ink: #2a2a2a;
-  --scribdown-sketch-border: #4c4c4c;
+  --scribdown-color-bg: #F6F1E8;
+  --scribdown-color-surface: #FFFDF8;
+  --scribdown-color-text-primary: #2D241F;
+  --scribdown-color-text-secondary: #6A5B53;
+  --scribdown-color-accent: #2F6A5F;
+  --scribdown-color-accent-visited: #24574E;
+  --scribdown-color-mark: #D7A339;
+  --scribdown-color-border: #CDBEAE;
+  --scribdown-color-danger: #A94A3F;
+  --scribdown-color-warning: #8B6B2E;
+  --scribdown-shadow-sm: 2px 3px 0 rgba(45, 36, 31, 0.12);
+  --scribdown-shadow-md: 4px 6px 0 rgba(45, 36, 31, 0.16);
+
+  --scribdown-font-body: "Source Serif 4", "Noto Serif SC", serif;
+  --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
+  --scribdown-font-code: "JetBrains Mono", "Fira Code", monospace;
+
+  /* 四角独立写法，呼应手绘感 */
+  --scribdown-radius-sm: 8px 10px 9px 11px;
+  --scribdown-radius-md: 14px 16px 13px 17px;
+  --scribdown-radius-lg: 22px 24px 20px 26px;
+
+  --scribdown-space-1: 4px;
+  --scribdown-space-2: 8px;
+  --scribdown-space-3: 12px;
+  --scribdown-space-4: 16px;
+  --scribdown-space-5: 24px;
+  --scribdown-space-6: 32px;
+  --scribdown-space-7: 48px;
+  --scribdown-space-8: 64px;
+
+  --scribdown-duration-fast: 120ms;
+  --scribdown-duration-base: 200ms;
+  --scribdown-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --scribdown-easing-enter: cubic-bezier(0, 0, 0.2, 1);
+  --scribdown-easing-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
+/* 暗色主题 token 覆盖 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --scribdown-color-bg: #1E1A16;
+    --scribdown-color-surface: #2A2420;
+    --scribdown-color-text-primary: #E8DDD4;
+    --scribdown-color-text-secondary: #9B8C82;
+    --scribdown-color-accent: #5FBFAD;
+    --scribdown-color-accent-visited: #4DA595;
+    --scribdown-color-mark: #C49A4A;
+    --scribdown-color-border: #3D3028;
+    --scribdown-color-danger: #D4706A;
+    --scribdown-color-warning: #C49A4A;
+    --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.3);
+    --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ─── Shell Components ──────────────────────────────────────────────── */
+/* DocumentShell：正文列最大宽度 840px，侧边距至少 48px，顶部 64px，底部 96px */
+.scribdown-page {
+  margin: 0;
+  padding: 0;
+  background: var(--scribdown-color-bg);
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: var(--scribdown-font-body);
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-app {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: var(--scribdown-space-8) var(--scribdown-space-7) 96px;
+}
+
+/* HanddrawnCard / scribdown-card */
 .scribdown-card {
-  background: var(--scribdown-paper-bg);
-  color: var(--scribdown-ink);
-  border: 2px solid var(--scribdown-sketch-border);
-  border-radius: 16px;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.25);
-  padding: 16px;
+  background: var(--scribdown-color-surface);
+  color: var(--scribdown-color-text-primary);
+  border: 2px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-lg);
+  box-shadow: var(--scribdown-shadow-md);
+  padding: var(--scribdown-space-6);
+}
+
+/* ─── Markdown 正文排版 ─────────────────────────────────────────────── */
+/* body-md：18px / 1.75 / 400 */
+.scribdown-markdown {
+  font-size: 18px;
+  line-height: 1.75;
+  font-weight: 400;
+  color: var(--scribdown-color-text-primary);
+  word-break: break-word;
+}
+
+/* HeadingRenderer：字体 heading，Typography 规范字号 / 行高 / 字重 */
+.scribdown-markdown h1,
+.scribdown-markdown h2,
+.scribdown-markdown h3,
+.scribdown-markdown h4,
+.scribdown-markdown h5,
+.scribdown-markdown h6 {
+  font-family: var(--scribdown-font-heading);
+  margin-top: var(--scribdown-space-6);
+  margin-bottom: var(--scribdown-space-3);
+}
+
+.scribdown-markdown h1 { font-size: 44px; line-height: 1.2;  font-weight: 700; }
+.scribdown-markdown h2 {
+  font-size: 32px; line-height: 1.3; font-weight: 700;
+  /* 短横线涂抹感底线，颜色来自 accent 低透明度派生值 */
+  border-bottom: 2px solid color-mix(in srgb, var(--scribdown-color-accent) 30%, transparent);
+  padding-bottom: var(--scribdown-space-1);
+}
+.scribdown-markdown h3 { font-size: 24px; line-height: 1.35; font-weight: 600; }
+.scribdown-markdown h4 { font-size: 20px; line-height: 1.4;  font-weight: 600; }
+.scribdown-markdown h5 { font-size: 18px; line-height: 1.5;  font-weight: 600; }
+.scribdown-markdown h6 { font-size: 15px; line-height: 1.5;  font-weight: 600; }
+
+/* ParagraphRenderer：段间距 space-5 */
+.scribdown-markdown p {
+  margin: 0 0 var(--scribdown-space-5);
+}
+
+/* ListRenderer：缩进 24px，行距 space-2 */
+.scribdown-markdown ul,
+.scribdown-markdown ol {
+  padding-left: 24px;
+  margin: 0 0 var(--scribdown-space-5);
+}
+
+.scribdown-markdown li {
+  margin-bottom: var(--scribdown-space-2);
+}
+
+/* InlineCode：padding 2px 6px，font-size 0.92em / 500，字体 code */
+.scribdown-markdown code {
+  font-family: var(--scribdown-font-code);
+  font-size: 0.92em;
+  font-weight: 500;
+  padding: 2px 6px;
+  background: color-mix(in srgb, var(--scribdown-color-border) 40%, transparent);
+  border-radius: var(--scribdown-radius-sm);
+}
+
+/* CodeBlock：14px / 1.7 / 500，radius-md，shadow-md */
+.scribdown-markdown pre {
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 500;
+  background: var(--scribdown-color-surface);
+  border: 1px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-md);
+  box-shadow: var(--scribdown-shadow-md);
+  padding: var(--scribdown-space-4);
+  overflow-x: auto;
+  margin: 0 0 var(--scribdown-space-5);
+}
+
+/* pre 内的 code 去掉行内样式 */
+.scribdown-markdown pre code {
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Blockquote：左线 4px accent，内边距 16px 20px，背景 surface */
+.scribdown-markdown blockquote {
+  border-left: 4px solid var(--scribdown-color-accent);
+  margin: 0 0 var(--scribdown-space-5);
+  padding: var(--scribdown-space-4) 20px;
+  background: var(--scribdown-color-surface);
+  border-radius: 0 var(--scribdown-radius-md) var(--scribdown-radius-md) 0;
+}
+
+.scribdown-markdown blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* LinkRenderer：accent 色，区分 default / hover / visited / focus-visible */
+.scribdown-markdown a {
+  color: var(--scribdown-color-accent);
+  text-decoration: underline;
+  transition: opacity var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-markdown a:visited {
+  color: var(--scribdown-color-accent-visited);
+}
+
+.scribdown-markdown a:hover {
+  opacity: 0.8;
+}
+
+.scribdown-markdown a:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* mark 高亮 */
+.scribdown-markdown mark {
+  background: var(--scribdown-color-mark);
+  color: var(--scribdown-color-text-primary);
+  border-radius: var(--scribdown-radius-sm);
+  padding: 0 2px;
+}
+
+/* 图片：最大宽度 720px */
+.scribdown-markdown img {
+  max-width: 720px;
+  width: 100%;
+  border-radius: var(--scribdown-radius-md);
+}
+
+/* TableRenderer：cell padding 12px 16px，横向滚动 */
+.scribdown-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 var(--scribdown-space-5);
+  display: block;
+  overflow-x: auto;
+}
+
+.scribdown-markdown th,
+.scribdown-markdown td {
+  border: 1px solid var(--scribdown-color-border);
+  padding: var(--scribdown-space-3) var(--scribdown-space-4);
+  text-align: left;
+}
+
+.scribdown-markdown th {
+  font-family: var(--scribdown-font-heading);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--scribdown-color-border) 30%, transparent);
+}
+
+/* HanddrawnDivider：不用直线，上下留白 space-5 */
+.scribdown-markdown hr {
+  border: none;
+  border-top: 2px dashed var(--scribdown-color-border);
+  margin: var(--scribdown-space-5) 0;
 }

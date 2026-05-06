@@ -1,8 +1,3 @@
-# 标准 Markdown 样例
-
-用于 AI 在 Pencil 中填充统一内容，避免每次出图时内容结构漂移。覆盖主规范中已声明的主要块级节点、行内标记、扩展语法及关键失败态。
-
-````markdown
 # Scribdown 渲染预览
 
 > Scribdown 是一个**手绘风格**的 Markdown 渲染器，只负责*展示*，不负责编辑。
@@ -133,16 +128,8 @@ invalid mermaid syntax @@@@
 
 ## 表格示例
 
-| Node | Status | Note |
-| --- | --- | --- |
-| paragraph | ready | stable |
-| code | ready | with shiki |
-| table | default | horizontal scroll |
-````
-
-## 样例使用规则
-
-- 所有默认画板优先使用这份样例作为正文内容
-- `Long Content` 画板在此基础上追加 2 倍正文长度、更长代码块和更复杂的 `Mermaid` 图表
-- `State` 画板不使用该样例正文，只展示对应状态模块
-- AI 在 Pencil 中绘制组件页时，可从该样例中拆出单个内容块作为组件实例
+| Node      | Status  | Note               |
+| --------- | ------- | ------------------ |
+| paragraph | ready   | stable             |
+| code      | ready   | with shiki         |
+| table     | default | horizontal scroll  |
