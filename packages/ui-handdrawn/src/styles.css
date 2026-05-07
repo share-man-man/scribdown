@@ -1,16 +1,16 @@
 /* ─── Token 定义 ───────────────────────────────────────────────────── */
 /* 浅色主题，与 tokens.md 保持一致。 */
 :root {
-  --scribdown-color-bg: #F6F1E8;
-  --scribdown-color-surface: #FFFDF8;
-  --scribdown-color-text-primary: #2D241F;
-  --scribdown-color-text-secondary: #6A5B53;
-  --scribdown-color-accent: #2F6A5F;
-  --scribdown-color-accent-visited: #24574E;
-  --scribdown-color-mark: #D7A339;
-  --scribdown-color-border: #CDBEAE;
-  --scribdown-color-danger: #A94A3F;
-  --scribdown-color-warning: #8B6B2E;
+  --scribdown-color-bg: #f6f1e8;
+  --scribdown-color-surface: #fffdf8;
+  --scribdown-color-text-primary: #2d241f;
+  --scribdown-color-text-secondary: #6a5b53;
+  --scribdown-color-accent: #2f6a5f;
+  --scribdown-color-accent-visited: #24574e;
+  --scribdown-color-mark: #d7a339;
+  --scribdown-color-border: #cdbeae;
+  --scribdown-color-danger: #a94a3f;
+  --scribdown-color-warning: #8b6b2e;
   --scribdown-shadow-sm: 2px 3px 0 rgba(45, 36, 31, 0.12);
   --scribdown-shadow-md: 4px 6px 0 rgba(45, 36, 31, 0.16);
 
@@ -42,16 +42,16 @@
 /* 暗色主题 token 覆盖 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --scribdown-color-bg: #1E1A16;
-    --scribdown-color-surface: #2A2420;
-    --scribdown-color-text-primary: #E8DDD4;
-    --scribdown-color-text-secondary: #9B8C82;
-    --scribdown-color-accent: #5FBFAD;
-    --scribdown-color-accent-visited: #4DA595;
-    --scribdown-color-mark: #C49A4A;
-    --scribdown-color-border: #3D3028;
-    --scribdown-color-danger: #D4706A;
-    --scribdown-color-warning: #C49A4A;
+    --scribdown-color-bg: #1e1a16;
+    --scribdown-color-surface: #2a2420;
+    --scribdown-color-text-primary: #e8ddd4;
+    --scribdown-color-text-secondary: #9b8c82;
+    --scribdown-color-accent: #5fbfad;
+    --scribdown-color-accent-visited: #4da595;
+    --scribdown-color-mark: #c49a4a;
+    --scribdown-color-border: #3d3028;
+    --scribdown-color-danger: #d4706a;
+    --scribdown-color-warning: #c49a4a;
     --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.3);
     --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.4);
   }
@@ -107,17 +107,39 @@
   margin-bottom: var(--scribdown-space-3);
 }
 
-.scribdown-markdown h1 { font-size: 44px; line-height: 1.2;  font-weight: 700; }
+.scribdown-markdown h1 {
+  font-size: 44px;
+  line-height: 1.2;
+  font-weight: 700;
+}
 .scribdown-markdown h2 {
-  font-size: 32px; line-height: 1.3; font-weight: 700;
+  font-size: 32px;
+  line-height: 1.3;
+  font-weight: 700;
   /* 短横线涂抹感底线，颜色来自 accent 低透明度派生值 */
   border-bottom: 2px solid color-mix(in srgb, var(--scribdown-color-accent) 30%, transparent);
   padding-bottom: var(--scribdown-space-1);
 }
-.scribdown-markdown h3 { font-size: 24px; line-height: 1.35; font-weight: 600; }
-.scribdown-markdown h4 { font-size: 20px; line-height: 1.4;  font-weight: 600; }
-.scribdown-markdown h5 { font-size: 18px; line-height: 1.5;  font-weight: 600; }
-.scribdown-markdown h6 { font-size: 15px; line-height: 1.5;  font-weight: 600; }
+.scribdown-markdown h3 {
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.scribdown-markdown h4 {
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.scribdown-markdown h5 {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.scribdown-markdown h6 {
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+}
 
 /* ParagraphRenderer：段间距 space-5 */
 .scribdown-markdown p {
@@ -168,17 +190,34 @@
   box-shadow: none;
 }
 
-/* Blockquote：左线 4px accent，内边距 16px 20px，背景 surface */
+/* Blockquote：沿用 SVG 手绘边框与左侧竖条，左切片保护竖条不被横向拉伸。 */
 .scribdown-markdown blockquote {
-  border-left: 4px solid var(--scribdown-color-accent);
+  --scribdown-blockquote-frame: url("./assets/blockquote.svg");
+
+  box-sizing: border-box;
+  color: var(--scribdown-color-text-secondary);
   margin: 0 0 var(--scribdown-space-5);
-  padding: var(--scribdown-space-4) 20px;
+  padding: var(--scribdown-space-4) 20px var(--scribdown-space-4) 40px;
   background: var(--scribdown-color-surface);
-  border-radius: 0 var(--scribdown-radius-md) var(--scribdown-radius-md) 0;
+  border: 1px solid transparent;
+  border-image-source: var(--scribdown-blockquote-frame);
+  border-image-slice: 16 20 16 28 fill;
+  border-image-width: 16px 20px 16px 28px;
+  border-image-repeat: stretch;
+}
+
+.scribdown-markdown blockquote p {
+  margin-bottom: var(--scribdown-space-2);
 }
 
 .scribdown-markdown blockquote p:last-child {
   margin-bottom: 0;
+}
+
+/* quoteMeta：Markdown 无独立语义，使用非首段的最后一段承接设计里的署名行。 */
+.scribdown-markdown blockquote p:last-child:not(:first-child) {
+  font-size: 15px;
+  line-height: 1.4;
 }
 
 /* LinkRenderer：accent 色，区分 default / hover / visited / focus-visible */
