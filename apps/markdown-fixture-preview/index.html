@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scribdown Markdown Fixture Preview</title>
+  </head>
+  <body class="scribdown-page">
+    <div id="markdown-fixture-preview-root">
+      <header class="fixture-preview__toolbar">
+        <div>
+          <p class="fixture-preview__eyebrow" id="fixture-preview-product"></p>
+          <h1 class="fixture-preview__title" id="fixture-preview-title"></h1>
+        </div>
+        <div class="fixture-preview__status">
+          <span id="fixture-preview-status"></span>
+          <time id="fixture-preview-updated-at"></time>
+        </div>
+      </header>
+
+      <main class="fixture-preview__layout">
+        <section class="fixture-preview__preview" aria-label="Markdown 渲染预览">
+          <article class="fixture-preview__paper scribdown-card scribdown-markdown" id="fixture-preview-output"></article>
+        </section>
+
+        <aside class="fixture-preview__source" aria-label="Markdown 原文">
+          <pre><code id="fixture-preview-source"></code></pre>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
