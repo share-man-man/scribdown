@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "dist/extension.js",
+  "main": "dist/extension.cjs",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -17,8 +17,8 @@
     ]
   },
   "scripts": {
-    "dev": "tsc -p tsconfig.json --watch",
-    "build": "tsc -p tsconfig.json",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
