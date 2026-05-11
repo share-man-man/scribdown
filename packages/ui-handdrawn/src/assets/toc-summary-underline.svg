@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="10" viewBox="0 0 72 10" preserveAspectRatio="none">
+  <style>
+    .stroke-main {
+      fill: none;
+      stroke: #2F6A5F;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .stroke-dry {
+      fill: none;
+      opacity: 0.5;
+      stroke: #2F6A5F;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.7;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .stroke-main,
+      .stroke-dry {
+        stroke: #5FBFAD;
+      }
+    }
+  </style>
+  <path class="stroke-main" d="M2.1 5.8 C7.8 3.7 14.0 6.5 20.0 4.8 C27.1 2.8 33.3 6.9 40.4 4.7 C47.3 2.5 54.1 6.3 60.8 4.6 C65.2 3.5 68.7 5.3 70.1 4.4" />
+  <path class="stroke-dry" d="M4.0 7.3 C12.5 5.9 20.4 7.0 28.7 5.4" />
+  <path class="stroke-dry" d="M34.0 6.9 C42.7 5.0 51.4 5.8 60.0 4.8" />
+  <path class="stroke-dry" d="M61.8 6.4 C65.0 5.4 68.0 5.2 70.4 4.7" />
+</svg>

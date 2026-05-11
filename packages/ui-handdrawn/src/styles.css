@@ -157,6 +157,185 @@
   margin-bottom: var(--scribdown-space-2);
 }
 
+/* TableOfContents：由 [TOC] 占位符生成，承接文档内标题导航。 */
+.scribdown-markdown .scribdown-toc {
+  --scribdown-toc-frame: url("./assets/toc.svg");
+
+  box-sizing: border-box;
+  margin: 0 0 var(--scribdown-space-6);
+  padding: 10px 18px;
+  background: var(--scribdown-color-surface);
+  border: 1px solid transparent;
+  border-image-source: var(--scribdown-toc-frame);
+  border-image-slice: 14 16 14 16 fill;
+  border-image-width: 14px 16px;
+  border-image-repeat: stretch;
+}
+
+.scribdown-markdown .scribdown-toc[open] {
+  padding-bottom: var(--scribdown-space-4);
+}
+
+.scribdown-markdown .scribdown-toc-summary {
+  --scribdown-toc-summary-underline: url("./assets/toc-summary-underline.svg");
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--scribdown-space-2);
+  min-height: 36px;
+  color: var(--scribdown-color-accent);
+  cursor: pointer;
+  font-family: var(--scribdown-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  list-style: none;
+  user-select: none;
+}
+
+.scribdown-markdown .scribdown-toc-summary:focus {
+  outline: none;
+}
+
+.scribdown-markdown .scribdown-toc-summary::marker,
+.scribdown-markdown .scribdown-toc-summary::-webkit-details-marker {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-toc-summary:focus-visible {
+  outline: none;
+}
+
+.scribdown-markdown .scribdown-toc-summary:focus-visible::after {
+  content: "";
+  position: absolute;
+  right: auto;
+  bottom: 1px;
+  left: 18px;
+  width: 48px;
+  height: 8px;
+  background-image: var(--scribdown-toc-summary-underline);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  opacity: 0.72;
+}
+
+.scribdown-markdown .scribdown-toc-summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 9px solid var(--scribdown-color-accent);
+  transform: rotate(-5deg);
+  transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-markdown .scribdown-toc[open] .scribdown-toc-summary::before {
+  transform: rotate(85deg);
+}
+
+.scribdown-markdown .scribdown-toc-nav {
+  margin-top: var(--scribdown-space-2);
+}
+
+.scribdown-markdown .scribdown-toc-list {
+  counter-reset: scribdown-toc-counter;
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+.scribdown-markdown .scribdown-toc-item {
+  position: relative;
+  counter-increment: scribdown-toc-counter;
+  min-height: 30px;
+  margin-bottom: 6px;
+  color: var(--scribdown-color-text-secondary);
+}
+
+.scribdown-markdown .scribdown-toc-item::before {
+  content: attr(data-toc-index) ".";
+  position: absolute;
+  top: 1px;
+  left: 0;
+  min-width: 28px;
+  color: var(--scribdown-color-warning);
+  font-family: var(--scribdown-font-heading);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: right;
+  text-shadow: 0.7px 0 color-mix(in srgb, var(--scribdown-color-warning) 22%, transparent);
+  transform: rotate(-0.8deg);
+}
+
+.scribdown-markdown .scribdown-toc-item:nth-child(2n)::before {
+  transform: rotate(0.8deg) translateY(1px);
+}
+
+.scribdown-markdown .scribdown-toc-item:nth-child(3n)::before {
+  transform: rotate(-1.2deg) translateY(-1px);
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-1 {
+  padding-left: 44px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-1::before {
+  min-width: 28px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-2 {
+  padding-left: 64px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-2::before {
+  min-width: 46px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-3 {
+  padding-left: 88px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-3::before {
+  min-width: 70px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-4 {
+  padding-left: 112px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-4::before {
+  min-width: 94px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-5 {
+  padding-left: 136px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-5::before {
+  min-width: 118px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-6 {
+  padding-left: 160px;
+}
+
+.scribdown-markdown .scribdown-toc-item--depth-6::before {
+  min-width: 142px;
+}
+
+.scribdown-markdown .scribdown-toc a {
+  color: var(--scribdown-color-accent);
+  text-decoration: none;
+}
+
+.scribdown-markdown .scribdown-toc a:hover {
+  text-decoration: underline;
+}
+
 /* InlineCode：SVG 背景提供不规则边框与笔触纹理，维持行内元素的自然排版。 */
 .scribdown-markdown code {
   --scribdown-inline-code-frame: url("./assets/inline-code.svg");
