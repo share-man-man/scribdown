@@ -12,12 +12,6 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@scribdown/docs", "dev"],
       "port": 5174
-    },
-    {
-      "name": "browser-extension",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@scribdown/browser-extension", "dev"],
-      "port": 5173
     }
   ]
 }
