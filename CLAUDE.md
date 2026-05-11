@@ -1,4 +1,4 @@
-# Scribdown — CLAUDE.md
+# Scribdown
 
 ## 项目定位
 
@@ -9,46 +9,36 @@ Scribdown 提供统一的 Markdown 渲染体验，覆盖浏览器插件与 VS Co
 ```text
 .
 ├── apps/
-│   ├── browser-extension/   # React + Vite 浏览器插件弹窗
-│   └── vscode-extension/    # VS Code 预览插件
+│   ├── browser-extension/        # 浏览器插件（React + Vite）
+│   ├── docs/                     # VitePress 文档站点
+│   ├── markdown-fixture-preview/ # 渲染预览沙盒
+│   └── vscode-extension/         # VS Code 预览插件
 ├── packages/
-│   ├── markdown-renderer/   # Markdown → HTML 渲染核心
-│   ├── ui-handdrawn/        # 手绘风格视觉组件
-│   └── shared/              # 常量、枚举、跨端命名
-├── tools/                   # 开发脚本与自动化工具
-├── tests/e2e/               # Playwright E2E 测试
-├── design/                  # 设计源文件（.pen）
-├── wiki/                    # 项目文档
+│   ├── markdown-renderer/        # Markdown → HTML 渲染核心
+│   ├── ui-handdrawn/             # 手绘风格视觉组件
+│   └── shared/                   # 常量、枚举、跨端命名
+├── tests/e2e/                    # Playwright E2E
+├── design/source/                # 设计源文件（.pen，仅通过 Pencil MCP 读写）
 ├── turbo.json
 └── pnpm-workspace.yaml
 ```
 
 ## 环境基线
 
-- Node.js：`24.15.0`（通过 `.tool-versions` 管理）
+- Node.js：`24.15.0`（`.tool-versions`）
 - pnpm：`10.33.0`
-- VS Code 引擎：`^1.90.0`
 
 ## 常用命令
 
 ```bash
-pnpm install                  # 安装依赖
-pnpm run dev                  # 一键启动（packages watch + apps dev）
-pnpm run dev:packages         # 仅启动 packages/tools watch
-pnpm run dev:apps             # 仅启动 apps 开发进程
-pnpm run build                # 全工作区构建
-pnpm run lint                 # ESLint 静态检查
-pnpm run format               # Prettier 格式检查
-pnpm run typecheck            # TypeScript 类型检查
-pnpm run test                 # Vitest 单元测试
-pnpm run e2e                  # Playwright E2E 测试
-pnpm run clean                # 清理 dist / build / coverage / node_modules
-pnpm run changeset            # 记录版本变更
-pnpm run version-packages     # 计算并写入版本号
-pnpm run release              # 发布包
+pnpm run dev            # 一键启动（packages watch + apps dev）
+pnpm run dev:packages   # 仅 packages/tools watch
+pnpm run dev:apps       # 仅 apps dev
+pnpm run build          # 全工作区构建
+pnpm run e2e            # Playwright E2E（首次需 pnpm exec playwright install）
 ```
 
-> **首次运行 `dev` 前**，需先执行 `pnpm run build` 让各 `packages/*` 生成 `dist`。
+> **首次 `dev` 前**需先 `pnpm run build`，让各 `packages/*` 生成 `dist`。其余脚本（`lint` / `format` / `typecheck` / `test` / `clean` / `changeset` / `version-packages` / `release`）见根 `package.json`。
 
 ## 架构约束
 
@@ -57,32 +47,17 @@ pnpm run release              # 发布包
 - **平台差异仅在 `apps/*` 落地**，`packages/markdown-renderer` 保持跨端一致。
 - **渲染安全默认可开关**：用户输入内容渲染时统一开启 `sanitizeHtml`；Webview / 浏览器宿主中不直接拼接不可信 HTML。
 
-## 关键模块速查
+## 应用模块速查
 
-| 模块                           | 关键导出                          | 说明                                |
-| ------------------------------ | --------------------------------- | ----------------------------------- |
-| `@scribdown/markdown-renderer` | `renderMarkdown(text, options?)`  | Markdown → 安全 HTML（async）       |
-|                                | `renderCodeToHtml(code, lang)`    | Shiki 代码高亮                      |
-|                                | `sanitizeHtmlWithDomPurify(html)` | 字符串级安全清洗                    |
-| `@scribdown/ui-handdrawn`      | `HanddrawnCard`                   | 统一手绘卡片容器                    |
-| `@scribdown/shared`            | constants / enums                 | 项目名、平台类型、主题类型、命令 ID |
+| 应用 | 作用 | dev 地址 | preview 地址 | 备注 |
+| --- | --- | --- | --- | --- |
+| `@scribdown/browser-extension` | 浏览器插件宿主：popup + content script 调用 `markdown-renderer` 与 `ui-handdrawn` 完成页面渲染。 | `http://127.0.0.1:5173` | `http://127.0.0.1:4173` | dev 服务器仅服务 popup 调试，扩展加载走 `dist/`。 |
+| `@scribdown/vscode-extension` | VS Code 预览插件：注册 `Scribdown: Open Preview` 命令并在 Webview 中复用同一套渲染。 | — | — | `tsup --watch` 仅产出 `dist/`，调试通过 `F5` 启动 Extension Host。 |
+| `@scribdown/docs` | VitePress 文档站点：指南、UI 设计规范、开发文档对外发布入口。 | `http://127.0.0.1:5174` | `http://127.0.0.1:4174` | `apps/docs/ui-design/markdown-fixture.md` 同时作为渲染样例的"单一信息源"。 |
+| `@scribdown/markdown-fixture-preview` | 渲染预览沙盒：直接加载 `apps/docs/ui-design/markdown-fixture.md`，通过真实渲染链路输出到浏览器。 | `http://127.0.0.1:5175` | `http://127.0.0.1:4175` | 用于设计走查与样式回归，避免每次都打包浏览器 / VS Code 插件；非发布产物，不上线。 |
 
-## 代码规范
+> 端口已通过各自 `package.json` 的 dev/preview 脚本固定，新增 web 应用时请沿用 `dev: 51xx` / `preview: 41xx` 段位；`browser-extension` 的 dev 端口使用 `--strictPort`，被占用时会直接报错而非自动跳号。
 
-- 所有 `let` / `const` 变量必须写明注释；函数使用 JSDoc 格式说明参数含义。
-- 枚举和常量统一引用 `@scribdown/shared`，不重复定义或硬编码。
-- 关键步骤写明注释，解释"为什么"而非"做了什么"。
+## UI 验证约定
 
-## 测试规范
-
-- 单元测试文件匹配 `**/*.test.ts` / `**/*.test.tsx`，使用 Vitest。
-- E2E 测试放在 `tests/e2e/`，使用 Playwright（首次需 `pnpm exec playwright install`）。
-- 发布前必须通过 `lint`、`typecheck`、`test`。
-
-## VS Code 插件本地调试
-
-在 VS Code 中打开仓库，按 `F5` 启动 Extension Development Host，在新窗口执行命令 `Scribdown: Open Preview`。
-
-## 设计文件
-
-`.pen` 文件位于 `design/source/`，只能通过 Pencil MCP 工具读写，不可直接用文本工具打开。
+改动可能影响渲染效果时，必须打开 `@scribdown/markdown-fixture-preview`（`http://127.0.0.1:5175`）核对再收工；不影响渲染的改动可跳过并在结论中注明。
