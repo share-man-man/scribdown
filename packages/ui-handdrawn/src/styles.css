@@ -157,14 +157,20 @@
   margin-bottom: var(--scribdown-space-2);
 }
 
-/* InlineCode：padding 2px 6px，font-size 0.92em / 500，字体 code */
+/* InlineCode：SVG 背景提供不规则边框与笔触纹理，维持行内元素的自然排版。 */
 .scribdown-markdown code {
+  --scribdown-inline-code-frame: url("./assets/inline-code.svg");
+
   font-family: var(--scribdown-font-code);
   font-size: 0.92em;
   font-weight: 500;
-  padding: 2px 6px;
-  background: color-mix(in srgb, var(--scribdown-color-border) 40%, transparent);
-  border-radius: var(--scribdown-radius-sm);
+  padding: 2px 7px 3px;
+  background-color: transparent;
+  background-image: var(--scribdown-inline-code-frame);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* CodeBlock：14px / 1.7 / 500，radius-md，shadow-md */
@@ -184,6 +190,7 @@
 /* pre 内的 code 去掉行内样式 */
 .scribdown-markdown pre code {
   font-size: inherit;
+  background-image: none;
   background: none;
   padding: 0;
   border-radius: 0;
