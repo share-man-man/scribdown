@@ -1,6 +1,7 @@
 import DOMPurify from "dompurify";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
+import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { createHighlighter } from "shiki";
@@ -21,8 +22,8 @@ export interface RenderMarkdownOptions {
  * @returns 渲染后的 HTML 文本。
  */
 export async function renderMarkdown(markdownText: string, options: RenderMarkdownOptions = {}): Promise<string> {
-  // 渲染流水线：先解析 Markdown，再转换为 HTML AST。
-  const processor = unified().use(remarkParse).use(remarkRehype);
+  // 渲染流水线：先解析 Markdown 与 GFM 行内标记，再转换为 HTML AST。
+  const processor = unified().use(remarkParse).use(remarkGfm).use(remarkRehype);
 
   if (options.sanitizeHtml) {
     // 关键步骤：在输出前执行 rehype 结构清洗。
