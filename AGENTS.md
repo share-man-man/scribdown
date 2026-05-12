@@ -47,17 +47,6 @@ pnpm run e2e            # Playwright E2E（首次需 pnpm exec playwright instal
 - **平台差异仅在 `apps/*` 落地**，`packages/markdown-renderer` 保持跨端一致。
 - **渲染安全默认可开关**：用户输入内容渲染时统一开启 `sanitizeHtml`；Webview / 浏览器宿主中不直接拼接不可信 HTML。
 
-## 应用模块速查
-
-| 应用 | 作用 | dev 地址 | preview 地址 | 备注 |
-| --- | --- | --- | --- | --- |
-| `@scribdown/browser-extension` | 浏览器插件宿主：popup + content script 调用 `markdown-renderer` 与 `ui-handdrawn` 完成页面渲染。 | `http://127.0.0.1:5173` | `http://127.0.0.1:4173` | dev 服务器仅服务 popup 调试，扩展加载走 `dist/`。 |
-| `@scribdown/vscode-extension` | VS Code 预览插件：注册 `Scribdown: Open Preview` 命令并在 Webview 中复用同一套渲染。 | — | — | `tsup --watch` 仅产出 `dist/`，调试通过 `F5` 启动 Extension Host。 |
-| `@scribdown/docs` | VitePress 文档站点：指南、UI 设计规范、开发文档对外发布入口。 | `http://127.0.0.1:5174` | `http://127.0.0.1:4174` | `apps/docs/ui-design/markdown-fixture.md` 同时作为渲染样例的"单一信息源"。 |
-| `@scribdown/markdown-fixture-preview` | 渲染预览沙盒：直接加载 `apps/docs/ui-design/markdown-fixture.md`，通过真实渲染链路输出到浏览器。 | `http://127.0.0.1:5175` | `http://127.0.0.1:4175` | 用于设计走查与样式回归，避免每次都打包浏览器 / VS Code 插件；非发布产物，不上线。 |
-
-> 端口已通过各自 `package.json` 的 dev/preview 脚本固定，新增 web 应用时请沿用 `dev: 51xx` / `preview: 41xx` 段位；`browser-extension` 的 dev 端口使用 `--strictPort`，被占用时会直接报错而非自动跳号。
-
 ## UI 验证约定
 
-改动可能影响渲染效果时，必须打开 `@scribdown/markdown-fixture-preview`（`http://127.0.0.1:5175`）核对再收工；不影响渲染的改动可跳过并在结论中注明。
+改动可能影响渲染效果时，进入 http://127.0.0.1:5175，如果没有启动，则在根目录执行 `pnpm run dev` 启动验证。
