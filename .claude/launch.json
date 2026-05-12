@@ -3,14 +3,14 @@
   "configurations": [
     {
       "name": "markdown-fixture-preview",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@scribdown/markdown-fixture-preview", "dev"],
+      "runtimeExecutable": "tail",
+      "runtimeArgs": ["-f", "/dev/null"],
       "port": 5175
     },
     {
       "name": "docs",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@scribdown/docs", "dev"],
+      "runtimeExecutable": "tail",
+      "runtimeArgs": ["-f", "/dev/null"],
       "port": 5174
     }
   ]
