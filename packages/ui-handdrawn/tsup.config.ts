@@ -7,8 +7,8 @@ import { defineConfig } from "tsup";
  * 通过 onSuccess 钩子把 src 下的样式与 SVG 拷贝到 dist。
  */
 export default defineConfig({
-  // 没有可编译入口，使用空数组让 tsup 仅触发 onSuccess。
-  entry: [],
+  // 使用样式文件作为最小入口，确保当前 tsup 版本会执行构建生命周期。
+  entry: ["src/styles.css"],
   clean: false,
   async onSuccess() {
     // 先清空 dist，避免遗留旧资源。
