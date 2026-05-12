@@ -90,13 +90,17 @@
   --scribdown-heading-mark: url("./assets/heading-mark.svg");
   --scribdown-markdown-edge-horizontal: url("./assets/markdown-edge-horizontal.svg");
   --scribdown-markdown-edge-vertical: url("./assets/markdown-edge-vertical.svg");
+  --scribdown-image-fallback-edge-horizontal: url("./assets/image-fallback-edge-horizontal.svg");
+  --scribdown-image-fallback-edge-vertical: url("./assets/image-fallback-edge-vertical.svg");
 
   position: relative;
   background-color: var(--scribdown-color-surface);
   background-image:
     radial-gradient(circle at 24% 14%, var(--scribdown-paper-grain) 0 1px, transparent 1.7px),
     radial-gradient(circle at 72% 58%, var(--scribdown-paper-fiber) 0 1.2px, transparent 1.9px);
-  background-size: 28px 25px, 39px 34px;
+  background-size:
+    28px 25px,
+    39px 34px;
   padding: var(--scribdown-space-6);
   font-size: 18px;
   line-height: 1.75;
@@ -115,14 +119,16 @@
     var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
     var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
   background-position:
-    left top, left bottom,
-    left top, right top;
-  background-repeat:
-    repeat-x, repeat-x,
-    repeat-y, repeat-y;
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px, 96px 8px,
-    8px 72px, 8px 72px;
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
 }
 
 .scribdown-markdown > :first-child {
@@ -167,16 +173,22 @@
 .scribdown-markdown h6 .scribdown-heading-mark {
   background-image:
     linear-gradient(
-      color-mix(in srgb, var(--scribdown-color-surface) var(--scribdown-heading-mark-fade), transparent),
-      color-mix(in srgb, var(--scribdown-color-surface) var(--scribdown-heading-mark-fade), transparent)
+      color-mix(
+        in srgb,
+        var(--scribdown-color-surface) var(--scribdown-heading-mark-fade),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--scribdown-color-surface) var(--scribdown-heading-mark-fade),
+        transparent
+      )
     ),
     var(--scribdown-heading-mark);
   background-position:
     0 92%,
     0 92%;
-  background-repeat:
-    no-repeat,
-    no-repeat;
+  background-repeat: no-repeat, no-repeat;
   background-size:
     100% var(--scribdown-heading-mark-height),
     100% var(--scribdown-heading-mark-height);
@@ -297,7 +309,11 @@
   height: 9px;
   border-radius: 54% 46% 58% 42%;
   background:
-    radial-gradient(circle at 36% 34%, color-mix(in srgb, var(--scribdown-color-surface) 40%, transparent) 0 1.2px, transparent 1.7px),
+    radial-gradient(
+      circle at 36% 34%,
+      color-mix(in srgb, var(--scribdown-color-surface) 40%, transparent) 0 1.2px,
+      transparent 1.7px
+    ),
     var(--scribdown-color-accent);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-color-warning) 34%, transparent);
   transform: rotate(-8deg);
@@ -368,14 +384,16 @@
     var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
     var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
-    left top, left bottom,
-    left top, right top;
-  background-repeat:
-    repeat-x, repeat-x,
-    repeat-y, repeat-y;
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px, 96px 8px,
-    8px 72px, 8px 72px;
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
 }
 
 .scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) {
@@ -642,7 +660,11 @@
   font-weight: 500;
   padding: 1px 6px 2px;
   border-radius: 7px 9px 8px 10px;
-  background: color-mix(in srgb, var(--scribdown-color-surface) 82%, var(--scribdown-color-mark) 18%);
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 82%,
+    var(--scribdown-color-mark) 18%
+  );
   box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-color-border) 46%, transparent);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -657,7 +679,9 @@
   background:
     radial-gradient(circle at 16px 18px, var(--scribdown-paper-grain) 0 1px, transparent 1.5px),
     color-mix(in srgb, var(--scribdown-color-surface) 88%, var(--scribdown-color-border) 12%);
-  background-size: 31px 27px, auto;
+  background-size:
+    31px 27px,
+    auto;
   border: 0;
   border-radius: var(--scribdown-radius-md);
   box-shadow: var(--scribdown-shadow-md);
@@ -676,14 +700,16 @@
     var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
     var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
-    left top, left bottom,
-    left top, right top;
-  background-repeat:
-    repeat-x, repeat-x,
-    repeat-y, repeat-y;
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px, 96px 8px,
-    8px 72px, 8px 72px;
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
   opacity: 0.82;
 }
 
@@ -788,13 +814,12 @@
 
 /* mark 高亮 */
 .scribdown-markdown mark {
-  background:
-    linear-gradient(
-      92deg,
-      transparent 0 3%,
-      color-mix(in srgb, var(--scribdown-color-mark) 68%, transparent) 8% 90%,
-      transparent 97% 100%
-    );
+  background: linear-gradient(
+    92deg,
+    transparent 0 3%,
+    color-mix(in srgb, var(--scribdown-color-mark) 68%, transparent) 8% 90%,
+    transparent 97% 100%
+  );
   color: var(--scribdown-color-text-primary);
   border-radius: var(--scribdown-radius-sm);
   padding: 0 3px;
@@ -802,14 +827,420 @@
   box-decoration-break: clone;
 }
 
-/* 图片：最大宽度 720px */
-.scribdown-markdown img {
+/* ImageRenderer：块级图片转换为 figure，边框由 SVG 四边重复组成，和 blockquote::after 同源。 */
+.scribdown-markdown .scribdown-image-figure {
+  width: min(100%, 720px);
+  margin: 0 auto var(--scribdown-space-5);
+}
+
+.scribdown-markdown .scribdown-image-frame {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 92%, var(--scribdown-color-border) 8%);
+  background-size:
+    32px 29px,
+    auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.scribdown-markdown .scribdown-image-frame::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 7px -7px -7px 7px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--scribdown-color-border) 38%, transparent),
+      transparent 84%
+    ),
+    color-mix(in srgb, var(--scribdown-color-text-primary) 8%, transparent);
+  border-radius: 16px 18px 15px 17px;
+  transform: rotate(0.35deg);
+}
+
+/* 关键步骤：用横向和纵向 SVG 边缘平铺，形成九宫格式可伸缩边框。 */
+.scribdown-markdown .scribdown-image-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
+    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+  background-position:
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
+}
+
+.scribdown-markdown .scribdown-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: color-mix(in srgb, var(--scribdown-color-surface) 86%, transparent);
+  border: 0;
+  border-radius: 6px 7px 5px 6px;
+  box-shadow: none;
+  cursor: zoom-in;
+}
+
+.scribdown-markdown .scribdown-image:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--scribdown-color-accent) 72%, transparent);
+  outline-offset: 4px;
+}
+
+.scribdown-markdown a .scribdown-image {
+  cursor: pointer;
+}
+
+.scribdown-markdown .scribdown-image-caption {
+  margin-top: var(--scribdown-space-2);
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.scribdown-markdown .scribdown-image-figure + p:has(> em:only-child) {
+  width: min(100%, 720px);
+  margin: calc(0px - var(--scribdown-space-3)) auto var(--scribdown-space-5);
+  color: var(--scribdown-color-text-primary);
+  font-size: 18px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.scribdown-markdown .scribdown-image-fallback {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-image-frame--failed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 176px;
+  padding: var(--scribdown-space-5);
+  background:
+    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
+}
+
+.scribdown-markdown .scribdown-image-frame--failed::after {
+  background-image:
+    var(--scribdown-image-fallback-edge-horizontal),
+    var(--scribdown-image-fallback-edge-horizontal), var(--scribdown-image-fallback-edge-vertical),
+    var(--scribdown-image-fallback-edge-vertical);
+  background-size:
+    64px 8px,
+    64px 8px,
+    8px 64px,
+    8px 64px;
+}
+
+.scribdown-markdown .scribdown-image-frame--failed .scribdown-image {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-image-frame--failed .scribdown-image-fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  max-width: 100%;
+  color: var(--scribdown-color-text-primary);
+  text-align: center;
+}
+
+.scribdown-markdown .scribdown-image-fallback-icon {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 58px;
+  height: 46px;
+  margin-bottom: var(--scribdown-space-3);
+  border: 2px solid var(--scribdown-color-text-primary);
+  background:
+    linear-gradient(
+      42deg,
+      transparent 0 47%,
+      var(--scribdown-color-accent) 48% 52%,
+      transparent 53% 100%
+    ),
+    linear-gradient(
+      138deg,
+      transparent 0 47%,
+      var(--scribdown-color-accent) 48% 52%,
+      transparent 53% 100%
+    ),
+    color-mix(in srgb, var(--scribdown-color-surface) 78%, var(--scribdown-color-accent) 8%);
+  transform: rotate(-1.5deg);
+}
+
+.scribdown-markdown .scribdown-image-fallback-icon::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--scribdown-color-accent);
+  border-radius: 50%;
+}
+
+.scribdown-markdown .scribdown-image-fallback-text {
+  font-family: var(--scribdown-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.scribdown-markdown .scribdown-image-fallback-source {
+  max-width: 100%;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--scribdown-color-text-secondary);
+  font-family: var(--scribdown-font-code);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.scribdown-markdown :not(.scribdown-image-frame) > img {
   max-width: 720px;
   width: 100%;
+  height: auto;
   background: var(--scribdown-color-surface);
-  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 72%, transparent);
   border-radius: var(--scribdown-radius-md);
+}
+
+/* ImageViewer：运行时注入的全图查看层，支持按钮和快捷键缩放。 */
+.scribdown-image-viewer {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(246, 241, 232, 0.1) 0 1px, transparent 1.7px),
+    color-mix(in srgb, var(--scribdown-color-text-primary) 84%, transparent);
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-image-viewer:not([open]) {
+  display: none;
+}
+
+.scribdown-image-viewer[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.scribdown-image-viewer::backdrop {
+  background: color-mix(in srgb, var(--scribdown-color-text-primary) 78%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.scribdown-image-viewer__chrome {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--scribdown-space-3);
+  align-items: center;
+  padding: var(--scribdown-space-3) var(--scribdown-space-4);
+  background:
+    radial-gradient(circle at 18px 16px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 94%, transparent);
+  background-size:
+    32px 29px,
+    auto;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 14%, transparent);
+}
+
+.scribdown-image-viewer__caption-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--scribdown-space-1);
+}
+
+.scribdown-image-viewer__caption {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scribdown-image-viewer__hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--scribdown-color-text-primary) 60%, transparent);
+  font-family: var(--scribdown-font-code);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.scribdown-image-viewer__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--scribdown-space-2);
+}
+
+.scribdown-image-viewer__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 72%, transparent);
+  border-radius: 8px 10px 9px 11px;
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 88%,
+    var(--scribdown-color-mark) 12%
+  );
   box-shadow: var(--scribdown-shadow-sm);
+  color: var(--scribdown-color-text-primary);
+  cursor: pointer;
+  font-family: var(--scribdown-font-code);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scribdown-image-viewer__button:hover {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 78%,
+    var(--scribdown-color-mark) 22%
+  );
+}
+
+.scribdown-image-viewer__button:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 3px;
+}
+
+.scribdown-image-viewer__button:disabled {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.46;
+}
+
+.scribdown-image-viewer__button--close {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 82%,
+    var(--scribdown-color-danger) 18%
+  );
+}
+
+.scribdown-image-viewer__zoom-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 36px;
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-code);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scribdown-image-viewer__viewport {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  /* safe center：图片尺寸 ≤ 视口时居中；溢出时自动退化为 start，避免裁掉头部不可滚动。 */
+  align-items: safe center;
+  justify-content: safe center;
+  padding: var(--scribdown-space-5);
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.scribdown-image-viewer--zoomed .scribdown-image-viewer__viewport {
+  cursor: grab;
+}
+
+.scribdown-image-viewer--zoomed.scribdown-image-viewer--dragging .scribdown-image-viewer__viewport {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.scribdown-image-viewer__image {
+  flex: 0 0 auto;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  background: var(--scribdown-color-surface);
+  border-radius: 6px 7px 5px 6px;
+  box-shadow: 6px 8px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 26%, transparent);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scribdown-image-viewer--dragging .scribdown-image-viewer__image {
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .scribdown-image-viewer__chrome {
+    grid-template-columns: 1fr;
+    gap: var(--scribdown-space-2);
+    padding: var(--scribdown-space-3);
+  }
+
+  .scribdown-image-viewer__controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .scribdown-image-viewer__button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .scribdown-image-viewer__hint {
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .scribdown-image-viewer__viewport {
+    padding: var(--scribdown-space-3);
+  }
 }
 
 /* TableRenderer：cell padding 12px 16px，横向滚动 */
@@ -824,7 +1255,9 @@
   background:
     radial-gradient(circle at 22px 18px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
     var(--scribdown-color-surface);
-  background-size: 36px 31px, auto;
+  background-size:
+    36px 31px,
+    auto;
   box-shadow: var(--scribdown-shadow-sm);
 }
 
@@ -833,15 +1266,11 @@
   border: 0;
   padding: var(--scribdown-space-3) var(--scribdown-space-4);
   text-align: left;
-  background-image:
-    var(--scribdown-frame-edge-horizontal),
-    var(--scribdown-frame-edge-vertical);
+  background-image: var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-vertical);
   background-position:
     left bottom,
     right top;
-  background-repeat:
-    repeat-x,
-    repeat-y;
+  background-repeat: repeat-x, repeat-y;
   background-size:
     96px 8px,
     8px 72px;

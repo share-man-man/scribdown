@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="8" viewBox="0 0 64 8" preserveAspectRatio="none">
+  <style>
+    .dash {
+      fill: none;
+      stroke: #4A3F38;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .trace {
+      fill: none;
+      opacity: 0.48;
+      stroke: #6A5B53;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .dash { stroke: #D6C9BE; }
+      .trace { stroke: #A49388; opacity: 0.5; }
+    }
+  </style>
+  <path class="dash" d="M2 4.2 C6 3.8 10 4.5 14 4.1" />
+  <path class="dash" d="M22 4.0 C26 3.6 30 4.4 34 4.0" />
+  <path class="dash" d="M42 4.2 C46 3.7 50 4.5 54 4.1" />
+  <path class="dash" d="M58 4.0 C60 3.8 62 4.2 64 4.0" />
+  <path class="trace" d="M2 5.5 C6 5.0 10 5.8 14 5.4" />
+  <path class="trace" d="M22 5.3 C26 4.9 30 5.6 34 5.2" />
+  <path class="trace" d="M42 5.5 C46 5.1 50 5.8 54 5.4" />
+</svg>
