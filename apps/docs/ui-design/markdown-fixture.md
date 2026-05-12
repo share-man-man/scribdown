@@ -124,7 +124,7 @@ Scribdown
 
 正常图片：
 
-![Paper texture placeholder](https://example.com/preview.png "图片标题")
+![Paper texture placeholder](https://picsum.photos/id/1035/640/360 "图片标题")
 
 引用式图片：
 
@@ -132,13 +132,13 @@ Scribdown
 
 图片说明文：
 
-![Handdrawn preview with caption](https://example.com/captioned-preview.png)
+![Handdrawn preview with caption](https://picsum.photos/id/1035/640/360)
 
 _Figure 1. 手绘风格预览页，正文区使用暖纸色背景与克制的装饰纹理。_
 
 加载失败的图片（`alt` 文本占位）：
 
-![这张图片加载失败了](https://example.com/broken-image-404.png)
+![这张图片加载失败了](/broken-image-404.png)
 
 ## 代码示例
 
@@ -370,4 +370,4 @@ supercalifragilisticexpialidocious-supercalifragilisticexpialidocious-supercalif
 
 [docs]: https://example.com/docs
 [spec]: https://example.com/spec
-[preview]: https://example.com/preview.png
+[preview]: https://picsum.photos/id/1035/640/360

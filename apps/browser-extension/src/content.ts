@@ -1,4 +1,4 @@
-import { renderMarkdown } from "@scribdown/markdown-renderer";
+import { hydrateMarkdownImages, renderMarkdown } from "@scribdown/markdown-renderer";
 // 通过 ?inline 将 CSS 以字符串形式打包进 IIFE，避免运行时文件加载。
 import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
 
@@ -35,4 +35,6 @@ import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
       <article class="scribdown-markdown">${renderedHtml}</article>
     </main>
   `;
+  // 关键步骤：补齐图片加载状态，保证失败态可以展示 alt 文本占位。
+  hydrateMarkdownImages(document.body);
 })();

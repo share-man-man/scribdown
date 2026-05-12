@@ -1,4 +1,4 @@
-import { renderMarkdown } from "@scribdown/markdown-renderer";
+import { hydrateMarkdownImages, renderMarkdown } from "@scribdown/markdown-renderer";
 import { MARKDOWN_FIXTURE_PREVIEW_TITLE, PROJECT_NAME } from "@scribdown/shared";
 import "@scribdown/ui-handdrawn/styles.css";
 import fixtureMarkdown from "../../docs/ui-design/markdown-fixture.md?raw";
@@ -69,6 +69,8 @@ async function renderFixture(markdownText: string, mounts: PreviewMounts): Promi
   mounts.titleText.textContent = MARKDOWN_FIXTURE_PREVIEW_TITLE;
   mounts.sourceOutput.textContent = markdownText;
   mounts.previewOutput.innerHTML = renderedHtml;
+  // 关键步骤：补齐图片加载状态，便于失败态占位样式接管浏览器默认 broken image。
+  hydrateMarkdownImages(mounts.previewOutput);
   mounts.statusText.textContent = "Ready";
   mounts.updatedAt.dateTime = renderedAt.toISOString();
   mounts.updatedAt.textContent = renderedAt.toLocaleTimeString();
