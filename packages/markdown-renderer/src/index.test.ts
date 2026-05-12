@@ -97,4 +97,31 @@ describe("renderMarkdown", () => {
 
     expect(renderedHtml).toContain("<dl><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>");
   });
+
+  it("wraps standalone images in a styled figure when sanitizeHtml is enabled", async () => {
+    // 输入 Markdown 覆盖独占图片段落、title caption 与失败态占位内容。
+    const markdownText = '![湖边雪山](/mountain.jpg "图片标题")';
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+
+    expect(renderedHtml).toContain('<figure class="scribdown-image-figure">');
+    expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/mountain.jpg" alt="湖边雪山"');
+    expect(renderedHtml).toContain('title="图片标题" class="scribdown-image">');
+    expect(renderedHtml).toContain('<span class="scribdown-image-fallback">');
+    expect(renderedHtml).toContain('<span class="scribdown-image-fallback-text">湖边雪山</span>');
+    expect(renderedHtml).toContain('<span class="scribdown-image-fallback-source">/mountain.jpg</span>');
+    expect(renderedHtml).toContain('<figcaption class="scribdown-image-caption">图片标题</figcaption>');
+  });
+
+  it("wraps reference images in the same figure structure", async () => {
+    // 输入 Markdown 覆盖引用式图片定义。
+    const markdownText = ["![手绘风格预览][preview]", "", "[preview]: /preview.jpg"].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+
+    expect(renderedHtml).toContain('<figure class="scribdown-image-figure">');
+    expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/preview.jpg" alt="手绘风格预览"');
+    expect(renderedHtml).toContain('class="scribdown-image"');
+    expect(renderedHtml).toContain('<span class="scribdown-image-fallback-source">preview</span>');
+  });
 });
