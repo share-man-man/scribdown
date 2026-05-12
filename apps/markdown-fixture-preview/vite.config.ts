@@ -10,8 +10,7 @@ const sharedAlias = [
     replacement: resolve(__dirname, "../../packages/ui-handdrawn/src/styles.css")
   },
   { find: "@scribdown/markdown-renderer", replacement: resolve(__dirname, "../../packages/markdown-renderer/src/index.ts") },
-  { find: "@scribdown/shared", replacement: resolve(__dirname, "../../packages/shared/src/index.ts") },
-  { find: "@scribdown/ui-handdrawn", replacement: resolve(__dirname, "../../packages/ui-handdrawn/src/index.tsx") }
+  { find: "@scribdown/shared", replacement: resolve(__dirname, "../../packages/shared/src/index.ts") }
 ];
 
 /**

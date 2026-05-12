@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="8" height="72" viewBox="0 0 8 72" preserveAspectRatio="none">
+  <style>
+    .brush {
+      fill: none;
+      stroke: #CDBEAE;
+      opacity: 0.82;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2.35;
+    }
+
+    .stroke {
+      fill: none;
+      stroke: #B9A58E;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.35;
+    }
+
+    .hairline {
+      fill: none;
+      opacity: 0.58;
+      stroke: #8B7C6F;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.58;
+    }
+
+    .dry {
+      fill: none;
+      opacity: 0.62;
+      stroke: #8B7C6F;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.82;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .brush {
+        stroke: #4D3D34;
+        opacity: 0.88;
+      }
+
+      .stroke {
+        stroke: #6E5C50;
+      }
+
+      .hairline {
+        stroke: #A49388;
+        opacity: 0.28;
+      }
+
+      .dry {
+        stroke: #9B8C82;
+        opacity: 0.32;
+      }
+    }
+  </style>
+  <path class="brush" d="M4.0 0 C1.8 6.8 6.2 13.9 3.5 20.8 C0.8 28.0 6.4 35.8 3.7 43.4 C1.1 51.0 6.3 59.7 4.1 72" />
+  <path class="stroke" d="M4.3 0 C2.5 7.2 5.5 14.4 3.9 21.8 C2.0 30.2 5.8 38.3 4.0 46.2 C2.2 54.0 5.4 62.2 4.1 72" />
+  <path class="hairline" d="M3.0 0.2 C5.7 8.0 2.3 15.0 4.9 22.8 C7.1 30.0 2.5 38.4 4.8 45.8 C7.0 53.3 2.7 62.8 4.9 71.8" />
+  <path class="dry" d="M5.9 0 C4.6 8.4 6.0 18.4 4.6 27.0" />
+  <path class="dry" d="M2.1 12.0 C3.6 18.4 2.2 25.2 3.6 31.8" />
+  <path class="dry" d="M5.5 34.6 C4.2 42.4 5.4 50.0 4.2 58.2" />
+  <path class="dry" d="M5.8 60.8 C4.6 65.2 5.4 69.0 4.4 72" />
+</svg>

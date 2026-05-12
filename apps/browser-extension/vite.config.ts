@@ -4,10 +4,7 @@ import react from "@vitejs/plugin-react";
 
 /**
  * 各 packages 的路径别名，popup 与 content script 两次构建共用。
- * 使用数组形式保证匹配顺序：更具体的 CSS 路径必须排在包名前面，
- * 否则 `@scribdown/ui-handdrawn` 作为前缀会错误匹配
- * `@scribdown/ui-handdrawn/styles.css?inline`。
- * CSS 别名使用正则以同时覆盖带 ?inline 查询参数的情况。
+ * ui-handdrawn 只对外暴露样式与静态资源，使用正则以同时覆盖带 ?inline 查询参数。
  */
 const sharedAlias = [
   {
@@ -15,8 +12,7 @@ const sharedAlias = [
     replacement: resolve(__dirname, "../../packages/ui-handdrawn/src/styles.css")
   },
   { find: "@scribdown/markdown-renderer", replacement: resolve(__dirname, "../../packages/markdown-renderer/src/index.ts") },
-  { find: "@scribdown/shared",            replacement: resolve(__dirname, "../../packages/shared/src/index.ts") },
-  { find: "@scribdown/ui-handdrawn",      replacement: resolve(__dirname, "../../packages/ui-handdrawn/src/index.tsx") }
+  { find: "@scribdown/shared",            replacement: resolve(__dirname, "../../packages/shared/src/index.ts") }
 ];
 
 /**

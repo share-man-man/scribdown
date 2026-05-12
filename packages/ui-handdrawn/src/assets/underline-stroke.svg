@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="8" viewBox="0 0 96 8" preserveAspectRatio="none">
+  <style>
+    .main {
+      fill: none;
+      stroke: #2F6A5F;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.45;
+    }
+
+    .dry {
+      fill: none;
+      opacity: 0.48;
+      stroke: #8B6B2E;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.75;
+    }
+
+    .skip {
+      fill: none;
+      opacity: 0.32;
+      stroke: #2F6A5F;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.55;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .main,
+      .skip {
+        stroke: #5FBFAD;
+      }
+
+      .dry {
+        stroke: #C49A4A;
+      }
+    }
+  </style>
+  <path class="main" d="M0 4.4 C7.2 3.2 14.0 5.8 20.8 4.2 C29.0 2.2 36.6 6.0 45.0 4.1 C54.4 2.0 63.0 5.8 72.4 4.2 C81.2 2.7 88.6 5.4 96 4.4" />
+  <path class="dry" d="M4.8 6.2 C13.0 4.8 20.8 5.7 29.0 4.5" />
+  <path class="skip" d="M34.0 5.6 C42.8 4.0 51.0 4.9 59.4 3.8" />
+  <path class="dry" d="M64.0 5.8 C73.2 4.3 82.0 4.9 91.2 4.1" />
+</svg>

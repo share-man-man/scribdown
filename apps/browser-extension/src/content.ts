@@ -32,9 +32,7 @@ import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
   document.body.className = "scribdown-page";
   document.body.innerHTML = `
     <main class="scribdown-app">
-      <div class="scribdown-card">
-        <article class="scribdown-markdown">${renderedHtml}</article>
-      </div>
+      <article class="scribdown-markdown">${renderedHtml}</article>
     </main>
   `;
 })();
