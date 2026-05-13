@@ -1,0 +1,80 @@
+<svg
+  width="192"
+  height="12"
+  viewBox="0 0 192 12"
+  preserveAspectRatio="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <!-- 轻微纸面/笔触扰动 -->
+    <filter id="roughen">
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.9"
+        numOctaves="2"
+        seed="8"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        scale="1.6"
+      />
+    </filter>
+  </defs>
+
+  <!-- <rect width="100%" height="100%" fill="#FAF7F0" /> -->
+
+  <g
+    fill="none"
+    stroke="#1F2933"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#roughen)"
+  >
+
+    <!-- 横线：主笔触 -->
+    <path
+      d="M0 6.2
+         C10.6 4.0, 22.2 8.7, 34.6 5.8
+         C47.9 2.8, 63.2 9.4, 79.0 5.7
+         C95.8 1.9, 112.4 9.9, 130.1 5.9
+         C147.8 3.2, 166.4 8.6, 192 6.1"
+      stroke-width="2.76"
+      opacity="0.9"
+    />
+
+    <!-- 横线：副笔触，模拟笔锋毛边 -->
+    <path
+      d="M0 8.9
+         C13.2 7.2, 26.0 10.8, 38.7 8.4
+         C51.8 6.1, 67.6 10.9, 83.8 8.0
+         C100.0 5.8, 118.3 10.4, 137.1 8.6
+         C154.4 6.8, 172.5 10.6, 192 8.8"
+      stroke-width="2.6"
+      opacity="0.42"
+    />
+
+    <!-- 横线：局部厚墨，制造粗细不均匀 -->
+    <path
+      d="M28.0 5.6
+         C38.1 4.7, 49.2 6.9, 60.4 5.5"
+      stroke-width="6.1"
+      opacity="0.24"
+    />
+
+    <!-- 横线：第二段厚墨 -->
+    <path
+      d="M122.0 5.8
+         C132.1 4.9, 142.7 7.3, 153.4 5.9"
+      stroke-width="5.4"
+      opacity="0.2"
+    />
+
+    <!-- 横线：细刮痕，增加不规则层次 -->
+    <path
+      d="M72.4 9.7
+         C82.4 8.8, 91.6 10.8, 101.4 9.5"
+      stroke-width="1.3"
+      opacity="0.35"
+    />
+  </g>
+</svg>

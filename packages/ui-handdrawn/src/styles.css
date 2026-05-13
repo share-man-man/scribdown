@@ -76,7 +76,7 @@
 .scribdown-app {
   max-width: 840px;
   margin: 0 auto;
-  padding: var(--scribdown-space-8) var(--scribdown-space-7) 96px;
+  padding: var(--scribdown-space-6) var(--scribdown-space-5) var(--scribdown-space-7);
 }
 
 /* ─── Markdown 正文排版 ─────────────────────────────────────────────── */
@@ -92,6 +92,33 @@
   --scribdown-markdown-edge-vertical: url("./assets/markdown-edge-vertical.svg");
   --scribdown-image-fallback-edge-horizontal: url("./assets/image-fallback-edge-horizontal.svg");
   --scribdown-image-fallback-edge-vertical: url("./assets/image-fallback-edge-vertical.svg");
+  --scribdown-code-block-edge-horizontal: url("./assets/code-block-edge-horizontal.svg");
+  --scribdown-code-block-edge-vertical: url("./assets/code-block-edge-vertical.svg");
+  --scribdown-code-block-card-bg-1: url("./assets/card-bg-1.svg");
+  --scribdown-code-block-card-bg-2: url("./assets/card-bg-2.svg");
+  --scribdown-code-block-card-bg-3: url("./assets/card-bg-3.svg");
+  --scribdown-code-block-card-bg-4: url("./assets/card-bg-4.svg");
+  --scribdown-code-block-shadow-gray-token: var(--scribdown-color-text-secondary);
+  --scribdown-code-block-shadow-fill-1: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 78%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-code-block-shadow-fill-2: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 74%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-code-block-shadow-fill-3: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 70%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-code-block-shadow-fill-4: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 66%,
+    var(--scribdown-color-surface)
+  );
 
   position: relative;
   background-color: var(--scribdown-color-surface);
@@ -101,9 +128,9 @@
   background-size:
     28px 25px,
     39px 34px;
-  padding: var(--scribdown-space-6);
-  font-size: 18px;
-  line-height: 1.75;
+  padding: var(--scribdown-space-5);
+  font-size: 16px;
+  line-height: 1.65;
   font-weight: 400;
   color: var(--scribdown-color-text-primary);
   word-break: break-word;
@@ -149,8 +176,8 @@
   position: relative;
   isolation: isolate;
   font-family: var(--scribdown-font-heading);
-  margin-top: var(--scribdown-space-6);
-  margin-bottom: var(--scribdown-space-3);
+  margin-top: var(--scribdown-space-4);
+  margin-bottom: var(--scribdown-space-1);
   letter-spacing: 0;
 }
 
@@ -158,7 +185,7 @@
   --scribdown-heading-mark-fade: 0%;
   --scribdown-heading-mark-height: 0.36em;
 
-  font-size: 44px;
+  font-size: 34px;
   line-height: 1.2;
   font-weight: 700;
   text-shadow: 0.9px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 20%, transparent);
@@ -200,7 +227,7 @@
   --scribdown-heading-mark-fade: 14%;
   --scribdown-heading-mark-height: 0.3em;
 
-  font-size: 32px;
+  font-size: 26px;
   line-height: 1.3;
   font-weight: 700;
 }
@@ -209,7 +236,7 @@
   --scribdown-heading-mark-fade: 26%;
   --scribdown-heading-mark-height: 0.24em;
 
-  font-size: 24px;
+  font-size: 21px;
   line-height: 1.35;
   font-weight: 600;
 }
@@ -218,7 +245,7 @@
   --scribdown-heading-mark-fade: 38%;
   --scribdown-heading-mark-height: 0.18em;
 
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.4;
   font-weight: 600;
 }
@@ -226,7 +253,7 @@
   --scribdown-heading-mark-fade: 50%;
   --scribdown-heading-mark-height: 0.14em;
 
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.5;
   font-weight: 600;
 }
@@ -234,14 +261,14 @@
   --scribdown-heading-mark-fade: 60%;
   --scribdown-heading-mark-height: 0.1em;
 
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   font-weight: 600;
 }
 
-/* ParagraphRenderer：段间距 space-5 */
+/* ParagraphRenderer：段间距 space-3，紧凑版 */
 .scribdown-markdown p {
-  margin: 0 0 var(--scribdown-space-5);
+  margin: 0 0 var(--scribdown-space-3);
 }
 
 .scribdown-markdown strong {
@@ -262,19 +289,19 @@
 
 /* ListRenderer：保留有序列表语义编号，只替换无序列表的浏览器默认 bullet。 */
 .scribdown-markdown ul:not(.scribdown-toc-list) {
-  margin: 0 0 var(--scribdown-space-5);
+  margin: 0 0 var(--scribdown-space-3);
   padding-left: 0;
   list-style: none;
 }
 
 .scribdown-markdown ol:not(.scribdown-toc-list) {
-  margin: 0 0 var(--scribdown-space-5);
-  padding-left: 34px;
+  margin: 0 0 var(--scribdown-space-3);
+  padding-left: 30px;
 }
 
 .scribdown-markdown li:not(.scribdown-toc-item) {
   position: relative;
-  margin-bottom: var(--scribdown-space-2);
+  margin-bottom: var(--scribdown-space-1);
 }
 
 .scribdown-markdown ul:not(.scribdown-toc-list) > li:not(.scribdown-toc-item) {
@@ -288,7 +315,7 @@
 .scribdown-markdown ol:not(.scribdown-toc-list) > li:not(.scribdown-toc-item)::marker {
   color: var(--scribdown-color-warning);
   font-family: "Caveat", "Comic Sans MS", "Bradley Hand", "Segoe Print", "LXGW WenKai", cursive;
-  font-size: 18px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
   text-shadow: 0.7px 0 color-mix(in srgb, var(--scribdown-color-warning) 24%, transparent);
@@ -399,8 +426,8 @@
 .scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) {
   width: fit-content;
   max-width: 100%;
-  margin: 0 0 var(--scribdown-space-5);
-  padding: 12px 18px;
+  margin: 0 0 var(--scribdown-space-3);
+  padding: 10px 16px;
 }
 
 .scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch)[open] {
@@ -427,8 +454,8 @@
 .scribdown-markdown .scribdown-toc {
   width: fit-content;
   max-width: 100%;
-  margin: 0 0 var(--scribdown-space-6);
-  padding: 10px 18px;
+  margin: 0 0 var(--scribdown-space-4);
+  padding: 8px 16px;
 }
 
 .scribdown-markdown .scribdown-toc[open] {
@@ -656,7 +683,7 @@
 /* InlineCode：轻量纸底，避免和 frame 四边框重复。 */
 .scribdown-markdown code {
   font-family: var(--scribdown-font-code);
-  font-size: 0.92em;
+  font-size: inherit;
   font-weight: 500;
   padding: 1px 6px 2px;
   border-radius: 7px 9px 8px 10px;
@@ -670,35 +697,87 @@
   box-decoration-break: clone;
 }
 
-/* CodeBlock：14px / 1.7 / 500，radius-md，shadow-md */
-.scribdown-markdown pre {
+/* CodeBlock：简单描边 + 顶部 chrome（语言标签 / 复制按钮） + 正文 + 行号。 */
+.scribdown-markdown .scribdown-code-block {
+  /* 主紫色：用于代码块边框、标签与按钮描边。 */
+  --scribdown-code-ink: #5c4b95;
+  /* 代码正文文字色，浅色主题下偏深紫黑。 */
+  --scribdown-code-text: #2d241f;
+  /* chrome 内容行高度。 */
+  --scribdown-code-chrome-height: 48px;
+  /* 行号列宽度。 */
+  --scribdown-code-line-number-width: 36px;
+  /* 行号与代码正文之间的间距。 */
+  --scribdown-code-line-number-gap: 14px;
+
   position: relative;
-  font-size: 14px;
-  line-height: 1.7;
-  font-weight: 500;
-  background:
-    radial-gradient(circle at 16px 18px, var(--scribdown-paper-grain) 0 1px, transparent 1.5px),
-    color-mix(in srgb, var(--scribdown-color-surface) 88%, var(--scribdown-color-border) 12%);
-  background-size:
-    31px 27px,
-    auto;
-  border: 0;
-  border-radius: var(--scribdown-radius-md);
-  box-shadow: var(--scribdown-shadow-md);
-  padding: var(--scribdown-space-4);
-  overflow-x: auto;
-  margin: 0 0 var(--scribdown-space-5);
+  z-index: 0;
+  isolation: isolate;
+  margin: 32px 0 36px;
+  /* chrome 改为文档流布局后不再需要顶部预留。 */
+  padding: 6px 0;
+  border-radius: 8px 10px 9px 11px;
+  background: var(--scribdown-color-surface);
+  overflow: visible;
+  isolation: isolate;
 }
 
-.scribdown-markdown pre::before {
+/* 关键步骤：叠加 4 层 card-bg 形成手绘阴影体积，并按需求设置逐层偏移。 */
+.scribdown-markdown .scribdown-code-block::before {
+  --shadow-drift-x: 16px;
+  --shadow-drift-y: 16px;
+
   content: "";
   position: absolute;
+  z-index: 0;
+  pointer-events: none;
+
+  left: 0;
+  top: 0;
+  width: calc(100% + var(--shadow-drift-x));
+  height: calc(100% + var(--shadow-drift-y));
+
+  background-image:
+    var(--scribdown-code-block-card-bg-1), var(--scribdown-code-block-card-bg-2),
+    var(--scribdown-code-block-card-bg-3), var(--scribdown-code-block-card-bg-4);
+
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+
+  /**
+   * 关键点：
+   * ::before 比容器大 16px，
+   * 所以这里减掉 16px，
+   * 背景图就等于容器原始宽高。
+   */
+  background-size:
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y));
+
+  /**
+   * 这里只控制漂移，不再改变图片尺寸
+   */
+  background-position:
+    8px 6px,
+    10px 8px,
+    12px 10px,
+    14px 12px;
+
+  z-index: -1;
+}
+
+/* 关键步骤：和 blockquote::after 一样用横向 / 纵向 SVG 边条平铺，形成可伸缩手绘边框。 */
+.scribdown-markdown .scribdown-code-block::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
   background-image:
-    var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
-    var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+    var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
   background-position:
     left top,
     left bottom,
@@ -706,22 +785,311 @@
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px,
-    96px 8px,
-    8px 72px,
-    8px 72px;
-  opacity: 0.82;
+    192px 12px,
+    192px 12px,
+    12px 144px,
+    12px 144px;
 }
 
-/* pre 内的 code 去掉行内样式 */
-.scribdown-markdown pre code {
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block::before {
+    /**
+     * 关键步骤：
+     * card-bg SVG 只负责形状（mask），
+     * 实际填充颜色统一由 token 控制，避免在 SVG 中硬编码色值。
+     */
+    background-image:
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-1),
+        var(--scribdown-code-block-shadow-fill-1)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-2),
+        var(--scribdown-code-block-shadow-fill-2)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-3),
+        var(--scribdown-code-block-shadow-fill-3)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-4),
+        var(--scribdown-code-block-shadow-fill-4)
+      );
+    -webkit-mask-image:
+      var(--scribdown-code-block-card-bg-1), var(--scribdown-code-block-card-bg-2),
+      var(--scribdown-code-block-card-bg-3), var(--scribdown-code-block-card-bg-4);
+    -webkit-mask-position:
+      8px 6px,
+      10px 8px,
+      12px 10px,
+      14px 12px;
+    -webkit-mask-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    -webkit-mask-size:
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y));
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-card-bg-1), var(--scribdown-code-block-card-bg-2),
+      var(--scribdown-code-block-card-bg-3), var(--scribdown-code-block-card-bg-4);
+    mask-position:
+      8px 6px,
+      10px 8px,
+      12px 10px,
+      14px 12px;
+    mask-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    mask-size:
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y));
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
+
+  .scribdown-markdown .scribdown-code-block::after {
+    /* 关键步骤：用 mask 保留边条形状，用 background-color 承载可主题化颜色变量。 */
+    background-color: var(--scribdown-code-ink);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      192px 12px,
+      192px 12px,
+      12px 144px,
+      12px 144px;
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      192px 12px,
+      192px 12px,
+      12px 144px,
+      12px 144px;
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .scribdown-markdown .scribdown-code-block {
+    --scribdown-code-ink: #b6a6e0;
+    --scribdown-code-text: #e8ddd4;
+  }
+}
+
+/* 顶部 chrome：使用相对定位并处于文档流内，避免依赖外层预留 padding。 */
+.scribdown-markdown .scribdown-code-block__chrome {
   position: relative;
-  font-size: inherit;
-  background-image: none;
-  background: none;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--scribdown-code-chrome-height);
+  margin: 4px 4px 0;
+  padding: 0 14px;
+  background: var(--scribdown-color-surface);
+  border-radius: 8px 10px 0 0;
+  pointer-events: none;
+}
+
+/* 关键步骤：chrome 底部增加手绘边线，与代码块外框风格保持一致。 */
+.scribdown-markdown .scribdown-code-block__chrome::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -1px;
+  height: 12px;
+  pointer-events: none;
+  background-image: var(--scribdown-code-block-edge-horizontal);
+  background-repeat: repeat-x;
+  background-size: 192px 12px;
+  background-position: left bottom;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block__chrome::after {
+    background-color: var(--scribdown-code-ink);
+    background-image: none;
+    -webkit-mask-image: var(--scribdown-code-block-edge-horizontal);
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: 192px 12px;
+    -webkit-mask-position: left bottom;
+    -webkit-mask-mode: alpha;
+    mask-image: var(--scribdown-code-block-edge-horizontal);
+    mask-repeat: repeat-x;
+    mask-size: 192px 12px;
+    mask-position: left bottom;
+    mask-mode: alpha;
+  }
+}
+
+/* 左侧语言标签：保留手绘质感，不依赖额外 SVG。 */
+.scribdown-markdown .scribdown-code-block__lang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 38px;
+  margin-left: 2px;
+  padding: 0 12px 0 16px;
+  border: 2px solid color-mix(in srgb, var(--scribdown-code-ink) 72%, transparent);
+  border-radius: 8px 12px 9px 11px;
+  background: color-mix(in srgb, var(--scribdown-code-ink) 16%, var(--scribdown-color-surface));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-code-ink) 28%, transparent);
+  color: var(--scribdown-code-ink);
+  font-family: var(--scribdown-font-code);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  pointer-events: auto;
+  user-select: none;
+}
+
+/* 右上角复制按钮：透明背景，SVG 图标，hover/激活态轻染色。 */
+.scribdown-markdown .scribdown-code-block__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px 9px 7px 10px;
+  background: transparent;
+  color: var(--scribdown-code-ink);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background var(--scribdown-duration-fast) var(--scribdown-easing-standard),
+    transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-markdown .scribdown-code-block__copy:hover {
+  background: color-mix(in srgb, var(--scribdown-code-ink) 14%, transparent);
+}
+
+.scribdown-markdown .scribdown-code-block__copy:active {
+  transform: translateY(1px);
+}
+
+.scribdown-markdown .scribdown-code-block__copy:focus-visible {
+  outline: 2px solid var(--scribdown-code-ink);
+  outline-offset: 2px;
+}
+
+.scribdown-markdown .scribdown-code-block__copy-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* 复制成功时图标切换为对勾，色调由 accent 接管。 */
+.scribdown-markdown
+  .scribdown-code-block__copy[data-scribdown-code-copied="true"]
+  .scribdown-code-block__copy-icon--copy {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-code-block__copy-icon--check {
+  display: none;
+}
+
+.scribdown-markdown
+  .scribdown-code-block__copy[data-scribdown-code-copied="true"]
+  .scribdown-code-block__copy-icon--check {
+  display: inline-block;
+}
+
+/* 正文容器：内部 padding 控制代码与边框的间距，给短代码块也留呼吸空间。 */
+.scribdown-markdown .scribdown-code-block__body {
+  position: relative;
+  z-index: 1;
+  min-height: 64px;
+  margin: 0 4px;
+  padding: 16px 0 20px;
+  background: var(--scribdown-color-surface);
+  border-radius: 0 0 9px 11px;
+  overflow: hidden;
+}
+
+.scribdown-markdown .scribdown-code-block__body > pre {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--scribdown-code-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.65;
+  scrollbar-color: color-mix(in srgb, var(--scribdown-code-ink) 30%, transparent) transparent;
+}
+
+.scribdown-markdown .scribdown-code-block__body > pre::before {
+  content: none;
+}
+
+.scribdown-markdown .scribdown-code-block__body > pre code {
+  counter-reset: scribdown-code-line;
+  position: relative;
+  display: block;
+  min-width: max-content;
   padding: 0;
   border-radius: 0;
+  background: none;
+  background-image: none;
   box-shadow: none;
+  color: var(--scribdown-code-text);
+  font-family: var(--scribdown-font-code);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* 行：左侧分配空间给行号，行号通过 ::before 计数器绘制。 */
+.scribdown-markdown .scribdown-code-block__line {
+  counter-increment: scribdown-code-line;
+  position: relative;
+  display: block;
+  padding-right: 16px;
+  padding-left: calc(
+    var(--scribdown-code-line-number-width) + var(--scribdown-code-line-number-gap)
+  );
+}
+
+.scribdown-markdown .scribdown-code-block__line::before {
+  content: counter(scribdown-code-line);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--scribdown-code-line-number-width);
+  color: color-mix(in srgb, var(--scribdown-code-ink) 60%, transparent);
+  font-family: var(--scribdown-font-code);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Blockquote：边框与强调条拆层，强调条高度跟随容器撑满。 */
@@ -730,8 +1098,8 @@
   box-sizing: border-box;
   width: 100%;
   color: var(--scribdown-color-text-secondary);
-  margin: 0 0 var(--scribdown-space-5);
-  padding: var(--scribdown-space-4) 20px var(--scribdown-space-4) 40px;
+  margin: 0 0 var(--scribdown-space-3);
+  padding: var(--scribdown-space-2) 16px var(--scribdown-space-2) 36px;
   background: color-mix(in srgb, var(--scribdown-color-accent) 8%, var(--scribdown-color-surface));
   border-radius: var(--scribdown-radius-md);
 }
@@ -751,7 +1119,7 @@
 }
 
 .scribdown-markdown blockquote p {
-  margin-bottom: var(--scribdown-space-2);
+  margin-bottom: var(--scribdown-space-1);
 }
 
 .scribdown-markdown blockquote p:last-child {
@@ -830,7 +1198,7 @@
 /* ImageRenderer：块级图片转换为 figure，边框由 SVG 四边重复组成，和 blockquote::after 同源。 */
 .scribdown-markdown .scribdown-image-figure {
   width: min(100%, 720px);
-  margin: 0 auto var(--scribdown-space-5);
+  margin: 0 auto var(--scribdown-space-3);
 }
 
 .scribdown-markdown .scribdown-image-frame {
@@ -915,7 +1283,7 @@
   margin-top: var(--scribdown-space-2);
   color: var(--scribdown-color-text-primary);
   font-family: var(--scribdown-font-heading);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
   text-align: center;
@@ -923,9 +1291,9 @@
 
 .scribdown-markdown .scribdown-image-figure + p:has(> em:only-child) {
   width: min(100%, 720px);
-  margin: calc(0px - var(--scribdown-space-3)) auto var(--scribdown-space-5);
+  margin: calc(0px - var(--scribdown-space-1)) auto var(--scribdown-space-3);
   color: var(--scribdown-color-text-primary);
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.55;
   text-align: left;
 }
@@ -938,8 +1306,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 176px;
-  padding: var(--scribdown-space-5);
+  min-height: 144px;
+  padding: var(--scribdown-space-4);
   background:
     radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
     color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
@@ -1010,7 +1378,7 @@
 
 .scribdown-markdown .scribdown-image-fallback-text {
   font-family: var(--scribdown-font-heading);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -1021,7 +1389,7 @@
   overflow-wrap: anywhere;
   color: var(--scribdown-color-text-secondary);
   font-family: var(--scribdown-font-code);
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.4;
 }
 
@@ -1248,7 +1616,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin: 0 0 var(--scribdown-space-5);
+  margin: 0 0 var(--scribdown-space-3);
   display: block;
   overflow-x: auto;
   border-radius: var(--scribdown-radius-md);
@@ -1264,7 +1632,7 @@
 .scribdown-markdown th,
 .scribdown-markdown td {
   border: 0;
-  padding: var(--scribdown-space-3) var(--scribdown-space-4);
+  padding: var(--scribdown-space-2) var(--scribdown-space-3);
   text-align: left;
   background-image: var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-vertical);
   background-position:
@@ -1284,12 +1652,12 @@
 
 /* HanddrawnDivider：不用直线，上下留白 space-5 */
 .scribdown-markdown hr {
-  height: 18px;
+  height: 12px;
   border: none;
   background-image: var(--scribdown-frame-edge-horizontal);
   background-position: center;
   background-repeat: no-repeat;
   background-size: 100% 8px;
-  margin: var(--scribdown-space-5) 0;
+  margin: var(--scribdown-space-3) 0;
   transform: rotate(-0.3deg);
 }

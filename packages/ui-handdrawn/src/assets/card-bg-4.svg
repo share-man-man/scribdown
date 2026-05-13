@@ -1,0 +1,102 @@
+<svg
+  width="1254"
+  height="1254"
+  viewBox="0 0 1254 1254"
+  preserveAspectRatio="none"
+  opacity="0.3"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <linearGradient id="cardBg4Base" x1="0%" y1="2%" x2="100%" y2="98%">
+      <stop offset="0%" stop-color="#151E2C" />
+      <stop offset="40%" stop-color="#0D1421" />
+      <stop offset="100%" stop-color="#091019" />
+    </linearGradient>
+    <radialGradient id="cardBg4Overlay" cx="49%" cy="38%" r="83%">
+      <stop offset="0%" stop-color="#1A273E" stop-opacity="0.3" />
+      <stop offset="60%" stop-color="#101722" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#05090E" stop-opacity="0.4" />
+    </radialGradient>
+    <pattern id="cardBg4Stripe" patternUnits="userSpaceOnUse" width="96" height="264">
+      <rect width="96" height="264" fill="transparent" />
+      <path
+        d="M16 -30 C36 22 8 98 24 156 C40 210 14 242 30 302"
+        fill="none"
+        stroke="#0A111B"
+        stroke-opacity="0.67"
+        stroke-width="19"
+        stroke-linecap="round"
+      />
+      <path
+        d="M48 -28 C66 24 38 96 54 154 C70 210 42 240 58 300"
+        fill="none"
+        stroke="#0B121E"
+        stroke-opacity="0.56"
+        stroke-width="17"
+        stroke-linecap="round"
+      />
+      <path
+        d="M80 -32 C98 18 70 94 86 152 C102 206 76 238 92 296"
+        fill="none"
+        stroke="#091019"
+        stroke-opacity="0.62"
+        stroke-width="18"
+        stroke-linecap="round"
+      />
+      <path
+        d="M4 -26 C20 36 -6 146 10 280"
+        fill="none"
+        stroke="#0C1320"
+        stroke-opacity="0.32"
+        stroke-width="9"
+        stroke-linecap="round"
+      />
+    </pattern>
+    <clipPath id="cardBg4Clip">
+      <path
+        d="M46 16 C26 22 20 44 24 82 L18 1162 C20 1198 38 1222 82 1228 L1164 1222 C1208 1220 1230 1200 1234 1162 L1234 90 C1232 52 1218 24 1176 16 L96 14 C74 14 58 14 46 16 Z"
+      />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#cardBg4Clip)">
+    <rect width="1254" height="1254" fill="url(#cardBg4Base)" />
+    <rect
+      width="1254"
+      height="1254"
+      fill="url(#cardBg4Stripe)"
+      opacity="0.7"
+      transform="rotate(2 627 627)"
+    />
+    <rect width="1254" height="1254" fill="url(#cardBg4Overlay)" />
+    <path
+      d="M84 212 C378 156 740 222 1132 170 C1178 164 1214 182 1232 224"
+      fill="none"
+      stroke="#22344E"
+      stroke-opacity="0.18"
+      stroke-width="18"
+      stroke-linecap="round"
+    />
+    <path
+      d="M78 1066 C382 1008 764 1088 1138 1028"
+      fill="none"
+      stroke="#1E2C43"
+      stroke-opacity="0.15"
+      stroke-width="16"
+      stroke-linecap="round"
+    />
+  </g>
+  <path
+    d="M46 16 C26 22 20 44 24 82 L18 1162 C20 1198 38 1222 82 1228 L1164 1222 C1208 1220 1230 1200 1234 1162 L1234 90 C1232 52 1218 24 1176 16 L96 14 C74 14 58 14 46 16 Z"
+    fill="none"
+    stroke="#1D2530"
+    stroke-opacity="0.36"
+    stroke-width="6"
+  />
+  <path
+    d="M54 26 C32 30 28 54 32 90 L26 1150 C30 1184 50 1206 92 1210 L1150 1206 C1194 1204 1216 1184 1220 1148 L1220 100 C1218 66 1204 40 1164 26 L106 24 C82 24 66 24 54 26 Z"
+    fill="none"
+    stroke="#121922"
+    stroke-opacity="0.62"
+    stroke-width="2.8"
+  />
+</svg>
