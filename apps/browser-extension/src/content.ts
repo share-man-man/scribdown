@@ -1,4 +1,8 @@
-import { hydrateMarkdownImages, renderMarkdown } from "@scribdown/markdown-renderer";
+import {
+  hydrateCodeBlocks,
+  hydrateMarkdownImages,
+  renderMarkdown
+} from "@scribdown/markdown-renderer";
 // 通过 ?inline 将 CSS 以字符串形式打包进 IIFE，避免运行时文件加载。
 import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
 
@@ -13,9 +17,7 @@ import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
   const renderedHtml = await renderMarkdown(rawMarkdown, { sanitizeHtml: true });
 
   // 从 URL 中提取文件名用于页面标题。
-  const filename = decodeURIComponent(
-    window.location.pathname.split("/").pop() ?? "Markdown"
-  );
+  const filename = decodeURIComponent(window.location.pathname.split("/").pop() ?? "Markdown");
 
   // 重置 <head>，注入渲染所需的样式。
   document.head.innerHTML = `
@@ -37,4 +39,6 @@ import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
   `;
   // 关键步骤：补齐图片加载状态，保证失败态可以展示 alt 文本占位。
   hydrateMarkdownImages(document.body);
+  // 关键步骤：为代码块挂载语言标签、复制按钮与行号 chrome。
+  hydrateCodeBlocks(document.body);
 })();
