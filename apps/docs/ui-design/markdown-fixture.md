@@ -138,7 +138,7 @@ _Figure 1. 手绘风格预览页，正文区使用暖纸色背景与克制的装
 
 加载失败的图片（`alt` 文本占位）：
 
-![这张图片加载失败了](/broken-image-404.png)
+![这张图片加载失败了](https://example.invalid/broken-image-404.png)
 
 ## 代码示例
 

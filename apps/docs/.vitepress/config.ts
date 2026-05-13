@@ -5,6 +5,10 @@ export default defineConfig({
   description: "手绘风格 Markdown 渲染器",
   lang: "zh-CN",
 
+  // 默认 markdown-it 未启用 footnote，`[^x]: ...` 会被识别为链接引用定义，
+  // 中文脚注内容会被当成 URL 触发 dead link 校验，这里忽略此模式。
+  ignoreDeadLinks: [/^\.\/%E/],
+
   themeConfig: {
     logo: "/logo.svg",
 
