@@ -100,8 +100,12 @@
   --scribdown-code-block-card-bg-3: url("./assets/card-bg-3.svg");
   --scribdown-code-block-card-bg-4: url("./assets/card-bg-4.svg");
   --scribdown-code-block-lang-tag-body: url("./assets/tag-body.svg");
+  --scribdown-code-block-lang-tag-body-outline: url("./assets/tag-body-outline.svg");
+  --scribdown-code-block-lang-tag-body-hatch: url("./assets/tag-body-hatch.svg");
   --scribdown-code-block-lang-tag-left-line: url("./assets/tag-left-line.svg");
   --scribdown-code-block-lang-tag-right: url("./assets/tag-right.svg");
+  --scribdown-code-block-lang-tag-right-outline: url("./assets/tag-right-outline.svg");
+  --scribdown-code-block-lang-tag-right-hatch: url("./assets/tag-right-hatch.svg");
   --scribdown-code-block-lang-tag-right-safe-width: 18px;
   --scribdown-code-block-shadow-gray-token: var(--scribdown-color-text-secondary);
   --scribdown-code-block-chrome-shadow-token: var(--scribdown-color-border);
@@ -714,6 +718,22 @@
   --scribdown-code-ink: #5c4b95;
   /* 代码正文文字色，浅色主题下偏深紫黑。 */
   --scribdown-code-text: #2d241f;
+  /* 语言标签边框色 token。 */
+  --scribdown-code-block-lang-border-token: var(--scribdown-code-ink);
+  /* 语言标签边框填充色。 */
+  --scribdown-code-block-lang-border-fill: color-mix(
+    in srgb,
+    var(--scribdown-code-block-lang-border-token) 72%,
+    transparent
+  );
+  /* 语言标签排线色 token。 */
+  --scribdown-code-block-lang-hatch-token: var(--scribdown-color-warning);
+  /* 语言标签排线填充色（需与边框色不同）。 */
+  --scribdown-code-block-lang-hatch-fill: color-mix(
+    in srgb,
+    var(--scribdown-code-block-lang-hatch-token) 44%,
+    transparent
+  );
   /* chrome 内容行高度。 */
   --scribdown-code-chrome-height: 34px;
   /* 行号列宽度。 */
@@ -959,6 +979,22 @@
 }
 
 @supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block__chrome::before {
+    /* 关键步骤：使用 mask 仅保留纹理形状，颜色由 token 统一控制。 */
+    background-color: var(--scribdown-code-block-chrome-shadow-fill);
+    background-image: none;
+    -webkit-mask-image: var(--scribdown-code-block-rect-shadow);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: auto 100%;
+    -webkit-mask-mode: alpha;
+    mask-image: var(--scribdown-code-block-rect-shadow);
+    mask-position: center;
+    mask-repeat: repeat-x;
+    mask-size: auto 100%;
+    mask-mode: alpha;
+  }
+
   .scribdown-markdown .scribdown-code-block__chrome::after {
     background-color: var(--scribdown-code-ink);
     background-image: none;
@@ -1011,6 +1047,7 @@
   left: 0px;
   padding-right: var(--scribdown-code-block-lang-tag-right-safe-width);
   pointer-events: none;
+  background-color: transparent;
   background-image:
     var(--scribdown-code-block-lang-tag-left-line),
     var(--scribdown-code-block-lang-tag-right),
@@ -1032,6 +1069,122 @@
     border-box,
     border-box,
     content-box;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block__lang::before {
+    /* 关键步骤：边框层与排线层拆开着色，确保两者颜色可独立配置。 */
+    background-image:
+      linear-gradient(
+        var(--scribdown-code-block-lang-border-fill),
+        var(--scribdown-code-block-lang-border-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-border-fill),
+        var(--scribdown-code-block-lang-border-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-border-fill),
+        var(--scribdown-code-block-lang-border-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-hatch-fill),
+        var(--scribdown-code-block-lang-hatch-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-hatch-fill),
+        var(--scribdown-code-block-lang-hatch-fill)
+      );
+    background-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+    background-position:
+      left center,
+      right center,
+      left center,
+      right center,
+      left center;
+    background-size:
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%;
+    background-origin:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    background-clip:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    -webkit-mask-image:
+      var(--scribdown-code-block-lang-tag-left-line),
+      var(--scribdown-code-block-lang-tag-right-outline),
+      var(--scribdown-code-block-lang-tag-body-outline),
+      var(--scribdown-code-block-lang-tag-right-hatch),
+      var(--scribdown-code-block-lang-tag-body-hatch);
+    -webkit-mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+    -webkit-mask-position:
+      left center,
+      right center,
+      left center,
+      right center,
+      left center;
+    -webkit-mask-size:
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%;
+    -webkit-mask-origin:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    -webkit-mask-clip:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    -webkit-mask-mode: alpha, alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-lang-tag-left-line),
+      var(--scribdown-code-block-lang-tag-right-outline),
+      var(--scribdown-code-block-lang-tag-body-outline),
+      var(--scribdown-code-block-lang-tag-right-hatch),
+      var(--scribdown-code-block-lang-tag-body-hatch);
+    mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+    mask-position:
+      left center,
+      right center,
+      left center,
+      right center,
+      left center;
+    mask-size:
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%;
+    mask-origin:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    mask-clip:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    mask-mode: alpha, alpha, alpha, alpha, alpha;
+  }
 }
 
 /* 右上角复制按钮：透明背景，SVG 图标，hover/激活态轻染色。 */

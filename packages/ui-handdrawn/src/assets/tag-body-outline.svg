@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="63.653" height="48" viewBox="9.239 0 63.653 48" role="img" aria-label="handdrawn tag">
+  <style>
+    .tag-fill-rect,
+    .tag-fill-triangle {
+      fill: none;
+      stroke: #d7a339;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.85;
+      opacity: 0.42;
+    }
+
+    .tag-outline-rect,
+    .tag-outline-triangle {
+      fill: none;
+      stroke: #2f6a5f;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.7;
+      opacity: 0.78;
+    }
+
+    .tag-inner {
+      fill: none;
+      stroke: #8b6b2e;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.2;
+      opacity: 0.38;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .tag-fill-rect,
+      .tag-fill-triangle {
+        stroke: #c49a4a;
+        opacity: 0.48;
+      }
+
+      .tag-outline-rect,
+      .tag-outline-triangle {
+        stroke: #5fbfad;
+      }
+
+      .tag-inner {
+        stroke: #c49a4a;
+      }
+    }
+  </style>
+  <path class="tag-outline-rect" d="M9.003693818654865 9.334320288989693 C39.979484466183926 8.19957979390747, 51.671825006138526 8.762068823672598, 72.37015150925144 9.53503076527267 M9.295911033498124 9.521497987909243 C25.988783443951977 11.82070334431366, 38.00698701781221 9.789865786103764, 68.92839651410468 9.628132346970961" />
+  <path class="tag-outline-rect" d="M9.000399748403579 36.95125518916175 C39.244572159554814 36.536944090734464, 40.38458351800219 37.04475977660273, 73.14488379927352 38.2858747321181 M9.603980238130315 38.63007478849031 C27.176343747181818 38.67232606503996, 43.159328279411426 37.63124149385723, 72.89353565513156 37.05960885570384" />
+
+</svg>
