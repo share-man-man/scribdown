@@ -315,6 +315,12 @@ const CODE_BLOCK_COPY_ICON_CHECK_CLASS_NAME = "scribdown-code-block__copy-icon--
 // 代码块代码行类名。
 const CODE_BLOCK_LINE_CLASS_NAME = "scribdown-code-block__line";
 
+// 代码块行号固定列类名。
+const CODE_BLOCK_GUTTER_CLASS_NAME = "scribdown-code-block__gutter";
+
+// 代码块行号固定列中的单行节点类名。
+const CODE_BLOCK_GUTTER_LINE_CLASS_NAME = "scribdown-code-block__gutter-line";
+
 // 代码块空行占位文本，避免空 span 被浏览器完全折叠。
 const CODE_BLOCK_EMPTY_LINE_PLACEHOLDER = "\u200b";
 
@@ -690,8 +696,8 @@ function decorateCodeBlock(preElement: HTMLPreElement): void {
   // 关键步骤：在替换 DOM 前抓取原始代码文本，便于复制按钮使用。
   const originalCodeText = codeElement.textContent ?? "";
 
-  // 把代码内容按行拆分为带类名的 span，便于 CSS 计数器渲染行号。
-  rewriteCodeBlockLines(codeElement, ownerDocument);
+  // 把代码内容按行拆分为带类名的 span，并得到总行数用于固定行号列。
+  const codeLineCount = rewriteCodeBlockLines(codeElement, ownerDocument);
 
   // 顶部 chrome 区域，承载语言标签与复制按钮。
   const chromeElement = ownerDocument.createElement("div");
@@ -716,9 +722,12 @@ function decorateCodeBlock(preElement: HTMLPreElement): void {
   const bodyElement = ownerDocument.createElement("div");
   bodyElement.className = CODE_BLOCK_BODY_CLASS_NAME;
 
+  // 固定宽度行号列，作为 pre 的兄弟节点独立布局，不跟随代码横向滚动。
+  const gutterElement = createCodeBlockLineNumberGutter(ownerDocument, codeLineCount);
+
   // 把 pre 替换为 figure，再把 chrome + body + 原 pre 放进 figure。
   preElement.replaceWith(figureElement);
-  bodyElement.append(preElement);
+  bodyElement.append(gutterElement, preElement);
   figureElement.append(chromeElement, bodyElement);
 
   // 在按钮上记录原始代码文本，复制时直接读取，无需再走 DOM。
@@ -765,12 +774,13 @@ function resolveCodeBlockLanguageLabel(languageId: string): string {
 }
 
 /**
- * 把代码内容按行拆分为带类名的 span，配合 CSS 计数器渲染行号。
+ * 把代码内容按行拆分为带类名的 span。
  * Shiki 已经输出 `<span class="line">` 时直接复用并补充类名，否则做纯文本拆分。
  * @param codeElement pre 内部的 code 元素。
  * @param ownerDocument 当前 document。
+ * @returns 当前代码块拆分后的总行数。
  */
-function rewriteCodeBlockLines(codeElement: HTMLElement, ownerDocument: Document): void {
+function rewriteCodeBlockLines(codeElement: HTMLElement, ownerDocument: Document): number {
   // Shiki 高亮输出的行 span 列表。
   const shikiLineElements = codeElement.querySelectorAll<HTMLElement>(":scope > span.line");
 
@@ -788,7 +798,7 @@ function rewriteCodeBlockLines(codeElement: HTMLElement, ownerDocument: Document
 
     // 关键步骤：删除 Shiki 在行 span 之间输出的换行文本节点，避免 pre 把它们渲染成额外行距。
     codeElement.replaceChildren(...shikiLineNodes);
-    return;
+    return shikiLineNodes.length;
   }
 
   // 代码块的全部文本内容。
@@ -815,6 +825,36 @@ function rewriteCodeBlockLines(codeElement: HTMLElement, ownerDocument: Document
     }
     codeElement.append(lineElement);
   });
+
+  return codeLines.length;
+}
+
+/**
+ * 创建代码块左侧固定行号列，保证行号区不参与横向滚动。
+ * @param ownerDocument 当前 document。
+ * @param lineCount 代码总行数。
+ * @returns 已填充行号文本的固定列容器。
+ */
+function createCodeBlockLineNumberGutter(
+  ownerDocument: Document,
+  lineCount: number
+): HTMLDivElement {
+  // 行号固定列容器。
+  const gutterElement = ownerDocument.createElement("div");
+  gutterElement.className = CODE_BLOCK_GUTTER_CLASS_NAME;
+
+  // 当前循环行索引（0-based），用于生成 1-based 行号文本。
+  for (let lineIndex = 0; lineIndex < lineCount; lineIndex += 1) {
+    // 当前行号文本（1-based）。
+    const lineNumberText = String(lineIndex + 1);
+    // 单行行号节点。
+    const lineNumberElement = ownerDocument.createElement("span");
+    lineNumberElement.className = CODE_BLOCK_GUTTER_LINE_CLASS_NAME;
+    lineNumberElement.textContent = lineNumberText;
+    gutterElement.append(lineNumberElement);
+  }
+
+  return gutterElement;
 }
 
 /**
