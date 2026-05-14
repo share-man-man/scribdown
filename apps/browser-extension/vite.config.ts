@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { build, defineConfig, type Plugin } from "vite";
+import { build, defineConfig, type Plugin, type TerserOptions } from "vite";
 import react from "@vitejs/plugin-react";
 
 /**
@@ -32,6 +32,13 @@ function buildContentScript(): Plugin {
           outDir: resolve(__dirname, "dist"),
           // 不清空主构建产物。
           emptyOutDir: false,
+          // 关键步骤：使用 terser 的 ascii_only 输出，保证扩展脚本编码可被 Chromium 加载。
+          minify: "terser",
+          terserOptions: {
+            format: {
+              ascii_only: true
+            }
+          } as TerserOptions,
           lib: {
             entry: resolve(__dirname, "src/content.ts"),
             name: "ScribdownContent",
