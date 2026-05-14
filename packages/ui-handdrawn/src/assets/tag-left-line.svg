@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4.009" height="48" viewBox="10.511 0 4.009 48" role="img" aria-label="handdrawn tag">
+  <style>
+    .tag-fill-rect,
+    .tag-fill-triangle {
+      fill: none;
+      stroke: #d7a339;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 0.85;
+      opacity: 0.42;
+    }
+
+    .tag-outline-rect,
+    .tag-outline-triangle {
+      fill: none;
+      stroke: #2f6a5f;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.7;
+      opacity: 0.78;
+    }
+
+    .tag-inner {
+      fill: none;
+      stroke: #8b6b2e;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.2;
+      opacity: 0.38;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .tag-fill-rect,
+      .tag-fill-triangle {
+        stroke: #c49a4a;
+        opacity: 0.48;
+      }
+
+      .tag-outline-rect,
+      .tag-outline-triangle {
+        stroke: #5fbfad;
+      }
+
+      .tag-inner {
+        stroke: #c49a4a;
+      }
+    }
+  </style>
+  <path class="tag-outline-rect" d="M13.619546783529222 10.14278773907572 C13.498353240997531 20.878773319907488, 12.709453801424242 28.46810000333935, 11.757517654262482 40.13468890432269 M11.69994563581422 9.175786388199777 C11.431620132322424 17.959600609075277, 11.784395381207577 24.717414139490575, 11.41096608461812 37.3438706013374" />
+</svg>
