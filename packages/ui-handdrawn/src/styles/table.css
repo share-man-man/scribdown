@@ -1,0 +1,220 @@
+/* TableRenderer：cell padding 12px 16px，横向滚动 */
+.scribdown-markdown table {
+  /* 表格视觉主色 token：边框与阴影统一来源。 */
+  --scribdown-table-ink-token: var(--scribdown-color-accent);
+  /* 表格外框最终填充色，配合 code-block 边条 mask 使用。 */
+  --scribdown-table-border-fill: color-mix(
+    in srgb,
+    var(--scribdown-table-ink-token) 88%,
+    transparent
+  );
+  /* 单元格边线默认横向 SVG。 */
+  --scribdown-table-cell-border-horizontal-svg: var(--scribdown-frame-edge-horizontal);
+  /* 单元格边线默认纵向 SVG。 */
+  --scribdown-table-cell-border-vertical-svg: var(--scribdown-frame-edge-vertical);
+  /* 单元格边线填充色（比外框更轻，避免视觉抢占）。 */
+  --scribdown-table-cell-border-fill: color-mix(
+    in srgb,
+    var(--scribdown-table-ink-token) 40%,
+    transparent
+  );
+  /* thead 阴影层填充色（与边框同 token）。 */
+  --scribdown-table-head-shadow-fill: color-mix(
+    in srgb,
+    var(--scribdown-table-ink-token) 22%,
+    transparent
+  );
+  /* thead 阴影纹理：复用代码块 chrome 的 rect-shadow 资产。 */
+  --scribdown-table-head-shadow-svg: var(--scribdown-code-block-rect-shadow);
+
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  /* 关键步骤：小列数按内容收缩，避免右侧留白。 */
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0 0 var(--scribdown-space-3);
+  display: block;
+  overflow-x: auto;
+  box-shadow: none;
+}
+
+/* 关键步骤：表格外框复用代码块同款边条结构。 */
+.scribdown-markdown table::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image:
+    var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+    var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+  background-position:
+    left 2px top -4px,
+    left 0px bottom -1px,
+    left -4px top 0px,
+    right -1px top 0px;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    192px 12px,
+    192px 12px,
+    12px 144px,
+    12px 144px;
+}
+
+.scribdown-markdown th,
+.scribdown-markdown td {
+  border: 0;
+  padding: var(--scribdown-space-2) var(--scribdown-space-3);
+  text-align: left;
+  background-color: var(--scribdown-color-surface);
+  background-image:
+    var(--scribdown-table-cell-border-horizontal-svg),
+    var(--scribdown-table-cell-border-vertical-svg);
+  background-position:
+    left bottom,
+    right top;
+  background-repeat: repeat-x, repeat-y;
+  background-size:
+    96px 4px,
+    4px 72px;
+}
+
+/* 关键步骤：最后一列不再绘制纵向单元格边线，避免与外框重叠。 */
+.scribdown-markdown tr > *:last-child {
+  --scribdown-table-cell-border-vertical-svg: none;
+}
+
+/* 关键步骤：仅最后一行数据不再绘制横向单元格边线，避免与外框重叠。 */
+.scribdown-markdown table > tbody > tr:last-child > *,
+.scribdown-markdown table > tr:last-child > * {
+  --scribdown-table-cell-border-horizontal-svg: none;
+}
+
+.scribdown-markdown th {
+  font-family: var(--scribdown-font-heading);
+  font-weight: 700;
+  background-color: var(--scribdown-color-surface);
+}
+
+/* 关键步骤：thead 使用独立纹理层，确保文本与边线不受遮挡。 */
+.scribdown-markdown thead th {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.scribdown-markdown thead th::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--scribdown-table-head-shadow-svg);
+  background-position: center;
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown th,
+  .scribdown-markdown td {
+    /* 关键步骤：单元格边线改为 mask 着色，保留纯线条层。 */
+    position: relative;
+    isolation: isolate;
+    background-image: none;
+  }
+
+  .scribdown-markdown th::after,
+  .scribdown-markdown td::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--scribdown-table-cell-border-fill);
+    -webkit-mask-image:
+      var(--scribdown-table-cell-border-horizontal-svg),
+      var(--scribdown-table-cell-border-vertical-svg);
+    -webkit-mask-position:
+      left bottom,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-y;
+    -webkit-mask-size:
+      96px 4px,
+      4px 72px;
+    -webkit-mask-mode: alpha;
+    mask-image:
+      var(--scribdown-table-cell-border-horizontal-svg),
+      var(--scribdown-table-cell-border-vertical-svg);
+    mask-position:
+      left bottom,
+      right top;
+    mask-repeat: repeat-x, repeat-y;
+    mask-size:
+      96px 4px,
+      4px 72px;
+    mask-mode: alpha;
+  }
+
+  /* 关键步骤：右下角单元格已关闭横竖边线时，移除伪元素，避免背景填充残留。 */
+  .scribdown-markdown table > tbody > tr:last-child > *:last-child::after,
+  .scribdown-markdown table > tr:last-child > *:last-child::after {
+    content: none;
+  }
+
+  .scribdown-markdown thead th::before {
+    /* 关键步骤：shadow 纹理改为 mask，颜色统一由表格主 token 控制。 */
+    background-color: var(--scribdown-table-head-shadow-fill);
+    background-image: none;
+    -webkit-mask-image: var(--scribdown-table-head-shadow-svg);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: auto 100%;
+    -webkit-mask-mode: alpha;
+    mask-image: var(--scribdown-table-head-shadow-svg);
+    mask-position: center;
+    mask-repeat: repeat-x;
+    mask-size: auto 100%;
+    mask-mode: alpha;
+  }
+
+  .scribdown-markdown table::after {
+    /* 关键步骤：保持代码块边条形状，改用绿色 token 着色。 */
+    background-color: var(--scribdown-table-border-fill);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      192px 12px,
+      192px 12px,
+      12px 144px,
+      12px 144px;
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    mask-position:
+      left 2px top -4px,
+      left 0px bottom -1px,
+      left -4px top 0px,
+      right -1px top 0px;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      192px 12px,
+      192px 12px,
+      12px 144px,
+      12px 144px;
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
+}

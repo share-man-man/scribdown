@@ -1,0 +1,106 @@
+/* ─── Token 定义 ───────────────────────────────────────────────────── */
+/* 浅色主题，与 tokens.md 保持一致。 */
+:root {
+  --scribdown-color-bg: #f6f1e8;
+  --scribdown-color-surface: #fffdf8;
+  --scribdown-color-text-primary: #2d241f;
+  --scribdown-color-text-secondary: #6a5b53;
+  --scribdown-color-accent: #2f6a5f;
+  --scribdown-color-accent-visited: #24574e;
+  --scribdown-color-link: #2b63c6;
+  --scribdown-color-link-visited: #234fa1;
+  --scribdown-color-mark: #d7a339;
+  --scribdown-color-border: #cdbeae;
+  --scribdown-color-danger: #a94a3f;
+  --scribdown-color-warning: #8b6b2e;
+  --scribdown-color-blockquote-bg: color-mix(
+    in srgb,
+    var(--scribdown-color-border) 18%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-color-blockquote-text: color-mix(
+    in srgb,
+    var(--scribdown-color-text-secondary) 88%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-color-blockquote-link: color-mix(
+    in srgb,
+    var(--scribdown-color-link) 86%,
+    var(--scribdown-color-text-primary)
+  );
+  --scribdown-color-blockquote-link-visited: color-mix(
+    in srgb,
+    var(--scribdown-color-link-visited) 86%,
+    var(--scribdown-color-text-primary)
+  );
+  --scribdown-paper-grain: rgba(139, 107, 46, 0.08);
+  --scribdown-paper-fiber: rgba(47, 106, 95, 0.05);
+  --scribdown-shadow-sm: 2px 3px 0 rgba(45, 36, 31, 0.12);
+  --scribdown-shadow-md: 4px 6px 0 rgba(45, 36, 31, 0.16);
+
+  --scribdown-font-body: "Source Serif 4", "Noto Serif SC", serif;
+  --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
+  --scribdown-font-code: "JetBrains Mono", "Fira Code", monospace;
+
+  /* 四角独立写法，呼应手绘感 */
+  --scribdown-radius-sm: 8px 10px 9px 11px;
+  --scribdown-radius-md: 14px 16px 13px 17px;
+  --scribdown-radius-lg: 22px 24px 20px 26px;
+
+  --scribdown-space-1: 4px;
+  --scribdown-space-2: 8px;
+  --scribdown-space-3: 12px;
+  --scribdown-space-4: 16px;
+  --scribdown-space-5: 24px;
+  --scribdown-space-6: 32px;
+  --scribdown-space-7: 48px;
+  --scribdown-space-8: 64px;
+
+  --scribdown-duration-fast: 120ms;
+  --scribdown-duration-base: 200ms;
+  --scribdown-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --scribdown-easing-enter: cubic-bezier(0, 0, 0.2, 1);
+  --scribdown-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* 暗色主题 token 覆盖 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --scribdown-color-bg: #1e1a16;
+    --scribdown-color-surface: #2a2420;
+    --scribdown-color-text-primary: #e8ddd4;
+    --scribdown-color-text-secondary: #9b8c82;
+    --scribdown-color-accent: #5fbfad;
+    --scribdown-color-accent-visited: #4da595;
+    --scribdown-color-link: #7ea7ff;
+    --scribdown-color-link-visited: #5f86dd;
+    --scribdown-color-mark: #c49a4a;
+    --scribdown-color-border: #3d3028;
+    --scribdown-color-danger: #d4706a;
+    --scribdown-color-warning: #c49a4a;
+    --scribdown-color-blockquote-bg: color-mix(
+      in srgb,
+      var(--scribdown-color-border) 28%,
+      var(--scribdown-color-surface)
+    );
+    --scribdown-color-blockquote-text: color-mix(
+      in srgb,
+      var(--scribdown-color-text-secondary) 90%,
+      var(--scribdown-color-bg)
+    );
+    --scribdown-color-blockquote-link: color-mix(
+      in srgb,
+      var(--scribdown-color-link) 88%,
+      var(--scribdown-color-text-primary)
+    );
+    --scribdown-color-blockquote-link-visited: color-mix(
+      in srgb,
+      var(--scribdown-color-link-visited) 88%,
+      var(--scribdown-color-text-primary)
+    );
+    --scribdown-paper-grain: rgba(196, 154, 74, 0.09);
+    --scribdown-paper-fiber: rgba(95, 191, 173, 0.07);
+    --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.3);
+    --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.4);
+  }
+}

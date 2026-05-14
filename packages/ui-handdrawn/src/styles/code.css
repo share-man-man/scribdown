@@ -1,0 +1,666 @@
+/* InlineCode：轻量纸底，避免和 frame 四边框重复。 */
+.scribdown-markdown code {
+  font-family: var(--scribdown-font-code);
+  font-size: inherit;
+  font-weight: 500;
+  padding: 1px 6px 2px;
+  border-radius: 7px 9px 8px 10px;
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 82%,
+    var(--scribdown-color-mark) 18%
+  );
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-color-border) 46%, transparent);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* CodeBlock：简单描边 + 顶部 chrome（语言标签 / 复制按钮） + 正文 + 行号。 */
+.scribdown-markdown .scribdown-code-block {
+  /* 主紫色：用于代码块边框、标签与按钮描边。 */
+  --scribdown-code-ink: #5c4b95;
+  /* 代码正文文字色，浅色主题下偏深紫黑。 */
+  --scribdown-code-text: #2d241f;
+  /* 语言标签边框色 token。 */
+  --scribdown-code-block-lang-border-token: var(--scribdown-code-ink);
+  /* 语言标签边框填充色。 */
+  --scribdown-code-block-lang-border-fill: color-mix(
+    in srgb,
+    var(--scribdown-code-block-lang-border-token) 72%,
+    transparent
+  );
+  /* 语言标签排线色 token。 */
+  --scribdown-code-block-lang-hatch-token: var(--scribdown-color-warning);
+  /* 语言标签排线填充色（需与边框色不同）。 */
+  --scribdown-code-block-lang-hatch-fill: color-mix(
+    in srgb,
+    var(--scribdown-code-block-lang-hatch-token) 44%,
+    transparent
+  );
+  /* chrome 内容行高度。 */
+  --scribdown-code-chrome-height: 34px;
+  /* 行号列宽度。 */
+  --scribdown-code-line-number-width: 32px;
+  /* 行号与代码正文之间的间距。 */
+  --scribdown-code-line-number-gap: 8px;
+  /* 行号列总宽（列宽 + 间距），用于正文缩进与分隔线定位。 */
+  --scribdown-code-line-gutter-width: calc(
+    var(--scribdown-code-line-number-width) + var(--scribdown-code-line-number-gap)
+  );
+
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  margin: 32px 0 36px;
+  /* chrome 改为文档流布局后不再需要顶部预留。 */
+  padding: 6px 0;
+  border-radius: 8px 10px 9px 11px;
+  background: var(--scribdown-color-surface);
+  overflow: visible;
+  isolation: isolate;
+}
+
+/* 关键步骤：叠加 4 层 card-bg 形成手绘阴影体积，并按需求设置逐层偏移。 */
+.scribdown-markdown .scribdown-code-block::before {
+  --shadow-drift-x: 16px;
+  --shadow-drift-y: 16px;
+
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+
+  left: 0;
+  top: 0;
+  width: calc(100% + var(--shadow-drift-x));
+  height: calc(100% + var(--shadow-drift-y));
+
+  background-image:
+    var(--scribdown-code-block-card-bg-1), var(--scribdown-code-block-card-bg-2),
+    var(--scribdown-code-block-card-bg-3), var(--scribdown-code-block-card-bg-4);
+
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+
+  /**
+   * 关键点：
+   * ::before 比容器大 16px，
+   * 所以这里减掉 16px，
+   * 背景图就等于容器原始宽高。
+   */
+  background-size:
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+    calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y));
+
+  /**
+   * 这里只控制漂移，不再改变图片尺寸
+   */
+  background-position:
+    8px 6px,
+    10px 8px,
+    12px 10px,
+    14px 12px;
+
+  z-index: -1;
+}
+
+/* 关键步骤：和 blockquote::after 一样用横向 / 纵向 SVG 边条平铺，形成可伸缩手绘边框。 */
+.scribdown-markdown .scribdown-code-block::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image:
+    var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+    var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+  background-position:
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    192px 12px,
+    192px 12px,
+    12px 144px,
+    12px 144px;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block::before {
+    /**
+     * 关键步骤：
+     * card-bg SVG 只负责形状（mask），
+     * 实际填充颜色统一由 token 控制，避免在 SVG 中硬编码色值。
+     */
+    background-image:
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-1),
+        var(--scribdown-code-block-shadow-fill-1)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-2),
+        var(--scribdown-code-block-shadow-fill-2)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-3),
+        var(--scribdown-code-block-shadow-fill-3)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-shadow-fill-4),
+        var(--scribdown-code-block-shadow-fill-4)
+      );
+    -webkit-mask-image:
+      var(--scribdown-code-block-card-bg-1), var(--scribdown-code-block-card-bg-2),
+      var(--scribdown-code-block-card-bg-3), var(--scribdown-code-block-card-bg-4);
+    -webkit-mask-position:
+      8px 6px,
+      10px 8px,
+      12px 10px,
+      14px 12px;
+    -webkit-mask-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    -webkit-mask-size:
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y));
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-card-bg-1), var(--scribdown-code-block-card-bg-2),
+      var(--scribdown-code-block-card-bg-3), var(--scribdown-code-block-card-bg-4);
+    mask-position:
+      8px 6px,
+      10px 8px,
+      12px 10px,
+      14px 12px;
+    mask-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    mask-size:
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y)),
+      calc(100% - var(--shadow-drift-x)) calc(100% - var(--shadow-drift-y));
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
+
+  .scribdown-markdown .scribdown-code-block::after {
+    /* 关键步骤：用 mask 保留边条形状，用 background-color 承载可主题化颜色变量。 */
+    background-color: var(--scribdown-code-ink);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      192px 12px,
+      192px 12px,
+      12px 144px,
+      12px 144px;
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
+      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      192px 12px,
+      192px 12px,
+      12px 144px,
+      12px 144px;
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .scribdown-markdown .scribdown-code-block {
+    --scribdown-code-ink: #b6a6e0;
+    --scribdown-code-text: #e8ddd4;
+  }
+}
+
+/* 顶部 chrome：使用相对定位并处于文档流内，避免依赖外层预留 padding。 */
+.scribdown-markdown .scribdown-code-block__chrome {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--scribdown-code-chrome-height);
+  margin: 0px 4px 0;
+  padding: 4px 14px;
+  background: var(--scribdown-color-surface);
+  border-radius: 8px 10px 0 0;
+  pointer-events: none;
+}
+
+/* 关键步骤：chrome 背景纹理改用 rect-shadow.svg。 */
+.scribdown-markdown .scribdown-code-block__chrome::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: var(--scribdown-code-block-rect-shadow);
+  background-position: center;
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+/* 关键步骤：保证语言标签和复制按钮位于纹理层之上。 */
+.scribdown-markdown .scribdown-code-block__chrome > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 关键步骤：chrome 底部增加手绘边线，与代码块外框风格保持一致。 */
+.scribdown-markdown .scribdown-code-block__chrome::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: 6px;
+  right: 6px;
+  bottom: -1px;
+  height: 12px;
+  pointer-events: none;
+  background-image: var(--scribdown-code-block-edge-horizontal);
+  background-repeat: repeat-x;
+  background-size: 192px 12px;
+  background-position: left bottom;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block__chrome::before {
+    /* 关键步骤：使用 mask 仅保留纹理形状，颜色由 token 统一控制。 */
+    background-color: var(--scribdown-code-block-chrome-shadow-fill);
+    background-image: none;
+    -webkit-mask-image: var(--scribdown-code-block-rect-shadow);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: auto 100%;
+    -webkit-mask-mode: alpha;
+    mask-image: var(--scribdown-code-block-rect-shadow);
+    mask-position: center;
+    mask-repeat: repeat-x;
+    mask-size: auto 100%;
+    mask-mode: alpha;
+  }
+
+  .scribdown-markdown .scribdown-code-block__chrome::after {
+    background-color: var(--scribdown-code-ink);
+    background-image: none;
+    -webkit-mask-image: var(--scribdown-code-block-edge-horizontal);
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: 192px 12px;
+    -webkit-mask-position: left bottom;
+    -webkit-mask-mode: alpha;
+    mask-image: var(--scribdown-code-block-edge-horizontal);
+    mask-repeat: repeat-x;
+    mask-size: 192px 12px;
+    mask-position: left bottom;
+    mask-mode: alpha;
+  }
+}
+
+/* 左侧语言标签：叠加 tag.svg 背景，保留手绘质感。 */
+.scribdown-markdown .scribdown-code-block__lang {
+  display: inline-block;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  min-height: 36px;
+  margin-left: 2px;
+  padding: 6px 10px 6px 12px;
+  border-radius: 8px 12px 9px 11px;
+  color: var(--scribdown-code-ink);
+  font-family: var(--scribdown-font-code);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  text-transform: lowercase;
+  pointer-events: auto;
+  user-select: none;
+}
+
+/* 关键步骤：语言标签背景分层，body 可重复，左右边界固定在两侧。 */
+.scribdown-markdown .scribdown-code-block__lang::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  box-sizing: border-box;
+  top: -4px;
+  right: -16px;
+  bottom: 0px;
+  left: 0px;
+  padding-right: var(--scribdown-code-block-lang-tag-right-safe-width);
+  pointer-events: none;
+  background-color: transparent;
+  background-image:
+    var(--scribdown-code-block-lang-tag-left-line),
+    var(--scribdown-code-block-lang-tag-right),
+    var(--scribdown-code-block-lang-tag-body);
+  background-repeat: no-repeat, no-repeat, repeat-x;
+  background-position:
+    left center,
+    right center,
+    left center;
+  background-size:
+    auto 100%,
+    auto 100%,
+    auto 100%;
+  background-origin:
+    border-box,
+    border-box,
+    content-box;
+  background-clip:
+    border-box,
+    border-box,
+    content-box;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block__lang::before {
+    /* 关键步骤：边框层与排线层拆开着色，确保两者颜色可独立配置。 */
+    background-image:
+      linear-gradient(
+        var(--scribdown-code-block-lang-border-fill),
+        var(--scribdown-code-block-lang-border-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-border-fill),
+        var(--scribdown-code-block-lang-border-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-border-fill),
+        var(--scribdown-code-block-lang-border-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-hatch-fill),
+        var(--scribdown-code-block-lang-hatch-fill)
+      ),
+      linear-gradient(
+        var(--scribdown-code-block-lang-hatch-fill),
+        var(--scribdown-code-block-lang-hatch-fill)
+      );
+    background-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+    background-position:
+      left center,
+      right center,
+      left center,
+      right center,
+      left center;
+    background-size:
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%;
+    background-origin:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    background-clip:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    -webkit-mask-image:
+      var(--scribdown-code-block-lang-tag-left-line),
+      var(--scribdown-code-block-lang-tag-right-outline),
+      var(--scribdown-code-block-lang-tag-body-outline),
+      var(--scribdown-code-block-lang-tag-right-hatch),
+      var(--scribdown-code-block-lang-tag-body-hatch);
+    -webkit-mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+    -webkit-mask-position:
+      left center,
+      right center,
+      left center,
+      right center,
+      left center;
+    -webkit-mask-size:
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%;
+    -webkit-mask-origin:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    -webkit-mask-clip:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    -webkit-mask-mode: alpha, alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-code-block-lang-tag-left-line),
+      var(--scribdown-code-block-lang-tag-right-outline),
+      var(--scribdown-code-block-lang-tag-body-outline),
+      var(--scribdown-code-block-lang-tag-right-hatch),
+      var(--scribdown-code-block-lang-tag-body-hatch);
+    mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+    mask-position:
+      left center,
+      right center,
+      left center,
+      right center,
+      left center;
+    mask-size:
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%,
+      auto 100%;
+    mask-origin:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    mask-clip:
+      border-box,
+      border-box,
+      content-box,
+      border-box,
+      content-box;
+    mask-mode: alpha, alpha, alpha, alpha, alpha;
+  }
+}
+
+/* 右上角复制按钮：透明背景，SVG 图标，hover/激活态轻染色。 */
+.scribdown-markdown .scribdown-code-block__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px 9px 7px 10px;
+  background: transparent;
+  color: var(--scribdown-code-ink);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background var(--scribdown-duration-fast) var(--scribdown-easing-standard),
+    transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-markdown .scribdown-code-block__copy:hover {
+  background: color-mix(in srgb, var(--scribdown-code-ink) 14%, transparent);
+}
+
+.scribdown-markdown .scribdown-code-block__copy:active {
+  transform: translateY(1px);
+}
+
+.scribdown-markdown .scribdown-code-block__copy:focus-visible {
+  outline: 2px solid var(--scribdown-code-ink);
+  outline-offset: 2px;
+}
+
+.scribdown-markdown .scribdown-code-block__copy-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* 复制成功时图标切换为对勾，色调由 accent 接管。 */
+.scribdown-markdown
+  .scribdown-code-block__copy[data-scribdown-code-copied="true"]
+  .scribdown-code-block__copy-icon--copy {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-code-block__copy-icon--check {
+  display: none;
+}
+
+.scribdown-markdown
+  .scribdown-code-block__copy[data-scribdown-code-copied="true"]
+  .scribdown-code-block__copy-icon--check {
+  display: inline-block;
+}
+
+/* 正文容器：内部 padding 控制代码与边框的间距，给短代码块也留呼吸空间。 */
+.scribdown-markdown .scribdown-code-block__body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--scribdown-code-line-gutter-width) minmax(0, 1fr);
+  padding: 4px 0 6px;
+  min-height: 28px;
+  margin: 0 4px;
+  background: var(--scribdown-color-surface);
+  border-radius: 0 0 9px 11px;
+  overflow: hidden;
+}
+
+/* 关键步骤：行号列独立成固定宽度网格列，不参与代码横向滚动。 */
+.scribdown-markdown .scribdown-code-block__gutter {
+  position: relative;
+  z-index: 2;
+  grid-column: 1;
+  box-sizing: border-box;
+  width: var(--scribdown-code-line-gutter-width);
+  padding-right: var(--scribdown-code-line-number-gap);
+  color: color-mix(in srgb, var(--scribdown-code-ink) 60%, transparent);
+  font-family: var(--scribdown-font-code);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.65;
+  text-align: right;
+  pointer-events: none;
+  user-select: none;
+}
+
+.scribdown-markdown .scribdown-code-block__gutter-line {
+  display: block;
+}
+
+/* 关键步骤：行号列右侧绘制手绘分隔线，与外层边框风格保持一致。 */
+.scribdown-markdown .scribdown-code-block__gutter::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  pointer-events: none;
+  background-image: var(--scribdown-code-block-edge-vertical);
+  background-repeat: repeat-y;
+  background-size: 6px 144px;
+  background-position: right top;
+  opacity: 0.3;
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-code-block__gutter::after {
+    background-color: var(--scribdown-code-ink);
+    background-image: none;
+    -webkit-mask-image: var(--scribdown-code-block-edge-vertical);
+    -webkit-mask-repeat: repeat-y;
+    -webkit-mask-size: 6px 144px;
+    -webkit-mask-position: right top;
+    -webkit-mask-mode: alpha;
+    mask-image: var(--scribdown-code-block-edge-vertical);
+    mask-repeat: repeat-y;
+    mask-size: 6px 144px;
+    mask-position: right top;
+    mask-mode: alpha;
+  }
+}
+
+.scribdown-markdown .scribdown-code-block__body > pre {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--scribdown-code-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.65;
+  scrollbar-color: color-mix(in srgb, var(--scribdown-code-ink) 30%, transparent) transparent;
+}
+
+.scribdown-markdown .scribdown-code-block__body > pre::before {
+  content: none;
+}
+
+.scribdown-markdown .scribdown-code-block__body > pre code {
+  position: relative;
+  display: block;
+  min-width: max-content;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  background-image: none;
+  box-shadow: none;
+  color: var(--scribdown-code-text);
+  font-family: var(--scribdown-font-code);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* 行：仅渲染代码正文，行号由独立 gutter 列渲染。 */
+.scribdown-markdown .scribdown-code-block__line {
+  display: block;
+  padding-right: 16px;
+  padding-left: 0;
+}
+
+.scribdown-markdown .scribdown-code-block__line::before {
+  content: none;
+}

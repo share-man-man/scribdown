@@ -1,0 +1,234 @@
+/* ─── Markdown 正文排版 ─────────────────────────────────────────────── */
+/* body-md：18px / 1.75 / 400 */
+.scribdown-markdown {
+  --scribdown-frame-edge-horizontal: url("../assets/frame-edge-horizontal.svg");
+  --scribdown-frame-edge-vertical: url("../assets/frame-edge-vertical.svg");
+  --scribdown-blockquote-bar: url("../assets/blockquote-bar.svg");
+  --scribdown-underline-stroke: url("../assets/underline-stroke.svg");
+  --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
+  --scribdown-heading-mark: url("../assets/heading-mark.svg");
+  --scribdown-markdown-edge-horizontal: url("../assets/markdown-edge-horizontal.svg");
+  --scribdown-markdown-edge-vertical: url("../assets/markdown-edge-vertical.svg");
+  --scribdown-image-fallback-edge-horizontal: url("../assets/image-fallback-edge-horizontal.svg");
+  --scribdown-image-fallback-edge-vertical: url("../assets/image-fallback-edge-vertical.svg");
+  --scribdown-code-block-edge-horizontal: url("../assets/code-block-edge-horizontal.svg");
+  --scribdown-code-block-edge-vertical: url("../assets/code-block-edge-vertical.svg");
+  --scribdown-code-block-rect-shadow: url("../assets/rect-shadow.svg");
+  --scribdown-code-block-card-bg-1: url("../assets/card-bg-1.svg");
+  --scribdown-code-block-card-bg-2: url("../assets/card-bg-2.svg");
+  --scribdown-code-block-card-bg-3: url("../assets/card-bg-3.svg");
+  --scribdown-code-block-card-bg-4: url("../assets/card-bg-4.svg");
+  --scribdown-code-block-lang-tag-body: url("../assets/tag-body.svg");
+  --scribdown-code-block-lang-tag-body-outline: url("../assets/tag-body-outline.svg");
+  --scribdown-code-block-lang-tag-body-hatch: url("../assets/tag-body-hatch.svg");
+  --scribdown-code-block-lang-tag-left-line: url("../assets/tag-left-line.svg");
+  --scribdown-code-block-lang-tag-right: url("../assets/tag-right.svg");
+  --scribdown-code-block-lang-tag-right-outline: url("../assets/tag-right-outline.svg");
+  --scribdown-code-block-lang-tag-right-hatch: url("../assets/tag-right-hatch.svg");
+  --scribdown-code-block-lang-tag-right-safe-width: 18px;
+  --scribdown-code-block-shadow-gray-token: var(--scribdown-color-text-secondary);
+  --scribdown-code-block-chrome-shadow-token: var(--scribdown-color-border);
+  --scribdown-code-block-chrome-shadow-fill: color-mix(
+    in srgb,
+    var(--scribdown-code-block-chrome-shadow-token) 40%,
+    transparent
+  );
+  --scribdown-code-block-shadow-fill-1: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 78%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-code-block-shadow-fill-2: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 74%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-code-block-shadow-fill-3: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 70%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-code-block-shadow-fill-4: color-mix(
+    in srgb,
+    var(--scribdown-code-block-shadow-gray-token) 66%,
+    var(--scribdown-color-surface)
+  );
+
+  position: relative;
+  background-color: var(--scribdown-color-surface);
+  background-image:
+    radial-gradient(circle at 24% 14%, var(--scribdown-paper-grain) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 72% 58%, var(--scribdown-paper-fiber) 0 1.2px, transparent 1.9px);
+  background-size:
+    28px 25px,
+    39px 34px;
+  padding: var(--scribdown-space-5);
+  font-size: 16px;
+  line-height: 1.65;
+  font-weight: 400;
+  color: var(--scribdown-color-text-primary);
+  word-break: break-word;
+}
+
+/* 外层边框：专属 markdown-edge 横/纵向笔触，分层叠加（wash/fill/gap/line/dry），呼应 blockquote 的实现。 */
+.scribdown-markdown::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
+    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+  background-position:
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
+}
+
+.scribdown-markdown > :first-child {
+  margin-top: 0;
+}
+
+.scribdown-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+/* HeadingRenderer：字体 heading，Typography 规范字号 / 行高 / 字重 */
+.scribdown-markdown h1,
+.scribdown-markdown h2,
+.scribdown-markdown h3,
+.scribdown-markdown h4,
+.scribdown-markdown h5,
+.scribdown-markdown h6 {
+  position: relative;
+  isolation: isolate;
+  font-family: var(--scribdown-font-heading);
+  margin-top: var(--scribdown-space-4);
+  margin-bottom: var(--scribdown-space-1);
+  letter-spacing: 0;
+}
+
+.scribdown-markdown h1 {
+  --scribdown-heading-mark-fade: 0%;
+  --scribdown-heading-mark-height: 0.36em;
+
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-shadow: 0.9px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 20%, transparent);
+}
+
+/* 关键步骤：手绘 SVG 高亮，结合 box-decoration-break 让多行标题逐行复制。 */
+.scribdown-markdown h1 .scribdown-heading-mark,
+.scribdown-markdown h2 .scribdown-heading-mark,
+.scribdown-markdown h3 .scribdown-heading-mark,
+.scribdown-markdown h4 .scribdown-heading-mark,
+.scribdown-markdown h5 .scribdown-heading-mark,
+.scribdown-markdown h6 .scribdown-heading-mark {
+  background-image:
+    linear-gradient(
+      color-mix(
+        in srgb,
+        var(--scribdown-color-surface) var(--scribdown-heading-mark-fade),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--scribdown-color-surface) var(--scribdown-heading-mark-fade),
+        transparent
+      )
+    ),
+    var(--scribdown-heading-mark);
+  background-position:
+    0 92%,
+    0 92%;
+  background-repeat: no-repeat, no-repeat;
+  background-size:
+    100% var(--scribdown-heading-mark-height),
+    100% var(--scribdown-heading-mark-height);
+  padding: 0 0.08em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.scribdown-markdown h2 {
+  --scribdown-heading-mark-fade: 14%;
+  --scribdown-heading-mark-height: 0.3em;
+
+  font-size: 26px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.scribdown-markdown h3 {
+  --scribdown-heading-mark-fade: 26%;
+  --scribdown-heading-mark-height: 0.24em;
+
+  font-size: 21px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.scribdown-markdown h4 {
+  --scribdown-heading-mark-fade: 38%;
+  --scribdown-heading-mark-height: 0.18em;
+
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.scribdown-markdown h5 {
+  --scribdown-heading-mark-fade: 50%;
+  --scribdown-heading-mark-height: 0.14em;
+
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.scribdown-markdown h6 {
+  --scribdown-heading-mark-fade: 60%;
+  --scribdown-heading-mark-height: 0.1em;
+
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* ParagraphRenderer：段间距 space-3，紧凑版 */
+.scribdown-markdown p {
+  margin: 0 0 var(--scribdown-space-3);
+}
+
+.scribdown-markdown strong {
+  font-weight: 700;
+  text-shadow: 0.7px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 24%, transparent);
+}
+
+.scribdown-markdown u {
+  padding-bottom: 0.1em;
+  background-image: var(--scribdown-underline-stroke);
+  background-position: 0 96%;
+  background-repeat: repeat-x;
+  background-size: 96px 0.38em;
+  text-decoration: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* HanddrawnDivider：不用直线，上下留白 space-5 */
+.scribdown-markdown hr {
+  height: 12px;
+  border: none;
+  background-image: var(--scribdown-frame-edge-horizontal);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 8px;
+  margin: var(--scribdown-space-3) 0;
+  transform: rotate(-0.3deg);
+}

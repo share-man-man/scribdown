@@ -1,0 +1,205 @@
+/* ImageRenderer：块级图片转换为 figure，边框由 SVG 四边重复组成，和 blockquote::after 同源。 */
+.scribdown-markdown .scribdown-image-figure {
+  width: min(100%, 720px);
+  margin: 0 auto var(--scribdown-space-3);
+}
+
+.scribdown-markdown .scribdown-image-frame {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 92%, var(--scribdown-color-border) 8%);
+  background-size:
+    32px 29px,
+    auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.scribdown-markdown .scribdown-image-frame::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 7px -7px -7px 7px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--scribdown-color-border) 38%, transparent),
+      transparent 84%
+    ),
+    color-mix(in srgb, var(--scribdown-color-text-primary) 8%, transparent);
+  border-radius: 16px 18px 15px 17px;
+  transform: rotate(0.35deg);
+}
+
+/* 关键步骤：用横向和纵向 SVG 边缘平铺，形成九宫格式可伸缩边框。 */
+.scribdown-markdown .scribdown-image-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
+    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+  background-position:
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
+}
+
+.scribdown-markdown .scribdown-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: color-mix(in srgb, var(--scribdown-color-surface) 86%, transparent);
+  border: 0;
+  border-radius: 6px 7px 5px 6px;
+  box-shadow: none;
+  cursor: zoom-in;
+}
+
+.scribdown-markdown .scribdown-image:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--scribdown-color-accent) 72%, transparent);
+  outline-offset: 4px;
+}
+
+.scribdown-markdown a .scribdown-image {
+  cursor: pointer;
+}
+
+.scribdown-markdown .scribdown-image-caption {
+  margin-top: var(--scribdown-space-2);
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.scribdown-markdown .scribdown-image-figure + p:has(> em:only-child) {
+  width: min(100%, 720px);
+  margin: calc(0px - var(--scribdown-space-1)) auto var(--scribdown-space-3);
+  color: var(--scribdown-color-text-primary);
+  font-size: 15px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.scribdown-markdown .scribdown-image-fallback {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-image-frame--failed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 144px;
+  padding: var(--scribdown-space-4);
+  background:
+    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
+}
+
+.scribdown-markdown .scribdown-image-frame--failed::after {
+  background-image:
+    var(--scribdown-image-fallback-edge-horizontal),
+    var(--scribdown-image-fallback-edge-horizontal), var(--scribdown-image-fallback-edge-vertical),
+    var(--scribdown-image-fallback-edge-vertical);
+  background-size:
+    64px 8px,
+    64px 8px,
+    8px 64px,
+    8px 64px;
+}
+
+.scribdown-markdown .scribdown-image-frame--failed .scribdown-image {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-image-frame--failed .scribdown-image-fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  max-width: 100%;
+  color: var(--scribdown-color-text-primary);
+  text-align: center;
+}
+
+.scribdown-markdown .scribdown-image-fallback-icon {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 58px;
+  height: 46px;
+  margin-bottom: var(--scribdown-space-3);
+  border: 2px solid var(--scribdown-color-text-primary);
+  background:
+    linear-gradient(
+      42deg,
+      transparent 0 47%,
+      var(--scribdown-color-accent) 48% 52%,
+      transparent 53% 100%
+    ),
+    linear-gradient(
+      138deg,
+      transparent 0 47%,
+      var(--scribdown-color-accent) 48% 52%,
+      transparent 53% 100%
+    ),
+    color-mix(in srgb, var(--scribdown-color-surface) 78%, var(--scribdown-color-accent) 8%);
+  transform: rotate(-1.5deg);
+}
+
+.scribdown-markdown .scribdown-image-fallback-icon::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--scribdown-color-accent);
+  border-radius: 50%;
+}
+
+.scribdown-markdown .scribdown-image-fallback-text {
+  font-family: var(--scribdown-font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.scribdown-markdown .scribdown-image-fallback-source {
+  max-width: 100%;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--scribdown-color-text-secondary);
+  font-family: var(--scribdown-font-code);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.scribdown-markdown :not(.scribdown-image-frame) > img {
+  max-width: 720px;
+  width: 100%;
+  height: auto;
+  background: var(--scribdown-color-surface);
+  border-radius: var(--scribdown-radius-md);
+}

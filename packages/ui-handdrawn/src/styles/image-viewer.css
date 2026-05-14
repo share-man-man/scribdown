@@ -1,0 +1,209 @@
+/* ImageViewer：运行时注入的全图查看层，支持按钮和快捷键缩放。 */
+.scribdown-image-viewer {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(246, 241, 232, 0.1) 0 1px, transparent 1.7px),
+    color-mix(in srgb, var(--scribdown-color-text-primary) 84%, transparent);
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-image-viewer:not([open]) {
+  display: none;
+}
+
+.scribdown-image-viewer[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.scribdown-image-viewer::backdrop {
+  background: color-mix(in srgb, var(--scribdown-color-text-primary) 78%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.scribdown-image-viewer__chrome {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--scribdown-space-3);
+  align-items: center;
+  padding: var(--scribdown-space-3) var(--scribdown-space-4);
+  background:
+    radial-gradient(circle at 18px 16px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 94%, transparent);
+  background-size:
+    32px 29px,
+    auto;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 14%, transparent);
+}
+
+.scribdown-image-viewer__caption-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--scribdown-space-1);
+}
+
+.scribdown-image-viewer__caption {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scribdown-image-viewer__hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--scribdown-color-text-primary) 60%, transparent);
+  font-family: var(--scribdown-font-code);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.scribdown-image-viewer__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--scribdown-space-2);
+}
+
+.scribdown-image-viewer__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 72%, transparent);
+  border-radius: 8px 10px 9px 11px;
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 88%,
+    var(--scribdown-color-mark) 12%
+  );
+  box-shadow: var(--scribdown-shadow-sm);
+  color: var(--scribdown-color-text-primary);
+  cursor: pointer;
+  font-family: var(--scribdown-font-code);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scribdown-image-viewer__button:hover {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 78%,
+    var(--scribdown-color-mark) 22%
+  );
+}
+
+.scribdown-image-viewer__button:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 3px;
+}
+
+.scribdown-image-viewer__button:disabled {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.46;
+}
+
+.scribdown-image-viewer__button--close {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 82%,
+    var(--scribdown-color-danger) 18%
+  );
+}
+
+.scribdown-image-viewer__zoom-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 36px;
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-code);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scribdown-image-viewer__viewport {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  /* safe center：图片尺寸 ≤ 视口时居中；溢出时自动退化为 start，避免裁掉头部不可滚动。 */
+  align-items: safe center;
+  justify-content: safe center;
+  padding: var(--scribdown-space-5);
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.scribdown-image-viewer--zoomed .scribdown-image-viewer__viewport {
+  cursor: grab;
+}
+
+.scribdown-image-viewer--zoomed.scribdown-image-viewer--dragging .scribdown-image-viewer__viewport {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.scribdown-image-viewer__image {
+  flex: 0 0 auto;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  background: var(--scribdown-color-surface);
+  border-radius: 6px 7px 5px 6px;
+  box-shadow: 6px 8px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 26%, transparent);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scribdown-image-viewer--dragging .scribdown-image-viewer__image {
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .scribdown-image-viewer__chrome {
+    grid-template-columns: 1fr;
+    gap: var(--scribdown-space-2);
+    padding: var(--scribdown-space-3);
+  }
+
+  .scribdown-image-viewer__controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .scribdown-image-viewer__button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .scribdown-image-viewer__hint {
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .scribdown-image-viewer__viewport {
+    padding: var(--scribdown-space-3);
+  }
+}

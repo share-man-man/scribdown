@@ -1,0 +1,68 @@
+/* Delete：SVG 笔触替代浏览器默认直线，避免删除线过硬。 */
+.scribdown-markdown del,
+.scribdown-markdown s {
+  --scribdown-delete-stroke: url("../assets/delete.svg");
+
+  position: relative;
+  color: var(--scribdown-color-text-secondary);
+  text-decoration: none;
+  background-image: var(--scribdown-delete-stroke);
+  background-repeat: no-repeat;
+  background-position: 50% 58%;
+  background-size: 100% 0.95em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Delete overlay：让删除笔触压在文字上方，避免被字形遮住。 */
+.scribdown-markdown del::after,
+.scribdown-markdown s::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: -0.08em;
+  right: -0.08em;
+  top: 50%;
+  height: 0.95em;
+  pointer-events: none;
+  background-image: var(--scribdown-delete-stroke);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transform: translateY(-50%);
+}
+
+/* LinkRenderer：独立 link token，区分 default / hover / visited / focus-visible */
+.scribdown-markdown a {
+  color: var(--scribdown-color-link);
+  text-decoration: none;
+  transition: opacity var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-markdown a:visited {
+  color: var(--scribdown-color-link-visited);
+}
+
+.scribdown-markdown a:hover {
+  opacity: 0.8;
+}
+
+.scribdown-markdown a:focus-visible {
+  outline: 2px solid var(--scribdown-color-link);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* mark 高亮 */
+.scribdown-markdown mark {
+  background: linear-gradient(
+    92deg,
+    transparent 0 3%,
+    color-mix(in srgb, var(--scribdown-color-mark) 68%, transparent) 8% 90%,
+    transparent 97% 100%
+  );
+  color: var(--scribdown-color-text-primary);
+  border-radius: var(--scribdown-radius-sm);
+  padding: 0 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}

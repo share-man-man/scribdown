@@ -1,0 +1,17 @@
+/* ─── Shell Components ──────────────────────────────────────────────── */
+/* DocumentShell：正文列最大宽度 840px，侧边距至少 48px，顶部 64px，底部 96px */
+.scribdown-page {
+  margin: 0;
+  padding: 0;
+  background: var(--scribdown-color-bg);
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: var(--scribdown-font-body);
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-app {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: var(--scribdown-space-6) var(--scribdown-space-5) var(--scribdown-space-7);
+}
