@@ -13,32 +13,35 @@
 /* 2. 外层壳层：page / app 容器 */
 @import "./styles/shell.css";
 
-/* 3. Markdown 正文：容器、标题、段落、强调、分隔线 */
+/* 3. 宿主默认样式隔离（浏览器 / VS Code Webview） */
+@import "./styles/host-reset.css";
+
+/* 4. Markdown 正文：容器、标题、段落、强调、分隔线 */
 @import "./styles/markdown.css";
 
-/* 4. 列表与任务列表 */
+/* 5. 列表与任务列表 */
 @import "./styles/lists.css";
 
-/* 5. 折叠块（details / summary） */
+/* 6. 折叠块（details / summary） */
 @import "./styles/details.css";
 
-/* 6. 目录（[TOC]） */
+/* 7. 目录（[TOC]） */
 @import "./styles/toc.css";
 
-/* 7. 代码：inline code + 代码块 + 语言标签 + 复制按钮 */
+/* 8. 代码：inline code + 代码块 + 语言标签 + 复制按钮 */
 @import "./styles/code.css";
 
-/* 8. 引用块 */
+/* 9. 引用块 */
 @import "./styles/blockquote.css";
 
-/* 9. 行内装饰：删除线、链接、mark 高亮 */
+/* 10. 行内装饰：删除线、链接、mark 高亮 */
 @import "./styles/inline.css";
 
-/* 10. 图片：figure / 边框 / fallback */
+/* 11. 图片：figure / 边框 / fallback */
 @import "./styles/image.css";
 
-/* 11. 全屏图片查看器 */
+/* 12. 全屏图片查看器 */
 @import "./styles/image-viewer.css";
 
-/* 12. 表格 */
+/* 13. 表格 */
 @import "./styles/table.css";

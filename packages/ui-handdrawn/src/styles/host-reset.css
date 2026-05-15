@@ -1,0 +1,46 @@
+/* 宿主默认样式隔离：
+ * VS Code Webview 会注入默认层（如 code/pre/a 等基础样式），
+ * 这里先把常见标签拉回到容器基线，再交给后续分模块样式接管。
+ */
+.scribdown-markdown {
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-body);
+}
+
+/* 关键步骤：统一文本色与字体继承，抹平宿主兜底差异。 */
+.scribdown-markdown :where(
+    p,
+    ul,
+    ol,
+    li,
+    blockquote,
+    pre,
+    code,
+    a,
+    strong,
+    em,
+    del,
+    s,
+    mark,
+    details,
+    summary,
+    table,
+    thead,
+    tbody,
+    tr,
+    th,
+    td,
+    img,
+    figure,
+    figcaption,
+    hr
+  ) {
+  color: inherit;
+  font-family: inherit;
+}
+
+/* 宿主常见的 pre/code 背景与边框兜底清空，避免和手绘样式叠加。 */
+.scribdown-markdown :where(pre, code) {
+  border: 0;
+  background: transparent;
+}

@@ -3,6 +3,7 @@
   font-family: var(--scribdown-font-code);
   font-size: inherit;
   font-weight: 500;
+  color: inherit;
   padding: 1px 6px 2px;
   border-radius: 7px 9px 8px 10px;
   background: color-mix(
