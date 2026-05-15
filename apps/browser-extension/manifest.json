@@ -12,7 +12,7 @@
   "content_scripts": [
     {
       "matches": ["file://**/*.md"],
-      "js": ["content.js"],
+      "js": ["src/content.ts"],
       "run_at": "document_end"
     }
   ]

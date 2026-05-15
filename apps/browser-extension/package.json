@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "dev": "vite --port 5173 --strictPort",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "test": "vitest run",
@@ -20,10 +20,10 @@
     "webextension-polyfill": "^0.12.0"
   },
   "devDependencies": {
+    "@crxjs/vite-plugin": "^2.4.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.1",
-    "terser": "^5.47.1",
     "typescript": "^5.8.3",
     "vite": "^7.0.4",
     "vitest": "^3.2.4"
