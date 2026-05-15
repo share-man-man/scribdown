@@ -1,24 +1,55 @@
 {
-  "name": "@scribdown/vscode-extension",
+  "name": "scribdown-markdown-preview",
+  "displayName": "Scribdown Markdown Preview",
+  "description": "Handdrawn-style Markdown preview for VS Code.",
+  "publisher": "scribdown",
   "version": "0.0.0",
-  "private": true,
   "type": "module",
   "main": "dist/extension.cjs",
+  "categories": [
+    "Other"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:scribdown.openPreview"
+  ],
+  "files": [
+    "dist/**",
+    "package.json"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "scribdown.openPreview",
-        "title": "Scribdown: Open Preview"
+        "title": "Open Scribdown Preview",
+        "category": "Scribdown",
+        "icon": "$(markdown)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "scribdown.openPreview",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "scribdown.openPreview",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
+    "vscode:prepublish": "pnpm run build",
     "dev": "tsup --watch",
     "build": "tsup",
+    "package:vsix": "pnpm dlx @vscode/vsce package --out scribdown-markdown-preview.vsix",
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -28,7 +59,9 @@
     "@scribdown/shared": "workspace:*"
   },
   "devDependencies": {
+    "@scribdown/ui-handdrawn": "workspace:*",
     "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.11",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }

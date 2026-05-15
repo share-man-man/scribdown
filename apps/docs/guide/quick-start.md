@@ -58,7 +58,7 @@ pnpm run e2e          # 端到端测试
 
 **VS Code 插件**
 
-在 VS Code 中打开仓库根目录，按 `F5` 启动扩展开发宿主（Extension Development Host），在新窗口中执行命令 `Scribdown: Open Preview`。
+在 VS Code 中打开仓库根目录，按 `F5` 启动扩展开发宿主（Extension Development Host），在新窗口中执行命令 `Scribdown: Open Scribdown Preview`。
 
 ## 常见问题
 
