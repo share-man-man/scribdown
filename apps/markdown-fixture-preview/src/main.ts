@@ -1,7 +1,6 @@
 import {
-  hydrateCodeBlocks,
-  hydrateMarkdownImages,
-  renderMarkdown
+  hydrateMarkdownPreview,
+  renderMarkdownPreview
 } from "@scribdown/markdown-renderer";
 import { MARKDOWN_FIXTURE_PREVIEW_TITLE, PROJECT_NAME } from "@scribdown/shared";
 import "@scribdown/ui-handdrawn/styles.css";
@@ -64,7 +63,7 @@ function getPreviewMounts(): PreviewMounts {
 async function renderFixture(markdownText: string, mounts: PreviewMounts): Promise<void> {
   // 使用真实渲染链路，避免设计预览与宿主预览出现实现偏差。
   /** Markdown 转换后的安全 HTML。 */
-  const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+  const renderedHtml = await renderMarkdownPreview(markdownText);
 
   /** 当前渲染完成时间。 */
   const renderedAt = new Date();
@@ -73,10 +72,8 @@ async function renderFixture(markdownText: string, mounts: PreviewMounts): Promi
   mounts.titleText.textContent = MARKDOWN_FIXTURE_PREVIEW_TITLE;
   mounts.sourceOutput.textContent = markdownText;
   mounts.previewOutput.innerHTML = renderedHtml;
-  // 关键步骤：补齐图片加载状态，便于失败态占位样式接管浏览器默认 broken image。
-  hydrateMarkdownImages(mounts.previewOutput);
-  // 关键步骤：为代码块挂载语言标签、复制按钮与行号 chrome。
-  hydrateCodeBlocks(mounts.previewOutput);
+  // 关键步骤：统一执行图片与代码块的 hydration，保持多端行为一致。
+  hydrateMarkdownPreview(mounts.previewOutput);
   mounts.statusText.textContent = "Ready";
   mounts.updatedAt.dateTime = renderedAt.toISOString();
   mounts.updatedAt.textContent = renderedAt.toLocaleTimeString();

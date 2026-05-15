@@ -1,8 +1,12 @@
 import {
-  hydrateCodeBlocks,
-  hydrateMarkdownImages,
-  renderMarkdown
+  hydrateMarkdownPreview,
+  renderMarkdownPreview
 } from "@scribdown/markdown-renderer";
+import {
+  SCRIBDOWN_APP_CLASS_NAME,
+  SCRIBDOWN_MARKDOWN_CLASS_NAME,
+  SCRIBDOWN_PAGE_CLASS_NAME
+} from "@scribdown/shared";
 // 通过 ?inline 将 CSS 以字符串形式打包进 IIFE，避免运行时文件加载。
 import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
 
@@ -14,7 +18,7 @@ import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
   if (!rawMarkdown.trim()) return;
 
   // 关键步骤：将原始 Markdown 渲染为安全 HTML。
-  const renderedHtml = await renderMarkdown(rawMarkdown, { sanitizeHtml: true });
+  const renderedHtml = await renderMarkdownPreview(rawMarkdown);
 
   // 从 URL 中提取文件名用于页面标题。
   const filename = decodeURIComponent(window.location.pathname.split("/").pop() ?? "Markdown");
@@ -31,14 +35,12 @@ import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
   document.head.appendChild(styleEl);
 
   // 用渲染结果替换 <body> 内容。
-  document.body.className = "scribdown-page";
+  document.body.className = SCRIBDOWN_PAGE_CLASS_NAME;
   document.body.innerHTML = `
-    <main class="scribdown-app">
-      <article class="scribdown-markdown">${renderedHtml}</article>
+    <main class="${SCRIBDOWN_APP_CLASS_NAME}">
+      <article class="${SCRIBDOWN_MARKDOWN_CLASS_NAME}">${renderedHtml}</article>
     </main>
   `;
-  // 关键步骤：补齐图片加载状态，保证失败态可以展示 alt 文本占位。
-  hydrateMarkdownImages(document.body);
-  // 关键步骤：为代码块挂载语言标签、复制按钮与行号 chrome。
-  hydrateCodeBlocks(document.body);
+  // 关键步骤：统一执行图片与代码块的 hydration，保持各宿主行为一致。
+  hydrateMarkdownPreview(document.body);
 })();
