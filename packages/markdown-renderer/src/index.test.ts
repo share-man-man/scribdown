@@ -9,7 +9,9 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
 
-    expect(renderedHtml).toContain('<h1 id="文档标题"><span class="scribdown-heading-mark">文档标题</span></h1>');
+    expect(renderedHtml).toContain(
+      '<h1 id="文档标题" data-source-line="1"><span class="scribdown-heading-mark">文档标题</span></h1>'
+    );
     expect(renderedHtml).toContain('<details class="scribdown-toc"><summary class="scribdown-toc-summary">目录</summary>');
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain(
@@ -50,8 +52,12 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
 
-    expect(renderedHtml).toContain('<h2 id="重复标题"><span class="scribdown-heading-mark">重复标题</span></h2>');
-    expect(renderedHtml).toContain('<h2 id="重复标题-1"><span class="scribdown-heading-mark">重复标题</span></h2>');
+    expect(renderedHtml).toContain(
+      '<h2 id="重复标题" data-source-line="3"><span class="scribdown-heading-mark">重复标题</span></h2>'
+    );
+    expect(renderedHtml).toContain(
+      '<h2 id="重复标题-1" data-source-line="5"><span class="scribdown-heading-mark">重复标题</span></h2>'
+    );
     expect(renderedHtml).toContain(`<a href="#${encodeURIComponent("重复标题")}">重复标题</a>`);
     expect(renderedHtml).toContain(`<a href="#${encodeURIComponent("重复标题-1")}">重复标题</a>`);
   });
@@ -85,8 +91,12 @@ describe("renderMarkdownPreview", () => {
     expect(renderedHtml).toContain(
       '<li data-toc-index="1" class="scribdown-toc-item scribdown-toc-item--depth-2 scribdown-toc-item--branch">'
     );
-    expect(renderedHtml).toContain('<h2 id="safe-heading"><span class="scribdown-heading-mark">Safe Heading</span></h2>');
-    expect(renderedHtml).toContain('<h3 id="nested-heading"><span class="scribdown-heading-mark">Nested Heading</span></h3>');
+    expect(renderedHtml).toContain(
+      '<h2 id="safe-heading" data-source-line="3"><span class="scribdown-heading-mark">Safe Heading</span></h2>'
+    );
+    expect(renderedHtml).toContain(
+      '<h3 id="nested-heading" data-source-line="5"><span class="scribdown-heading-mark">Nested Heading</span></h3>'
+    );
   });
 
   it("keeps definition list markup when sanitizeHtml is enabled", async () => {

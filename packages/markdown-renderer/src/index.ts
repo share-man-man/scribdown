@@ -1,3 +1,4 @@
+import { SOURCE_LINE_DATA_ATTRIBUTE } from "@scribdown/shared";
 import DOMPurify from "dompurify";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -7,6 +8,16 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { type Highlighter, createHighlighter } from "shiki";
 import { unified } from "unified";
+
+/**
+ * 源码行号在 hast 节点上的属性名（camelCase）。
+ * rehype-raw 会把 DOM 属性 data-source-line 回解析为该 camelCase 形式，
+ * sanitize 白名单与 hProperties 注入均需以此形式匹配，序列化后仍输出 data-source-line。
+ */
+const SOURCE_LINE_HAST_PROPERTY = SOURCE_LINE_DATA_ATTRIBUTE.replace(
+  /-([a-z])/gu,
+  (_match: string, letter: string) => letter.toUpperCase()
+);
 
 /**
  * Markdown 渲染参数。
@@ -38,6 +49,7 @@ interface MarkdownNode {
   spread?: boolean;
   children?: MarkdownNode[];
   data?: MarkdownNodeData;
+  position?: MarkdownNodePosition;
 }
 
 /**
@@ -46,6 +58,17 @@ interface MarkdownNode {
 interface MarkdownNodeData {
   hName?: string;
   hProperties?: Record<string, unknown>;
+}
+
+/**
+ * Markdown AST 节点的源码位置信息。
+ */
+interface MarkdownNodePosition {
+  /** 节点在源码中的起始位置。 */
+  start: {
+    /** 起始行号（1-based）。 */
+    line: number;
+  };
 }
 
 /**
@@ -440,6 +463,7 @@ async function renderMarkdown(
     .use(remarkDefinitionLists)
     .use(remarkTableOfContents)
     .use(remarkImageFigures)
+    .use(remarkSourceLine)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw);
 
@@ -1995,6 +2019,8 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       RegExp
     ]
   ];
+  // 通配元素属性白名单：额外放行滚动对齐用的 data-source-line。
+  const wildcardAttributes = [...(defaultAttributes["*"] ?? []), SOURCE_LINE_HAST_PROPERTY];
 
   return {
     ...defaultSchema,
@@ -2021,6 +2047,7 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
     ),
     attributes: {
       ...defaultAttributes,
+      "*": wildcardAttributes,
       details: detailsAttributes,
       summary: summaryAttributes,
       nav: navAttributes,
@@ -2044,6 +2071,37 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
 function remarkHighlightMark(): (tree: MarkdownNode) => void {
   return (tree: MarkdownNode) => {
     transformHighlightMarks(tree);
+  };
+}
+
+/**
+ * remark 插件：为顶层块级节点标注源码起始行号。
+ * 通过 hProperties 注入 data-source-line 属性，供编辑器与预览的双向滚动对齐使用。
+ * @returns Markdown AST 转换器。
+ */
+function remarkSourceLine(): (tree: MarkdownNode) => void {
+  return (tree: MarkdownNode) => {
+    // 顶层块级节点列表。
+    const blockNodes = tree.children ?? [];
+
+    blockNodes.forEach((blockNode) => {
+      // 当前节点的源码起始行号（1-based）。
+      const startLine = blockNode.position?.start.line;
+
+      // 仅标注仍保留源码位置的原生块级节点；插件新建的节点（图表、TOC 等）跳过。
+      if (typeof startLine !== "number") {
+        return;
+      }
+
+      // 节点 HTML 转换元数据容器。
+      const nodeData: MarkdownNodeData = blockNode.data ?? {};
+      // 节点 hast 属性容器。
+      const hProperties: Record<string, unknown> = nodeData.hProperties ?? {};
+
+      hProperties[SOURCE_LINE_HAST_PROPERTY] = startLine;
+      nodeData.hProperties = hProperties;
+      blockNode.data = nodeData;
+    });
   };
 }
 

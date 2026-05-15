@@ -61,16 +61,36 @@ const PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE = "preview-scroll-changed";
 const RENDER_CONTENT_MESSAGE_TYPE = "render-content";
 
 /**
- * Extension -> Webview 消息类型：设置滚动百分比。
+ * Extension -> Webview 消息类型：按源码行号设置预览滚动位置。
  */
 const SET_PREVIEW_SCROLL_MESSAGE_TYPE = "set-preview-scroll";
+
+/**
+ * 滚动同步驱动方枚举。
+ */
+const SCROLL_SYNC_SOURCE = {
+  /** 编辑器驱动预览滚动。 */
+  editor: "editor",
+  /** 预览驱动编辑器滚动。 */
+  preview: "preview"
+} as const;
+
+/**
+ * 滚动同步驱动方类型。
+ */
+type ScrollSyncSource = (typeof SCROLL_SYNC_SOURCE)[keyof typeof SCROLL_SYNC_SOURCE];
+
+/**
+ * 滚动同步驱动方在无新事件后保留的毫秒数，用于过滤另一侧的回声事件。
+ */
+const SCROLL_SYNC_SOURCE_RETENTION_MS = 250;
 
 /**
  * Webview 消息最小结构。
  */
 interface PreviewMessagePayload {
   type: string;
-  scrollPercentage?: number;
+  sourceLine?: number;
 }
 
 /**
@@ -98,9 +118,19 @@ class ScribdownPreviewController implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
 
   /**
-   * 预览当前滚动百分比（预留双向同步用）。
+   * 预览当前顶部对应的源码行号（1-based），用于重渲染后恢复位置与双向同步。
    */
-  private previewScrollPercentage = 0;
+  private previewSourceLine = 1;
+
+  /**
+   * 当前滚动同步驱动方，用于过滤另一侧的回声事件。
+   */
+  private scrollSyncSource: ScrollSyncSource | undefined;
+
+  /**
+   * 滚动同步驱动方过期重置定时器。
+   */
+  private scrollSyncResetTimer: ReturnType<typeof setTimeout> | undefined;
 
   /**
    * 创建控制器并注册文档监听。
@@ -121,7 +151,7 @@ class ScribdownPreviewController implements vscode.Disposable {
       await this.renderDocumentToPanel(event.document);
     });
 
-    // 编辑器可视区变化监听：预留编辑器 -> 预览同步入口。
+    // 编辑器可视区变化监听：将编辑器滚动同步到预览。
     const changeVisibleRangesDisposable = vscode.window.onDidChangeTextEditorVisibleRanges(
       (event) => {
         // 当前事件编辑器文档 URI。
@@ -131,8 +161,7 @@ class ScribdownPreviewController implements vscode.Disposable {
           return;
         }
 
-        // 关键步骤：保留事件读取，后续实现编辑器与预览滚动同步时直接复用。
-        void event.visibleRanges;
+        this.handleEditorScroll(event);
       }
     );
 
@@ -175,6 +204,7 @@ class ScribdownPreviewController implements vscode.Disposable {
    * 释放控制器资源。
    */
   public dispose(): void {
+    this.clearScrollSync();
     this.disposables.forEach((disposable) => disposable.dispose());
     this.panel?.dispose();
     this.panel = undefined;
@@ -224,9 +254,10 @@ class ScribdownPreviewController implements vscode.Disposable {
   private registerPanelListeners(panel: vscode.WebviewPanel): void {
     // 面板销毁监听。
     const panelDisposeDisposable = panel.onDidDispose(() => {
+      this.clearScrollSync();
       this.panel = undefined;
       this.previewDocumentUriText = undefined;
-      this.previewScrollPercentage = 0;
+      this.previewSourceLine = 1;
     });
 
     // Webview 消息监听。
@@ -250,9 +281,9 @@ class ScribdownPreviewController implements vscode.Disposable {
       }
 
       if (normalizedMessage.type === PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE) {
-        // 记录预览滚动比例，为后续双向同步做准备。
-        const scrollPercentage = normalizedMessage.scrollPercentage ?? 0;
-        this.previewScrollPercentage = clampScrollPercentage(scrollPercentage);
+        // 预览上报的顶部源码行号。
+        const sourceLine = normalizedMessage.sourceLine ?? 1;
+        this.handlePreviewScroll(sourceLine);
       }
     });
 
@@ -303,7 +334,7 @@ class ScribdownPreviewController implements vscode.Disposable {
 
       await this.panel.webview.postMessage({
         type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
-        scrollPercentage: this.previewScrollPercentage
+        sourceLine: this.previewSourceLine
       });
     } catch (error) {
       // 渲染错误文本。
@@ -317,6 +348,99 @@ class ScribdownPreviewController implements vscode.Disposable {
         baseHref: ""
       });
     }
+  }
+
+  /**
+   * 处理编辑器可视区变化，按顶部可视行把编辑器滚动同步到预览。
+   * @param event 编辑器可视区变化事件。
+   */
+  private handleEditorScroll(event: vscode.TextEditorVisibleRangesChangeEvent): void {
+    // 预览驱动滚动时，编辑器侧变化属于回声，跳过以避免循环。
+    if (this.scrollSyncSource === SCROLL_SYNC_SOURCE.preview) {
+      return;
+    }
+
+    // 首个可视行范围。
+    const firstVisibleRange = event.visibleRanges[0];
+
+    if (!firstVisibleRange) {
+      return;
+    }
+
+    // 顶部可视行对应的源码行号（编辑器行号 0-based，源码行号 1-based）。
+    const sourceLine = firstVisibleRange.start.line + 1;
+
+    // 关键步骤：标记编辑器为当前驱动方，过滤预览侧回声。
+    this.markScrollSyncSource(SCROLL_SYNC_SOURCE.editor);
+    this.previewSourceLine = sourceLine;
+
+    void this.panel?.webview.postMessage({
+      type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
+      sourceLine
+    });
+  }
+
+  /**
+   * 处理预览滚动上报，按源码行号把预览滚动同步到编辑器。
+   * @param sourceLine 预览顶部对应的源码行号（1-based，可能为小数）。
+   */
+  private handlePreviewScroll(sourceLine: number): void {
+    this.previewSourceLine = sourceLine;
+
+    // 编辑器驱动滚动时，预览侧上报属于回声，跳过以避免循环。
+    if (this.scrollSyncSource === SCROLL_SYNC_SOURCE.editor) {
+      return;
+    }
+
+    // 当前预览绑定文档对应的可见编辑器。
+    const previewEditor = vscode.window.visibleTextEditors.find(
+      (editor) => editor.document.uri.toString() === this.previewDocumentUriText
+    );
+
+    if (!previewEditor) {
+      return;
+    }
+
+    // 文档总行数。
+    const lineCount = previewEditor.document.lineCount;
+    // 目标顶部行号（源码行号 1-based 转编辑器行号 0-based 并约束到有效区间）。
+    const targetLine = Math.min(lineCount - 1, Math.max(0, Math.round(sourceLine) - 1));
+    // 目标行区间。
+    const targetRange = new vscode.Range(targetLine, 0, targetLine, 0);
+
+    // 关键步骤：标记预览为当前驱动方，过滤编辑器侧回声。
+    this.markScrollSyncSource(SCROLL_SYNC_SOURCE.preview);
+    previewEditor.revealRange(targetRange, vscode.TextEditorRevealType.AtTop);
+  }
+
+  /**
+   * 标记当前滚动同步驱动方，并在静默一段时间后自动释放。
+   * @param source 当前驱动方。
+   */
+  private markScrollSyncSource(source: ScrollSyncSource): void {
+    this.scrollSyncSource = source;
+
+    if (this.scrollSyncResetTimer) {
+      clearTimeout(this.scrollSyncResetTimer);
+    }
+
+    // 关键步骤：驱动方在静默后释放，允许另一侧重新接管滚动。
+    this.scrollSyncResetTimer = setTimeout(() => {
+      this.scrollSyncSource = undefined;
+      this.scrollSyncResetTimer = undefined;
+    }, SCROLL_SYNC_SOURCE_RETENTION_MS);
+  }
+
+  /**
+   * 清理滚动同步状态与定时器。
+   */
+  private clearScrollSync(): void {
+    if (this.scrollSyncResetTimer) {
+      clearTimeout(this.scrollSyncResetTimer);
+      this.scrollSyncResetTimer = undefined;
+    }
+
+    this.scrollSyncSource = undefined;
   }
 }
 
@@ -562,22 +686,13 @@ function normalizeWebviewMessage(message: unknown): PreviewMessagePayload | unde
     return undefined;
   }
 
-  // 消息滚动百分比字段。
-  const scrollPercentageField = messageRecord.scrollPercentage;
+  // 消息源码行号字段。
+  const sourceLineField = messageRecord.sourceLine;
 
   return {
     type: typeField,
-    scrollPercentage: typeof scrollPercentageField === "number" ? scrollPercentageField : undefined
+    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined
   };
-}
-
-/**
- * 约束滚动百分比到 0~1。
- * @param value 原始值。
- * @returns 约束后的值。
- */
-function clampScrollPercentage(value: number): number {
-  return Math.min(1, Math.max(0, value));
 }
 
 /**

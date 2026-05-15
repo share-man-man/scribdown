@@ -114,14 +114,13 @@ importers:
         version: 7.3.2(@types/node@24.12.2)(terser@5.47.1)
 
   apps/vscode-extension:
-    dependencies:
+    devDependencies:
       '@scribdown/markdown-renderer':
         specifier: workspace:*
         version: link:../../packages/markdown-renderer
       '@scribdown/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-    devDependencies:
       '@scribdown/ui-handdrawn':
         specifier: workspace:*
         version: link:../../packages/ui-handdrawn
@@ -140,6 +139,9 @@ importers:
 
   packages/markdown-renderer:
     dependencies:
+      '@scribdown/shared':
+        specifier: workspace:*
+        version: link:../shared
       dompurify:
         specifier: ^3.2.7
         version: 3.4.0

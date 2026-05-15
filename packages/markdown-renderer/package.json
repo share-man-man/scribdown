@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@scribdown/shared": "workspace:*",
     "dompurify": "^3.2.7",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
