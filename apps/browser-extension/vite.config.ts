@@ -3,19 +3,6 @@ import { build, defineConfig, type Plugin, type TerserOptions } from "vite";
 import react from "@vitejs/plugin-react";
 
 /**
- * 各 packages 的路径别名，popup 与 content script 两次构建共用。
- * ui-handdrawn 只对外暴露样式与静态资源，使用正则以同时覆盖带 ?inline 查询参数。
- */
-const sharedAlias = [
-  {
-    find: /^@scribdown\/ui-handdrawn\/styles\.css/,
-    replacement: resolve(__dirname, "../../packages/ui-handdrawn/src/styles.css")
-  },
-  { find: "@scribdown/markdown-renderer", replacement: resolve(__dirname, "../../packages/markdown-renderer/src/index.ts") },
-  { find: "@scribdown/shared",            replacement: resolve(__dirname, "../../packages/shared/src/index.ts") }
-];
-
-/**
  * 在 popup 构建结束后，自动触发 content script 的 IIFE 二次构建。
  * 使用插件而非独立 config 文件，保持单入口构建命令。
  * @returns Vite 插件对象。
@@ -27,7 +14,6 @@ function buildContentScript(): Plugin {
     closeBundle: async () => {
       await build({
         configFile: false,
-        resolve: { alias: sharedAlias },
         build: {
           outDir: resolve(__dirname, "dist"),
           // 不清空主构建产物。
@@ -64,7 +50,6 @@ function buildContentScript(): Plugin {
 export default function createViteConfig() {
   return defineConfig({
     plugins: [react(), buildContentScript()],
-    resolve: { alias: sharedAlias },
     build: {
       outDir: "dist",
       emptyOutDir: true,

@@ -1,5 +1,5 @@
 import { build as buildEsbuildBundle } from "esbuild";
-import { access, cp, mkdir, rm } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,9 +11,9 @@ const PACKAGE_ROOT = dirname(fileURLToPath(import.meta.url));
 // 用于按包名解析 workspace 包资源的 require。
 const requireFromConfig = createRequire(import.meta.url);
 
-// ui-handdrawn 构建产物目录（按包名解析，避免硬编码 monorepo 相对路径）。
-const UI_HANDDRAWN_DIST_DIRECTORY = dirname(
-  requireFromConfig.resolve("@scribdown/ui-handdrawn/styles.css")
+// ui-handdrawn 样式入口（JIT 模式下解析到包内 src/styles.css）。
+const UI_HANDDRAWN_STYLES_ENTRY_FILE_PATH = requireFromConfig.resolve(
+  "@scribdown/ui-handdrawn/styles.css"
 );
 
 // Webview 运行时资源目录。
@@ -22,28 +22,22 @@ const WEBVIEW_UI_DIST_DIRECTORY = resolve(PACKAGE_ROOT, "dist/webview-ui");
 // Webview runtime 打包入口文件路径。
 const WEBVIEW_RUNTIME_ENTRY_FILE_PATH = resolve(PACKAGE_ROOT, "src/webview/runtime.ts");
 
-// 复制到扩展包内的 Webview runtime 文件名。
-const WEBVIEW_RUNTIME_FILE_NAME = "preview-runtime.global.js";
+// Webview 样式产物完整路径。
+const WEBVIEW_STYLE_OUTPUT_FILE_PATH = resolve(WEBVIEW_UI_DIST_DIRECTORY, "styles.css");
 
 // Webview runtime 产物完整路径。
 const WEBVIEW_RUNTIME_OUTPUT_FILE_PATH = resolve(
   WEBVIEW_UI_DIST_DIRECTORY,
-  WEBVIEW_RUNTIME_FILE_NAME
+  "preview-runtime.global.js"
 );
+
+// 是否为生产构建。
+const IS_PRODUCTION_BUILD = process.env.NODE_ENV === "production";
 
 /**
  * 校验 Webview 资源准备条件。
  */
 async function ensureWebviewBuildPrerequisites(): Promise<void> {
-  try {
-    // 校验 ui-handdrawn 产物是否存在，避免打包出空样式。
-    await access(UI_HANDDRAWN_DIST_DIRECTORY);
-  } catch {
-    throw new Error(
-      "Missing @scribdown/ui-handdrawn build artifacts. Run `pnpm --filter @scribdown/ui-handdrawn build` first."
-    );
-  }
-
   try {
     // 校验 runtime 入口是否存在，避免生成空壳脚本。
     await access(WEBVIEW_RUNTIME_ENTRY_FILE_PATH);
@@ -60,11 +54,17 @@ async function ensureWebviewBuildPrerequisites(): Promise<void> {
 async function prepareWebviewUiAssets(): Promise<void> {
   await ensureWebviewBuildPrerequisites();
 
-  // 先清空旧资源，避免遗留历史文件。
-  await rm(WEBVIEW_UI_DIST_DIRECTORY, { recursive: true, force: true });
-  await mkdir(WEBVIEW_UI_DIST_DIRECTORY, { recursive: true });
-  // 关键步骤：复制 styles.css 与 assets/* 到扩展 dist，供 Webview 直接加载。
-  await cp(UI_HANDDRAWN_DIST_DIRECTORY, WEBVIEW_UI_DIST_DIRECTORY, { recursive: true });
+  // 关键步骤：用 esbuild 内联 ui-handdrawn 的 @import 分文件，
+  // 并把 url() 引用的 SVG 拷贝到 dist/webview-ui/assets，供 Webview 单文件加载。
+  await buildEsbuildBundle({
+    entryPoints: [UI_HANDDRAWN_STYLES_ENTRY_FILE_PATH],
+    outfile: WEBVIEW_STYLE_OUTPUT_FILE_PATH,
+    bundle: true,
+    loader: { ".svg": "file" },
+    assetNames: "assets/[name]",
+    legalComments: "none",
+    minify: IS_PRODUCTION_BUILD
+  });
 
   // 关键步骤：将 runtime.ts 打包为 IIFE，供 Webview 以 script 标签加载。
   await buildEsbuildBundle({
@@ -77,14 +77,14 @@ async function prepareWebviewUiAssets(): Promise<void> {
     target: ["es2020"],
     sourcemap: false,
     legalComments: "none",
-    minify: process.env.NODE_ENV === "production"
+    minify: IS_PRODUCTION_BUILD
   });
 }
 
 /**
  * VS Code 扩展构建配置：
  * - 产物为 CJS 单文件（VS Code 主进程只支持 CJS）
- * - bundle 模式将 workspace 包一并打入，发布到 marketplace 时不依赖 node_modules
+ * - bundle 模式将 workspace 包（JIT 源码）一并打入，发布到 marketplace 时不依赖 node_modules
  * - vscode 模块由宿主提供，必须 external
  */
 export default defineConfig({
@@ -98,6 +98,6 @@ export default defineConfig({
   external: ["vscode"],
   sourcemap: true,
   clean: true,
-  minify: process.env.NODE_ENV === "production",
+  minify: IS_PRODUCTION_BUILD,
   onSuccess: prepareWebviewUiAssets
 });

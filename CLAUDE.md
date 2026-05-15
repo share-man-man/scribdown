@@ -31,14 +31,12 @@ Scribdown 提供统一的 Markdown 渲染体验，覆盖浏览器插件与 VS Co
 ## 常用命令
 
 ```bash
-pnpm run dev            # 一键启动（packages watch + apps dev）
-pnpm run dev:packages   # 仅 packages/tools watch
-pnpm run dev:apps       # 仅 apps dev
+pnpm run dev            # 并行启动所有 apps dev
 pnpm run build          # 全工作区构建
 pnpm run e2e            # Playwright E2E（首次需 pnpm exec playwright install）
 ```
 
-> **首次 `dev` 前**需先 `pnpm run build`，让各 `packages/*` 生成 `dist`。其余脚本（`lint` / `format` / `typecheck` / `test` / `clean` / `changeset` / `version-packages` / `release`）见根 `package.json`。
+> `packages/*` 为 Just-in-Time 内部包，`exports` 直接指向 `src` 的 TS/CSS 源码，无构建步骤；`dev` 可直接启动，无需先 `build`。其余脚本（`lint` / `format` / `typecheck` / `test` / `clean` / `changeset` / `version-packages` / `release`）见根 `package.json`。
 
 ## 架构约束
 

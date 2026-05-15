@@ -4,9 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev:packages": "turbo run dev --filter='./packages/*' --filter='./tools/*'",
-    "dev:apps": "turbo run dev --filter='./apps/*'",
-    "dev": "turbo watch dev",
+    "dev": "turbo run dev",
     "build": "turbo run build",
     "test": "turbo run test",
     "e2e": "playwright test",
