@@ -4,12 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./styles.css": "./dist/styles.css",
-    "./assets/*": "./dist/assets/*"
+    "./styles.css": "./src/styles.css",
+    "./styles/*": "./src/styles/*",
+    "./assets/*": "./src/assets/*"
   },
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
