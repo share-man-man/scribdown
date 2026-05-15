@@ -6,6 +6,7 @@ build
 coverage
 .vscode-test
 *.log
+*.vsix
 .DS_Store
 apps/docs/.vitepress/cache
 apps/docs/.vitepress/dist

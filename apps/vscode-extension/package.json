@@ -6,6 +6,12 @@
   "version": "0.0.0",
   "type": "module",
   "main": "dist/extension.cjs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/share-man-man/scribdown.git",
+    "directory": "apps/vscode-extension"
+  },
   "categories": [
     "Other"
   ],
@@ -17,7 +23,8 @@
   ],
   "files": [
     "dist/**",
-    "package.json"
+    "package.json",
+    "LICENSE"
   ],
   "contributes": {
     "commands": [
@@ -49,16 +56,14 @@
     "vscode:prepublish": "pnpm run build",
     "dev": "tsup --watch",
     "build": "tsup",
-    "package:vsix": "pnpm dlx @vscode/vsce package --out scribdown-markdown-preview.vsix",
+    "package:vsix": "pnpm dlx @vscode/vsce package --no-dependencies --out scribdown-markdown-preview.vsix",
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@scribdown/markdown-renderer": "workspace:*",
-    "@scribdown/shared": "workspace:*"
-  },
   "devDependencies": {
+    "@scribdown/markdown-renderer": "workspace:*",
+    "@scribdown/shared": "workspace:*",
     "@scribdown/ui-handdrawn": "workspace:*",
     "@types/vscode": "^1.90.0",
     "esbuild": "^0.25.11",
