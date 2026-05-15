@@ -29,6 +29,11 @@ export const DEFAULT_THEME = ThemeType.Paper;
 export const OPEN_PREVIEW_COMMAND = "scribdown.openPreview";
 
 /**
+ * Markdown 语言 ID。
+ */
+export const MARKDOWN_LANGUAGE_ID = "markdown";
+
+/**
  * 浏览器插件预览标题。
  */
 export const BROWSER_PREVIEW_TITLE = "Browser Preview";
@@ -42,3 +47,18 @@ export const MARKDOWN_FIXTURE_PREVIEW_TITLE = "Markdown Fixture Preview";
  * VS Code 预览标题。
  */
 export const VSCODE_PREVIEW_TITLE = "VS Code Preview";
+
+/**
+ * Scribdown 页面根容器 class。
+ */
+export const SCRIBDOWN_PAGE_CLASS_NAME = "scribdown-page";
+
+/**
+ * Scribdown 应用布局容器 class。
+ */
+export const SCRIBDOWN_APP_CLASS_NAME = "scribdown-app";
+
+/**
+ * Scribdown Markdown 渲染容器 class。
+ */
+export const SCRIBDOWN_MARKDOWN_CLASS_NAME = "scribdown-markdown";
