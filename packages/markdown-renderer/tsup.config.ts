@@ -12,12 +12,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   target: "es2022",
-  external: [
-    "shiki",
-    "dompurify",
-    "unified",
-    /^remark-/,
-    /^rehype-/,
-    "@scribdown/shared",
-  ],
+  external: ["shiki", "dompurify", "unified", /^remark-/, /^rehype-/],
 });

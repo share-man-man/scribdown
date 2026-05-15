@@ -11,9 +11,16 @@ import { unified } from "unified";
 /**
  * Markdown 渲染参数。
  */
-export interface RenderMarkdownOptions {
+interface RenderMarkdownOptions {
   sanitizeHtml?: boolean;
   sanitize?: (unsafeHtml: string) => string;
+}
+
+/**
+ * Markdown 预览渲染参数。
+ */
+export interface RenderMarkdownPreviewOptions {
+  sanitizeHtml?: boolean;
 }
 
 /**
@@ -420,7 +427,7 @@ const SHIKI_CODE_INNER_PATTERN = /<code[^>]*>([\s\S]*?)<\/code>/u;
  * @param options 渲染控制参数。
  * @returns 渲染后的 HTML 文本。
  */
-export async function renderMarkdown(
+async function renderMarkdown(
   markdownText: string,
   options: RenderMarkdownOptions = {}
 ): Promise<string> {
@@ -451,6 +458,22 @@ export async function renderMarkdown(
   const highlightedHtml = await highlightMarkdownCodeBlocks(sanitizedHtml);
 
   return highlightedHtml;
+}
+
+/**
+ * 执行统一的 Markdown 预览渲染链路。
+ * @param markdownText 输入的 Markdown 文本。
+ * @param options 预览渲染控制参数。
+ * @returns 可直接挂载到预览容器的 HTML 文本。
+ */
+export async function renderMarkdownPreview(
+  markdownText: string,
+  options: RenderMarkdownPreviewOptions = {}
+): Promise<string> {
+  // 预览模式默认开启 HTML 清洗。
+  const sanitizeHtml = options.sanitizeHtml ?? true;
+
+  return renderMarkdown(markdownText, { sanitizeHtml });
 }
 
 /**
@@ -605,30 +628,11 @@ function decodeHtmlEntities(encodedText: string): string {
 }
 
 /**
- * 将代码片段渲染为高亮 HTML。
- * @param codeText 代码文本。
- * @param language 代码语言。
- * @returns 高亮后的 HTML 字符串。
- */
-export async function renderCodeToHtml(codeText: string, language: string): Promise<string> {
-  // 创建一次性高亮器用于最小可运行示例。
-  const highlighter = await createHighlighter({
-    themes: ["github-light"],
-    langs: ["typescript", "javascript", "json", "bash", language]
-  });
-
-  return highlighter.codeToHtml(codeText, {
-    lang: language,
-    theme: "github-light"
-  });
-}
-
-/**
  * 使用 DOMPurify 清洗 HTML。
  * @param unsafeHtml 未清洗的 HTML。
  * @returns 清洗后的 HTML。
  */
-export function sanitizeHtmlWithDomPurify(unsafeHtml: string): string {
+function sanitizeHtmlWithDomPurify(unsafeHtml: string): string {
   // DOMPurify 在 Node 环境下没有绑定 window 时会以工厂形态存在。
   const domPurify = DOMPurify as { sanitize?: (unsafeHtml: string) => string };
 
@@ -643,7 +647,7 @@ export function sanitizeHtmlWithDomPurify(unsafeHtml: string): string {
  * 给渲染后的图片绑定加载状态类名。
  * @param rootElement 包含 Markdown 渲染结果的根节点。
  */
-export function hydrateMarkdownImages(rootElement: ParentNode): void {
+function hydrateMarkdownImages(rootElement: ParentNode): void {
   // 当前根节点内的所有图片元素。
   const imageElements = rootElement.querySelectorAll<HTMLImageElement>(
     `img.${IMAGE_ELEMENT_CLASS_NAME}`
@@ -656,11 +660,20 @@ export function hydrateMarkdownImages(rootElement: ParentNode): void {
  * 把渲染后的代码块包装为带语言标签、复制按钮与行号的 chrome 结构。
  * @param rootElement 包含 Markdown 渲染结果的根节点。
  */
-export function hydrateCodeBlocks(rootElement: ParentNode): void {
+function hydrateCodeBlocks(rootElement: ParentNode): void {
   // 当前根节点内的所有未绑定 chrome 的 pre 元素。
   const preElements = rootElement.querySelectorAll<HTMLPreElement>("pre");
 
   preElements.forEach(decorateCodeBlock);
+}
+
+/**
+ * 执行统一的 Markdown 预览 hydration 链路。
+ * @param rootElement 包含 Markdown 渲染结果的根节点。
+ */
+export function hydrateMarkdownPreview(rootElement: ParentNode): void {
+  hydrateMarkdownImages(rootElement);
+  hydrateCodeBlocks(rootElement);
 }
 
 /**

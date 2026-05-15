@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { renderMarkdown } from "./index";
+import { renderMarkdownPreview } from "./index";
 
-describe("renderMarkdown", () => {
+describe("renderMarkdownPreview", () => {
   it("replaces standalone TOC marker with heading links", async () => {
     // 输入 Markdown 覆盖目录占位符和两级标题。
     const markdownText = ["# 文档标题", "", "[TOC]", "", "## 目录说明", "", "### 子章节"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText);
+    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
 
     expect(renderedHtml).toContain('<h1 id="文档标题"><span class="scribdown-heading-mark">文档标题</span></h1>');
     expect(renderedHtml).toContain('<details class="scribdown-toc"><summary class="scribdown-toc-summary">目录</summary>');
@@ -29,7 +29,7 @@ describe("renderMarkdown", () => {
     // 输入 Markdown 覆盖多层标题和同级标题。
     const markdownText = ["[TOC]", "", "## 父级", "", "### 子级", "", "#### 孙级", "", "## 同级"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText);
+    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
     // 可折叠分支数量。
     const tocBranchMatches = renderedHtml.match(/class="scribdown-toc-branch"/gu) ?? [];
 
@@ -48,7 +48,7 @@ describe("renderMarkdown", () => {
     // 输入 Markdown 覆盖重复标题。
     const markdownText = ["[TOC]", "", "## 重复标题", "", "## 重复标题"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText);
+    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
 
     expect(renderedHtml).toContain('<h2 id="重复标题"><span class="scribdown-heading-mark">重复标题</span></h2>');
     expect(renderedHtml).toContain('<h2 id="重复标题-1"><span class="scribdown-heading-mark">重复标题</span></h2>');
@@ -62,7 +62,7 @@ describe("renderMarkdown", () => {
       "\n"
     );
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText);
+    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
 
     expect(renderedHtml).toContain("<dl><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>");
     expect(renderedHtml).toContain("<dl><dt>Scribdown</dt><dd>统一 Markdown 渲染体验的项目。</dd></dl>");
@@ -73,7 +73,7 @@ describe("renderMarkdown", () => {
     // 输入 Markdown 覆盖清洗模式下的目录和标题锚点。
     const markdownText = ["[TOC]", "", "## Safe Heading", "", "### Nested Heading"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+    const renderedHtml = await renderMarkdownPreview(markdownText);
 
     expect(renderedHtml).toContain('<details class="scribdown-toc"><summary class="scribdown-toc-summary">目录</summary>');
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
@@ -93,7 +93,7 @@ describe("renderMarkdown", () => {
     // 输入 Markdown 覆盖清洗模式下的定义列表扩展语法。
     const markdownText = ["Markdown", ": 一种轻量级标记语言。"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+    const renderedHtml = await renderMarkdownPreview(markdownText);
 
     expect(renderedHtml).toContain("<dl><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>");
   });
@@ -102,7 +102,7 @@ describe("renderMarkdown", () => {
     // 输入 Markdown 覆盖独占图片段落、title caption 与失败态占位内容。
     const markdownText = '![湖边雪山](/mountain.jpg "图片标题")';
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+    const renderedHtml = await renderMarkdownPreview(markdownText);
 
     expect(renderedHtml).toContain('<figure class="scribdown-image-figure">');
     expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/mountain.jpg" alt="湖边雪山"');
@@ -117,7 +117,7 @@ describe("renderMarkdown", () => {
     // 输入 Markdown 覆盖引用式图片定义。
     const markdownText = ["![手绘风格预览][preview]", "", "[preview]: /preview.jpg"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdown(markdownText, { sanitizeHtml: true });
+    const renderedHtml = await renderMarkdownPreview(markdownText);
 
     expect(renderedHtml).toContain('<figure class="scribdown-image-figure">');
     expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/preview.jpg" alt="手绘风格预览"');
