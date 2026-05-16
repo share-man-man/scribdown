@@ -248,6 +248,8 @@ class ScribdownPreviewController implements vscode.Disposable {
       vscode.ViewColumn.Beside,
       {
         enableScripts: true,
+        // 启用 VS Code 内置查找控件，使 Webview 内 Cmd/Ctrl+F 可弹出搜索框。
+        enableFindWidget: true,
         retainContextWhenHidden: true,
         localResourceRoots
       }
