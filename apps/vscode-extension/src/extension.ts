@@ -354,6 +354,10 @@ class ScribdownPreviewController implements vscode.Disposable {
         baseHref: ensureTrailingSlash(baseUri.toString())
       });
 
+      // 关键步骤：重渲染后的位置恢复属于编辑器权威位置，标记驱动方以过滤其回声，
+      // 避免恢复滚动反向触发编辑器 revealRange。
+      this.markScrollSyncSource(SCROLL_SYNC_SOURCE.editor);
+
       await this.panel.webview.postMessage({
         type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
         sourceLine: this.previewSourceLine
@@ -463,12 +467,14 @@ class ScribdownPreviewController implements vscode.Disposable {
    * @param sourceLine 预览顶部对应的源码行号（1-based，可能为小数）。
    */
   private handlePreviewScroll(sourceLine: number): void {
-    this.previewSourceLine = sourceLine;
-
     // 编辑器驱动滚动时，预览侧上报属于回声，跳过以避免循环。
+    // 此处先于记录行号返回，避免回声的小数测量值覆盖编辑器写入的整数行号。
     if (this.scrollSyncSource === SCROLL_SYNC_SOURCE.editor) {
       return;
     }
+
+    // 预览自身驱动的滚动，记录最新顶部行号供重渲染恢复位置。
+    this.previewSourceLine = sourceLine;
 
     // 当前预览绑定文档对应的可见编辑器。
     const previewEditor = vscode.window.visibleTextEditors.find(

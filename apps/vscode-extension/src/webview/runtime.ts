@@ -114,6 +114,8 @@ export function bootstrapVscodePreviewRuntime(
 
   // 滚动上报的 rAF 节流句柄，0 表示当前无待处理帧。
   let scrollReportFrameHandle = 0;
+  // 程序化滚动后的实际纵向位置，用于跳过自身触发的 scroll 回声；undefined 表示无待跳过回声。
+  let suppressedScrollY: number | undefined;
   // 源码行锚点索引，缓存锚点测量结果。
   const anchorIndex = createSourceLineAnchorIndex(previewRootElement);
 
@@ -139,7 +141,15 @@ export function bootstrapVscodePreviewRuntime(
     }
 
     if (normalizedMessage.type === options.setPreviewScrollMessageType) {
-      scrollPreviewToSourceLine(anchorIndex.getAnchors(), normalizedMessage.sourceLine);
+      // 程序化滚动后的实际位置，用于在 scroll 回声中跳过上报。
+      const scrolledY = scrollPreviewToSourceLine(
+        anchorIndex.getAnchors(),
+        normalizedMessage.sourceLine
+      );
+
+      if (scrolledY !== undefined) {
+        suppressedScrollY = scrolledY;
+      }
     }
   });
 
@@ -153,6 +163,15 @@ export function bootstrapVscodePreviewRuntime(
 
       scrollReportFrameHandle = window.requestAnimationFrame(() => {
         scrollReportFrameHandle = 0;
+
+        // 关键步骤：跳过程序化滚动自身触发的 scroll 回声，避免无谓的往返消息。
+        if (
+          suppressedScrollY !== undefined &&
+          Math.abs(window.scrollY - suppressedScrollY) < 1
+        ) {
+          suppressedScrollY = undefined;
+          return;
+        }
 
         // 当前预览视口顶部对应的源码行号（可能为小数）。
         const topSourceLine = resolveTopSourceLine(anchorIndex.getAnchors());
@@ -259,6 +278,40 @@ function collectSourceLineAnchors(previewRootElement: HTMLElement): SourceLineAn
 }
 
 /**
+ * 在升序锚点数组中二分查找最后一个「键值 ≤ 目标值」的锚点索引。
+ * @param anchors 按所选键值升序排列的源码行锚点。
+ * @param target 目标值。
+ * @param selectKey 从锚点取出参与比较的键值。
+ * @returns 命中索引；目标值小于首个锚点键值时返回 -1。
+ */
+function findLastAnchorIndexAtMost(
+  anchors: SourceLineAnchor[],
+  target: number,
+  selectKey: (anchor: SourceLineAnchor) => number
+): number {
+  // 二分查找区间下界。
+  let lowIndex = 0;
+  // 二分查找区间上界。
+  let highIndex = anchors.length - 1;
+  // 命中的最后一个「键值 ≤ 目标值」索引。
+  let resultIndex = -1;
+
+  while (lowIndex <= highIndex) {
+    // 当前二分中点索引。
+    const midIndex = (lowIndex + highIndex) >> 1;
+
+    if (selectKey(anchors[midIndex]) <= target) {
+      resultIndex = midIndex;
+      lowIndex = midIndex + 1;
+    } else {
+      highIndex = midIndex - 1;
+    }
+  }
+
+  return resultIndex;
+}
+
+/**
  * 计算当前预览视口顶部对应的源码行号。
  * @param anchors 全部源码行锚点（按行号升序）。
  * @returns 源码行号（1-based，可能为小数）。
@@ -270,16 +323,12 @@ function resolveTopSourceLine(anchors: SourceLineAnchor[]): number {
 
   // 当前视口顶部的文档像素偏移。
   const viewportTop = window.scrollY;
-  // 视口顶部之上（含等于）的最后一个锚点索引。
-  let previousAnchorIndex = -1;
-
-  for (let anchorIndex = 0; anchorIndex < anchors.length; anchorIndex += 1) {
-    if (anchors[anchorIndex].offsetTop <= viewportTop) {
-      previousAnchorIndex = anchorIndex;
-    } else {
-      break;
-    }
-  }
+  // 视口顶部之上（含等于）的最后一个锚点索引（按像素偏移二分）。
+  const previousAnchorIndex = findLastAnchorIndexAtMost(
+    anchors,
+    viewportTop,
+    (anchor) => anchor.offsetTop
+  );
 
   // 视口处于首个锚点之前时，取首个锚点行号。
   if (previousAnchorIndex < 0) {
@@ -307,29 +356,26 @@ function resolveTopSourceLine(anchors: SourceLineAnchor[]): number {
  * 按目标源码行号滚动预览到对应像素位置。
  * @param anchors 全部源码行锚点（按行号升序）。
  * @param sourceLine 目标源码行号（1-based，可能为小数）。
+ * @returns 程序化滚动后的实际纵向位置；未执行滚动时返回 undefined。
  */
 function scrollPreviewToSourceLine(
   anchors: SourceLineAnchor[],
   sourceLine: number | undefined
-): void {
+): number | undefined {
   if (typeof sourceLine !== "number") {
-    return;
+    return undefined;
   }
 
   if (anchors.length === 0) {
-    return;
+    return undefined;
   }
 
-  // 目标行号之前（含等于）的最后一个锚点索引。
-  let previousAnchorIndex = -1;
-
-  for (let anchorIndex = 0; anchorIndex < anchors.length; anchorIndex += 1) {
-    if (anchors[anchorIndex].line <= sourceLine) {
-      previousAnchorIndex = anchorIndex;
-    } else {
-      break;
-    }
-  }
+  // 目标行号之前（含等于）的最后一个锚点索引（按源码行号二分）。
+  const previousAnchorIndex = findLastAnchorIndexAtMost(
+    anchors,
+    sourceLine,
+    (anchor) => anchor.line
+  );
 
   // 目标滚动到的文档像素偏移。
   let targetOffsetTop: number;
@@ -355,4 +401,7 @@ function scrollPreviewToSourceLine(
   }
 
   window.scrollTo(0, targetOffsetTop);
+
+  // 返回滚动后的实际位置（已被浏览器约束到有效区间），供回声跳过比对。
+  return window.scrollY;
 }
