@@ -86,6 +86,11 @@ type ScrollSyncSource = (typeof SCROLL_SYNC_SOURCE)[keyof typeof SCROLL_SYNC_SOU
 const SCROLL_SYNC_SOURCE_RETENTION_MS = 250;
 
 /**
+ * 编辑器滚动同步的节流间隔（毫秒），约一帧；高频可视区变化合并到该间隔内发送。
+ */
+const EDITOR_SCROLL_SYNC_THROTTLE_MS = 16;
+
+/**
  * Webview 消息最小结构。
  */
 interface PreviewMessagePayload {
@@ -131,6 +136,21 @@ class ScribdownPreviewController implements vscode.Disposable {
    * 滚动同步驱动方过期重置定时器。
    */
   private scrollSyncResetTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * 编辑器滚动同步节流的尾随发送定时器。
+   */
+  private editorScrollThrottleTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * 编辑器滚动同步上次实际发送的时间戳（毫秒）。
+   */
+  private editorScrollLastSentAt = 0;
+
+  /**
+   * 编辑器滚动同步节流间隔内待发送的最新源码行号；undefined 表示无待发送值。
+   */
+  private editorScrollPendingLine: number | undefined;
 
   /**
    * 创建控制器并注册文档监听。
@@ -370,9 +390,65 @@ class ScribdownPreviewController implements vscode.Disposable {
     // 顶部可视行对应的源码行号（编辑器行号 0-based，源码行号 1-based）。
     const sourceLine = firstVisibleRange.start.line + 1;
 
+    // 重渲染恢复位置依赖最新行号，立即更新，不受节流影响。
+    this.previewSourceLine = sourceLine;
+    this.scheduleEditorScrollSync(sourceLine);
+  }
+
+  /**
+   * 以节流方式把编辑器滚动同步到预览：节流间隔外立即发送（leading），
+   * 间隔内仅记录最新行号并安排一次尾随发送（trailing），避免拖动时高频发消息。
+   * @param sourceLine 顶部可视行对应的源码行号（1-based）。
+   */
+  private scheduleEditorScrollSync(sourceLine: number): void {
+    // 当前时间戳。
+    const nowMs = Date.now();
+    // 距上次实际发送经过的毫秒数。
+    const elapsedMs = nowMs - this.editorScrollLastSentAt;
+
+    if (elapsedMs >= EDITOR_SCROLL_SYNC_THROTTLE_MS) {
+      // 已超出节流间隔，立即发送并清理待发送状态。
+      this.editorScrollLastSentAt = nowMs;
+      this.editorScrollPendingLine = undefined;
+
+      if (this.editorScrollThrottleTimer) {
+        clearTimeout(this.editorScrollThrottleTimer);
+        this.editorScrollThrottleTimer = undefined;
+      }
+
+      this.postEditorScrollSync(sourceLine);
+      return;
+    }
+
+    // 处于节流间隔内：记录最新行号，已有尾随定时器则复用。
+    this.editorScrollPendingLine = sourceLine;
+
+    if (this.editorScrollThrottleTimer) {
+      return;
+    }
+
+    // 关键步骤：安排一次尾随发送，确保停止滚动后预览停在最终位置。
+    this.editorScrollThrottleTimer = setTimeout(() => {
+      this.editorScrollThrottleTimer = undefined;
+
+      // 尾随发送时的待发送行号。
+      const pendingLine = this.editorScrollPendingLine;
+      this.editorScrollPendingLine = undefined;
+
+      if (pendingLine !== undefined) {
+        this.editorScrollLastSentAt = Date.now();
+        this.postEditorScrollSync(pendingLine);
+      }
+    }, EDITOR_SCROLL_SYNC_THROTTLE_MS - elapsedMs);
+  }
+
+  /**
+   * 实际向预览发送编辑器滚动同步消息，并标记编辑器为当前驱动方。
+   * @param sourceLine 顶部可视行对应的源码行号（1-based）。
+   */
+  private postEditorScrollSync(sourceLine: number): void {
     // 关键步骤：标记编辑器为当前驱动方，过滤预览侧回声。
     this.markScrollSyncSource(SCROLL_SYNC_SOURCE.editor);
-    this.previewSourceLine = sourceLine;
 
     void this.panel?.webview.postMessage({
       type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
@@ -440,7 +516,13 @@ class ScribdownPreviewController implements vscode.Disposable {
       this.scrollSyncResetTimer = undefined;
     }
 
+    if (this.editorScrollThrottleTimer) {
+      clearTimeout(this.editorScrollThrottleTimer);
+      this.editorScrollThrottleTimer = undefined;
+    }
+
     this.scrollSyncSource = undefined;
+    this.editorScrollPendingLine = undefined;
   }
 }
 

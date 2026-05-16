@@ -41,6 +41,41 @@ interface SourceLineAnchor {
 }
 
 /**
+ * 源码行锚点索引：缓存锚点采集结果，避免每个滚动帧重复测量 DOM。
+ */
+interface SourceLineAnchorIndex {
+  /** 获取当前锚点数组；缓存有效时直接返回，失效时重新采集。 */
+  getAnchors(): SourceLineAnchor[];
+  /** 标记缓存失效，下次获取时重新采集。 */
+  invalidate(): void;
+}
+
+/**
+ * 创建源码行锚点索引。
+ * @param previewRootElement 预览根节点。
+ * @returns 锚点索引实例。
+ */
+function createSourceLineAnchorIndex(
+  previewRootElement: HTMLElement
+): SourceLineAnchorIndex {
+  // 已缓存的锚点数组；undefined 表示缓存失效需重新采集。
+  let cachedAnchors: SourceLineAnchor[] | undefined;
+
+  return {
+    getAnchors(): SourceLineAnchor[] {
+      if (!cachedAnchors) {
+        cachedAnchors = collectSourceLineAnchors(previewRootElement);
+      }
+
+      return cachedAnchors;
+    },
+    invalidate(): void {
+      cachedAnchors = undefined;
+    }
+  };
+}
+
+/**
  * 执行 Scribdown 统一预览 hydration。
  * @param rootElement 预览根节点。
  */
@@ -79,6 +114,14 @@ export function bootstrapVscodePreviewRuntime(
 
   // 滚动上报的 rAF 节流句柄，0 表示当前无待处理帧。
   let scrollReportFrameHandle = 0;
+  // 源码行锚点索引，缓存锚点测量结果。
+  const anchorIndex = createSourceLineAnchorIndex(previewRootElement);
+
+  // 内容尺寸变化（重渲染外的图片/字体加载、窗口缩放等）会改变锚点偏移，使缓存失效。
+  const previewResizeObserver = new ResizeObserver(() => {
+    anchorIndex.invalidate();
+  });
+  previewResizeObserver.observe(previewRootElement);
 
   window.addEventListener("message", (event) => {
     // 来自主进程的标准化消息。
@@ -90,11 +133,13 @@ export function bootstrapVscodePreviewRuntime(
 
     if (normalizedMessage.type === options.renderContentMessageType) {
       applyRenderedContent(previewRootElement, previewBaseElement, normalizedMessage);
+      // 关键步骤：重渲染替换了 DOM，锚点缓存立即失效。
+      anchorIndex.invalidate();
       return;
     }
 
     if (normalizedMessage.type === options.setPreviewScrollMessageType) {
-      scrollPreviewToSourceLine(previewRootElement, normalizedMessage.sourceLine);
+      scrollPreviewToSourceLine(anchorIndex.getAnchors(), normalizedMessage.sourceLine);
     }
   });
 
@@ -110,7 +155,7 @@ export function bootstrapVscodePreviewRuntime(
         scrollReportFrameHandle = 0;
 
         // 当前预览视口顶部对应的源码行号（可能为小数）。
-        const topSourceLine = resolveTopSourceLine(previewRootElement);
+        const topSourceLine = resolveTopSourceLine(anchorIndex.getAnchors());
 
         vscodeApi.postMessage({
           type: options.previewScrollChangedMessageType,
@@ -215,13 +260,10 @@ function collectSourceLineAnchors(previewRootElement: HTMLElement): SourceLineAn
 
 /**
  * 计算当前预览视口顶部对应的源码行号。
- * @param previewRootElement 预览根节点。
+ * @param anchors 全部源码行锚点（按行号升序）。
  * @returns 源码行号（1-based，可能为小数）。
  */
-function resolveTopSourceLine(previewRootElement: HTMLElement): number {
-  // 全部源码行锚点。
-  const anchors = collectSourceLineAnchors(previewRootElement);
-
+function resolveTopSourceLine(anchors: SourceLineAnchor[]): number {
   if (anchors.length === 0) {
     return 1;
   }
@@ -263,19 +305,16 @@ function resolveTopSourceLine(previewRootElement: HTMLElement): number {
 
 /**
  * 按目标源码行号滚动预览到对应像素位置。
- * @param previewRootElement 预览根节点。
+ * @param anchors 全部源码行锚点（按行号升序）。
  * @param sourceLine 目标源码行号（1-based，可能为小数）。
  */
 function scrollPreviewToSourceLine(
-  previewRootElement: HTMLElement,
+  anchors: SourceLineAnchor[],
   sourceLine: number | undefined
 ): void {
   if (typeof sourceLine !== "number") {
     return;
   }
-
-  // 全部源码行锚点。
-  const anchors = collectSourceLineAnchors(previewRootElement);
 
   if (anchors.length === 0) {
     return;
