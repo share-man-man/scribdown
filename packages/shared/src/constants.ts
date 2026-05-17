@@ -67,3 +67,8 @@ export const SCRIBDOWN_MARKDOWN_CLASS_NAME = "scribdown-markdown";
  * 块级元素源码起始行号的 data 属性名，用于编辑器与预览的双向滚动对齐。
  */
 export const SOURCE_LINE_DATA_ATTRIBUTE = "data-source-line";
+
+/**
+ * 编辑器光标所在源码行对应预览块的高亮 class。
+ */
+export const SOURCE_LINE_ACTIVE_CLASS_NAME = "scribdown-source-line-active";

@@ -437,9 +437,11 @@ let codeHighlighterPromise: Promise<Highlighter> | undefined;
 // 已经预加载到 Shiki 实例里的语言集合。
 const codeHighlighterLoadedLanguages = new Set<string>(CODE_HIGHLIGHTER_LANGUAGES);
 
-// 匹配渲染后 `<pre><code class="language-X">...</code></pre>` 的正则，用于 Shiki 替换。
+// 匹配渲染后 `<pre ...><code class="language-X" ...>...</code></pre>` 的正则，用于 Shiki 替换。
+// 捕获 pre 与 code（class 之后）的附加属性（如 data-source-line），替换时原样保留，
+// 避免 remarkSourceLine 注入的 data-source-line 破坏匹配导致代码块不被高亮。
 const CODE_BLOCK_HIGHLIGHT_PATTERN =
-  /<pre><code class="language-([\w-]+)">([\s\S]*?)<\/code><\/pre>/g;
+  /<pre([^>]*)><code class="language-([\w-]+)"([^>]*)>([\s\S]*?)<\/code><\/pre>/g;
 
 // 提取 Shiki HTML 输出中 `<code>...</code>` 之间内容的正则。
 const SHIKI_CODE_INNER_PATTERN = /<code[^>]*>([\s\S]*?)<\/code>/u;
@@ -556,11 +558,17 @@ async function highlightMarkdownCodeBlocks(html: string): Promise<string> {
   let lastIndex = 0;
 
   for (const match of html.matchAll(CODE_BLOCK_HIGHLIGHT_PATTERN)) {
-    const [matched, rawLanguage, encodedCode] = match;
+    const [matched, preAttributes, rawLanguage, codeAttributes, encodedCode] = match;
     const matchStart = match.index ?? 0;
 
     resultHtml += html.slice(lastIndex, matchStart);
-    resultHtml += await highlightSingleCodeBlock(highlighter, rawLanguage, encodedCode, matched);
+    resultHtml += await highlightSingleCodeBlock(highlighter, {
+      rawLanguage,
+      encodedCode,
+      matchedHtml: matched,
+      preAttributes,
+      codeAttributes
+    });
     lastIndex = matchStart + matched.length;
   }
 
@@ -569,19 +577,33 @@ async function highlightMarkdownCodeBlocks(html: string): Promise<string> {
 }
 
 /**
+ * 单个代码块的 Shiki 高亮入参。
+ */
+interface CodeBlockHighlightInput {
+  /** 代码块标注的语言标识。 */
+  rawLanguage: string;
+  /** 已 HTML 转义的代码内容。 */
+  encodedCode: string;
+  /** 原始匹配片段，作为兜底返回值。 */
+  matchedHtml: string;
+  /** pre 标签上的附加属性文本，替换时原样保留。 */
+  preAttributes: string;
+  /** code 标签上 class 之后的附加属性文本（如 data-source-line），替换时原样保留。 */
+  codeAttributes: string;
+}
+
+/**
  * 高亮单个代码块，必要时按需加载语言。
  * @param highlighter Shiki 高亮器实例。
- * @param rawLanguage 代码块标注的语言标识。
- * @param encodedCode 已 HTML 转义的代码内容。
- * @param matchedHtml 原始匹配片段，作为兜底返回值。
+ * @param input 代码块高亮入参。
  * @returns 高亮后的代码块 HTML。
  */
 async function highlightSingleCodeBlock(
   highlighter: Highlighter,
-  rawLanguage: string,
-  encodedCode: string,
-  matchedHtml: string
+  input: CodeBlockHighlightInput
 ): Promise<string> {
+  // 代码块标注的语言标识。
+  const { rawLanguage, encodedCode, matchedHtml, preAttributes, codeAttributes } = input;
   // 归一化语言标识：去除大小写差异，方便匹配 Shiki 内置名。
   const normalizedLanguage = rawLanguage.toLowerCase();
   // Shiki 中真实可用的语言标识，找不到时退回 "text"。
@@ -600,7 +622,7 @@ async function highlightSingleCodeBlock(
     const innerMatch = highlightedHtml.match(SHIKI_CODE_INNER_PATTERN);
     const innerHtml = innerMatch?.[1] ?? encodedCode;
 
-    return `<pre><code class="language-${rawLanguage}">${innerHtml}</code></pre>`;
+    return `<pre${preAttributes}><code class="language-${rawLanguage}"${codeAttributes}>${innerHtml}</code></pre>`;
   } catch {
     // Shiki 调用异常时（语言未注册等）原样返回，避免影响整体渲染。
     return matchedHtml;
@@ -766,6 +788,16 @@ function decorateCodeBlock(preElement: HTMLPreElement): void {
   preElement.replaceWith(figureElement);
   bodyElement.append(gutterElement, preElement);
   figureElement.append(chromeElement, bodyElement);
+
+  // 关键步骤：把源码行锚点从内层 code 迁移到最外层 figure，
+  // 使编辑器光标定位的高亮能覆盖整个代码块（含顶部 chrome）。
+  // remark-rehype 把 code 节点的 data-source-line 落在 code 元素上，而非 pre。
+  const codeBlockSourceLine = codeElement.getAttribute(SOURCE_LINE_DATA_ATTRIBUTE);
+
+  if (codeBlockSourceLine !== null) {
+    figureElement.setAttribute(SOURCE_LINE_DATA_ATTRIBUTE, codeBlockSourceLine);
+    codeElement.removeAttribute(SOURCE_LINE_DATA_ATTRIBUTE);
+  }
 
   // 在按钮上记录原始代码文本，复制时直接读取，无需再走 DOM。
   copyButtonElement.dataset.scribdownCodeSource = originalCodeText;
@@ -2088,7 +2120,8 @@ function remarkSourceLine(): (tree: MarkdownNode) => void {
       // 当前节点的源码起始行号（1-based）。
       const startLine = blockNode.position?.start.line;
 
-      // 仅标注仍保留源码位置的原生块级节点；插件新建的节点（图表、TOC 等）跳过。
+      // 仅标注带源码位置的块级节点；TOC、定义列表、图片 figure 等转换节点已显式保留原段落位置，
+      // 真正无源码位置的纯生成节点自动跳过。
       if (typeof startLine !== "number") {
         return;
       }
@@ -2248,6 +2281,8 @@ function createDefinitionListNode(node: MarkdownNode): MarkdownNode | undefined 
 
   return {
     type: "definitionList",
+    // 关键步骤：保留原段落源码位置，使 remarkSourceLine 能为 dl 标注 data-source-line。
+    position: node.position,
     data: {
       hName: "dl"
     },
@@ -2333,6 +2368,8 @@ function createImageFigureNode(node: MarkdownNode): MarkdownNode | undefined {
 
   return {
     type: "imageFigure",
+    // 关键步骤：保留原段落源码位置，使 remarkSourceLine 能为 figure 标注 data-source-line。
+    position: node.position,
     data: {
       hName: "figure",
       hProperties: {
@@ -2585,7 +2622,7 @@ function replaceTocMarkers(node: MarkdownNode, tocHeadings: TocHeading[]): void 
     const childNode = childNodes[childIndex];
 
     if (isTocMarkerParagraph(childNode)) {
-      childNodes[childIndex] = createTocNode(tocHeadings);
+      childNodes[childIndex] = createTocNode(tocHeadings, childNode);
       continue;
     }
 
@@ -2612,14 +2649,17 @@ function isTocMarkerParagraph(node: MarkdownNode): boolean {
 /**
  * 创建目录容器节点。
  * @param tocHeadings 目录标题条目。
+ * @param markerNode [TOC] 标记段落节点，用于保留源码位置。
  * @returns 可被 remark-rehype 转换为 details 的 Markdown 节点。
  */
-function createTocNode(tocHeadings: TocHeading[]): MarkdownNode {
+function createTocNode(tocHeadings: TocHeading[], markerNode: MarkdownNode): MarkdownNode {
   // 层级化后的目录条目，用于生成可折叠分支。
   const tocTree = createTocTree(tocHeadings);
 
   return {
     type: "toc",
+    // 关键步骤：保留 [TOC] 标记段落的源码位置，使 remarkSourceLine 能为目录标注 data-source-line。
+    position: markerNode.position,
     data: {
       hName: "details",
       hProperties: {

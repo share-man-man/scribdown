@@ -12,7 +12,9 @@ describe("renderMarkdownPreview", () => {
     expect(renderedHtml).toContain(
       '<h1 id="文档标题" data-source-line="1"><span class="scribdown-heading-mark">文档标题</span></h1>'
     );
-    expect(renderedHtml).toContain('<details class="scribdown-toc"><summary class="scribdown-toc-summary">目录</summary>');
+    expect(renderedHtml).toContain(
+      '<details class="scribdown-toc" data-source-line="3"><summary class="scribdown-toc-summary">目录</summary>'
+    );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain(
       `<details open class="scribdown-toc-branch"><summary class="scribdown-toc-branch-summary">文档标题<a href="#${encodeURIComponent("文档标题")}" aria-label="跳转到文档标题" class="scribdown-toc-branch-link">#</a></summary>`
@@ -70,8 +72,12 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
 
-    expect(renderedHtml).toContain("<dl><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>");
-    expect(renderedHtml).toContain("<dl><dt>Scribdown</dt><dd>统一 Markdown 渲染体验的项目。</dd></dl>");
+    expect(renderedHtml).toContain(
+      '<dl data-source-line="1"><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>'
+    );
+    expect(renderedHtml).toContain(
+      '<dl data-source-line="4"><dt>Scribdown</dt><dd>统一 Markdown 渲染体验的项目。</dd></dl>'
+    );
     expect(renderedHtml).not.toContain("Markdown\n: 一种轻量级标记语言。");
   });
 
@@ -81,7 +87,9 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText);
 
-    expect(renderedHtml).toContain('<details class="scribdown-toc"><summary class="scribdown-toc-summary">目录</summary>');
+    expect(renderedHtml).toContain(
+      '<details class="scribdown-toc" data-source-line="1"><summary class="scribdown-toc-summary">目录</summary>'
+    );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain('<ol class="scribdown-toc-list">');
     expect(renderedHtml).toContain('<details open class="scribdown-toc-branch">');
@@ -105,7 +113,21 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText);
 
-    expect(renderedHtml).toContain("<dl><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>");
+    expect(renderedHtml).toContain(
+      '<dl data-source-line="1"><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>'
+    );
+  });
+
+  it("keeps code block source line while applying syntax highlighting", async () => {
+    // 输入 Markdown 覆盖顶层围栏代码块。
+    const markdownText = ["```ts", "const value = 1;", "```"].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdownPreview(markdownText);
+
+    // 代码块保留 remarkSourceLine 注入的源码行锚点。
+    expect(renderedHtml).toContain('data-source-line="1"');
+    // data-source-line 不破坏 Shiki 匹配，代码块仍被按行高亮。
+    expect(renderedHtml).toContain('<span class="line"');
   });
 
   it("wraps standalone images in a styled figure when sanitizeHtml is enabled", async () => {
@@ -114,7 +136,7 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText);
 
-    expect(renderedHtml).toContain('<figure class="scribdown-image-figure">');
+    expect(renderedHtml).toContain('<figure class="scribdown-image-figure" data-source-line="1">');
     expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/mountain.jpg" alt="湖边雪山"');
     expect(renderedHtml).toContain('title="图片标题" class="scribdown-image">');
     expect(renderedHtml).toContain('<span class="scribdown-image-fallback">');
@@ -129,7 +151,7 @@ describe("renderMarkdownPreview", () => {
     // 渲染结果。
     const renderedHtml = await renderMarkdownPreview(markdownText);
 
-    expect(renderedHtml).toContain('<figure class="scribdown-image-figure">');
+    expect(renderedHtml).toContain('<figure class="scribdown-image-figure" data-source-line="1">');
     expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/preview.jpg" alt="手绘风格预览"');
     expect(renderedHtml).toContain('class="scribdown-image"');
     expect(renderedHtml).toContain('<span class="scribdown-image-fallback-source">preview</span>');
