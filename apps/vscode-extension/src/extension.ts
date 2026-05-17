@@ -102,6 +102,14 @@ const SCROLL_SYNC_SOURCE_RETENTION_MS = 250;
 const EDITOR_SCROLL_SYNC_THROTTLE_MS = 16;
 
 /**
+ * 光标变化后抑制纯滚动同步的时间窗口（毫秒）。
+ * 方向键移动光标时会同时触发选区变化与可视区变化两个事件，
+ * 该窗口内的可视区变化视为光标移动的副产物，交由光标定位消息一并处理，
+ * 避免预览先后执行两套基准不同的对齐而跳动。
+ */
+const CURSOR_DRIVEN_SCROLL_SUPPRESS_MS = 150;
+
+/**
  * Webview 消息最小结构。
  */
 interface PreviewMessagePayload {
@@ -174,6 +182,11 @@ class ScribdownPreviewController implements vscode.Disposable {
    * 编辑器滚动同步节流间隔内待发送的最新源码行号；undefined 表示无待发送值。
    */
   private editorScrollPendingLine: number | undefined;
+
+  /**
+   * 上次编辑器光标变化的时间戳（毫秒），用于抑制光标移动副产生的纯滚动同步。
+   */
+  private lastCursorChangeAt = 0;
 
   /**
    * 创建控制器并注册文档监听。
@@ -452,8 +465,15 @@ class ScribdownPreviewController implements vscode.Disposable {
     // 顶部可视行对应的源码行号（编辑器行号 0-based，源码行号 1-based）。
     const sourceLine = firstVisibleRange.start.line + 1;
 
-    // 重渲染恢复位置依赖最新行号，立即更新，不受节流影响。
+    // 重渲染恢复位置依赖最新行号，立即更新，不受节流与抑制影响。
     this.previewSourceLine = sourceLine;
+
+    // 关键步骤：光标移动会同时触发可视区变化，该滚动交由光标定位消息处理，
+    // 跳过纯滚动同步，避免预览先后执行两套基准不同的对齐而跳动。
+    if (Date.now() - this.lastCursorChangeAt < CURSOR_DRIVEN_SCROLL_SUPPRESS_MS) {
+      return;
+    }
+
     this.scheduleEditorScrollSync(sourceLine);
   }
 
@@ -523,6 +543,8 @@ class ScribdownPreviewController implements vscode.Disposable {
    * @param event 编辑器选区变化事件。
    */
   private handleEditorCursorChange(event: vscode.TextEditorSelectionChangeEvent): void {
+    // 记录光标变化时间，供 handleEditorScroll 抑制随之而来的纯滚动同步。
+    this.lastCursorChangeAt = Date.now();
     this.postPreviewCursorSync(resolveCursorAnchor(event.textEditor));
   }
 
