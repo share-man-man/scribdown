@@ -130,6 +130,40 @@ describe("renderMarkdownPreview", () => {
     expect(renderedHtml).toContain('<span class="line"');
   });
 
+  it("annotates list items with their source line including nested lists", async () => {
+    // 输入 Markdown 覆盖含嵌套子列表的无序列表。
+    const markdownText = ["- 第一项", "- 第二项", "  - 嵌套项"].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdownPreview(markdownText);
+
+    // 顶层列表项各自保留源码行锚点。
+    expect(renderedHtml).toContain('<li data-source-line="1">');
+    expect(renderedHtml).toContain('<li data-source-line="2">');
+    // 嵌套子列表项同样保留源码行锚点。
+    expect(renderedHtml).toContain('<li data-source-line="3">');
+  });
+
+  it("annotates nested blocks inside list items and blockquotes", async () => {
+    // 输入 Markdown 覆盖列表内代码块与嵌套引用两类嵌套块级结构。
+    const markdownText = [
+      "- 列表项",
+      "  ```ts",
+      "  const value = 1;",
+      "  ```",
+      "",
+      "> 外层引用",
+      ">",
+      "> > 内层引用"
+    ].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdownPreview(markdownText);
+
+    // 列表项内的代码块保留源码行锚点。
+    expect(renderedHtml).toContain('data-source-line="2"');
+    // 内层嵌套引用保留独立源码行锚点。
+    expect(renderedHtml).toContain('<blockquote data-source-line="8">');
+  });
+
   it("wraps standalone images in a styled figure when sanitizeHtml is enabled", async () => {
     // 输入 Markdown 覆盖独占图片段落、title caption 与失败态占位内容。
     const markdownText = '![湖边雪山](/mountain.jpg "图片标题")';
