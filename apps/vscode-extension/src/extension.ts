@@ -7,6 +7,7 @@ import {
   SCRIBDOWN_APP_CLASS_NAME,
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
   SCRIBDOWN_PAGE_CLASS_NAME,
+  SOURCE_LINE_ACTIVE_CLASS_NAME,
   VSCODE_PREVIEW_TITLE
 } from "@scribdown/shared";
 
@@ -66,6 +67,16 @@ const RENDER_CONTENT_MESSAGE_TYPE = "render-content";
 const SET_PREVIEW_SCROLL_MESSAGE_TYPE = "set-preview-scroll";
 
 /**
+ * Extension -> Webview 消息类型：按源码行号高亮并定位光标所在预览块。
+ */
+const SET_PREVIEW_CURSOR_MESSAGE_TYPE = "set-preview-cursor";
+
+/**
+ * Extension -> Webview 消息类型：清除光标定位高亮。
+ */
+const CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE = "clear-preview-cursor";
+
+/**
  * 滚动同步驱动方枚举。
  */
 const SCROLL_SYNC_SOURCE = {
@@ -96,6 +107,18 @@ const EDITOR_SCROLL_SYNC_THROTTLE_MS = 16;
 interface PreviewMessagePayload {
   type: string;
   sourceLine?: number;
+}
+
+/**
+ * 编辑器光标定位描述。
+ */
+interface CursorAnchorDescriptor {
+  /** 光标所在源码行号（1-based）。 */
+  sourceLine: number;
+  /** 编辑器可视区顶部源码行号（1-based）。 */
+  visibleTopLine: number;
+  /** 编辑器可视区底部源码行号（1-based）。 */
+  visibleBottomLine: number;
 }
 
 /**
@@ -185,7 +208,33 @@ class ScribdownPreviewController implements vscode.Disposable {
       }
     );
 
-    this.disposables.push(changeDocumentDisposable, changeVisibleRangesDisposable);
+    // 编辑器光标变化监听：把光标所在源码行同步为预览高亮与定位。
+    const changeSelectionDisposable = vscode.window.onDidChangeTextEditorSelection((event) => {
+      // 当前事件编辑器文档 URI。
+      const editorDocumentUriText = event.textEditor.document.uri.toString();
+
+      if (!this.panel || editorDocumentUriText !== this.previewDocumentUriText) {
+        return;
+      }
+
+      this.handleEditorCursorChange(event);
+    });
+
+    // 激活编辑器变化监听：光标离开绑定文档时清除高亮，切回时按光标重新高亮。
+    const changeActiveEditorDisposable = vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (!this.panel) {
+        return;
+      }
+
+      this.handleActiveEditorChange(editor);
+    });
+
+    this.disposables.push(
+      changeDocumentDisposable,
+      changeVisibleRangesDisposable,
+      changeSelectionDisposable,
+      changeActiveEditorDisposable
+    );
   }
 
   /**
@@ -362,6 +411,13 @@ class ScribdownPreviewController implements vscode.Disposable {
         type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
         sourceLine: this.previewSourceLine
       });
+
+      // 关键步骤：重渲染替换了预览 DOM，按当前光标位置重新应用高亮与定位。
+      const previewEditor = this.getPreviewEditor();
+
+      if (previewEditor) {
+        this.postPreviewCursorSync(resolveCursorAnchor(previewEditor));
+      }
     } catch (error) {
       // 渲染错误文本。
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -460,6 +516,65 @@ class ScribdownPreviewController implements vscode.Disposable {
       type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
       sourceLine
     });
+  }
+
+  /**
+   * 处理编辑器光标变化，把光标所在源码行同步到预览高亮与定位。
+   * @param event 编辑器选区变化事件。
+   */
+  private handleEditorCursorChange(event: vscode.TextEditorSelectionChangeEvent): void {
+    this.postPreviewCursorSync(resolveCursorAnchor(event.textEditor));
+  }
+
+  /**
+   * 向预览发送光标定位高亮消息，并标记编辑器为驱动方以过滤预览侧滚动回声。
+   * @param cursorAnchor 编辑器光标定位描述。
+   */
+  private postPreviewCursorSync(cursorAnchor: CursorAnchorDescriptor): void {
+    // 关键步骤：标记编辑器为当前驱动方，过滤定位滚动引发的预览侧回声。
+    this.markScrollSyncSource(SCROLL_SYNC_SOURCE.editor);
+
+    void this.panel?.webview.postMessage({
+      type: SET_PREVIEW_CURSOR_MESSAGE_TYPE,
+      sourceLine: cursorAnchor.sourceLine,
+      visibleTopLine: cursorAnchor.visibleTopLine,
+      visibleBottomLine: cursorAnchor.visibleBottomLine
+    });
+  }
+
+  /**
+   * 处理激活编辑器变化：光标离开绑定文档时清除高亮，切回时按光标重新高亮。
+   * @param activeEditor 当前激活编辑器，可能为 undefined。
+   */
+  private handleActiveEditorChange(activeEditor: vscode.TextEditor | undefined): void {
+    if (
+      activeEditor &&
+      activeEditor.document.uri.toString() === this.previewDocumentUriText
+    ) {
+      // 切回绑定文档，按当前光标位置重新高亮与定位。
+      this.postPreviewCursorSync(resolveCursorAnchor(activeEditor));
+      return;
+    }
+
+    // 光标离开绑定文档，清除预览高亮。
+    this.postClearPreviewCursor();
+  }
+
+  /**
+   * 通知预览清除光标定位高亮。
+   */
+  private postClearPreviewCursor(): void {
+    void this.panel?.webview.postMessage({ type: CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE });
+  }
+
+  /**
+   * 读取当前预览绑定文档对应的可见编辑器。
+   * @returns 对应可见编辑器；不存在时返回 undefined。
+   */
+  private getPreviewEditor(): vscode.TextEditor | undefined {
+    return vscode.window.visibleTextEditors.find(
+      (editor) => editor.document.uri.toString() === this.previewDocumentUriText
+    );
   }
 
   /**
@@ -579,6 +694,24 @@ function getActiveMarkdownDocument(): vscode.TextDocument | undefined {
 }
 
 /**
+ * 计算编辑器光标的源码行号及其在可视区内的纵向比例。
+ * @param editor 目标编辑器。
+ * @returns 光标定位描述。
+ */
+function resolveCursorAnchor(editor: vscode.TextEditor): CursorAnchorDescriptor {
+  // 光标所在编辑器行号（0-based）。
+  const cursorLine = editor.selection.active.line;
+  // 首个可视行范围。
+  const visibleRange = editor.visibleRanges[0];
+  // 编辑器可视区顶部源码行号（1-based），无可视范围时回退到光标行。
+  const visibleTopLine = (visibleRange ? visibleRange.start.line : cursorLine) + 1;
+  // 编辑器可视区底部源码行号（1-based），无可视范围时回退到光标行。
+  const visibleBottomLine = (visibleRange ? visibleRange.end.line : cursorLine) + 1;
+
+  return { sourceLine: cursorLine + 1, visibleTopLine, visibleBottomLine };
+}
+
+/**
  * 计算 Webview 可访问资源根目录。
  * @param documentUri 当前文档 URI。
  * @param extensionUri 当前扩展目录 URI。
@@ -640,6 +773,16 @@ function createPreviewShellHtml(
     <base id="${PREVIEW_BASE_ELEMENT_ID}" href="" />
     <title>${PROJECT_NAME} Preview</title>
     <link rel="stylesheet" href="${previewStylesHref}" />
+    <style>
+      .${SOURCE_LINE_ACTIVE_CLASS_NAME} {
+        position: absolute;
+        z-index: 2147483646;
+        pointer-events: none;
+        border-radius: 4px;
+        background-color: rgba(255, 184, 0, 0.4);
+        box-shadow: 0 0 0 4px rgba(255, 184, 0, 0.4);
+      }
+    </style>
   </head>
   <body class="${SCRIBDOWN_PAGE_CLASS_NAME}">
     <main class="${SCRIBDOWN_APP_CLASS_NAME}">
@@ -668,6 +811,8 @@ function createRuntimeBootstrapScript(): string {
     previewBaseElementId: PREVIEW_BASE_ELEMENT_ID,
     renderContentMessageType: RENDER_CONTENT_MESSAGE_TYPE,
     setPreviewScrollMessageType: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
+    setPreviewCursorMessageType: SET_PREVIEW_CURSOR_MESSAGE_TYPE,
+    clearPreviewCursorMessageType: CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE,
     previewReadyMessageType: PREVIEW_READY_MESSAGE_TYPE,
     previewScrollChangedMessageType: PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE
   };
