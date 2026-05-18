@@ -1,3 +1,4 @@
+import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
 import { renderMarkdownToDocument } from "./render-markdown";
 
 // 仅当源响应是这些纯文本/Markdown 变体时才进行渲染，避免把任意 HTML 当 Markdown 处理。
@@ -113,6 +114,19 @@ function extractFilename(sourceUrl: string): string {
     }
   } catch {
     renderError("src 参数不是合法的 URL。", null);
+    return;
+  }
+
+  // 关键步骤：尊重 popup 总开关。用户在 viewer 已加载后关闭开关并刷新（或直接打开
+  // viewer URL 时扩展处于关闭态），不再渲染而是把页面替换为原始 URL。
+  // background 的 webNavigation 监听器同样会读 storage 决定是否拦截，
+  // 因此这里只需 location.replace，无需额外 bypass 协调。
+  /** storage 中的当前启用状态（未设置视为启用）。 */
+  const enabledResult = await chrome.storage.local.get(
+    EXTENSION_ENABLED_STORAGE_KEY
+  );
+  if (enabledResult[EXTENSION_ENABLED_STORAGE_KEY] === false) {
+    window.location.replace(sourceUrl);
     return;
   }
 

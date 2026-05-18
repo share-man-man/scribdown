@@ -1,3 +1,4 @@
+import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
 import { renderMarkdownToDocument } from "./render-markdown";
 
 // 仅处理 file:// 场景，http(s) 走 background → viewer 重定向路径。
@@ -9,6 +10,13 @@ const MARKDOWN_PLAINTEXT_MIME_TYPES = new Set<string>([
 ]);
 
 (async () => {
+  // 关键步骤：尊重 popup 的总开关，关闭时跳过自动渲染，让用户看到原始文本。
+  /** 从 chrome.storage.local 读到的当前启用状态（未设置视为启用）。 */
+  const enabledResult = await chrome.storage.local.get(
+    EXTENSION_ENABLED_STORAGE_KEY
+  );
+  if (enabledResult[EXTENSION_ENABLED_STORAGE_KEY] === false) return;
+
   if (!MARKDOWN_PLAINTEXT_MIME_TYPES.has(document.contentType)) return;
 
   // Chrome 打开 file://*.md 时，页面体是一个 <pre> 标签包含原始文本。
