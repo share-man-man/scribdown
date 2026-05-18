@@ -7,13 +7,31 @@
     "default_popup": "popup.html"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "webNavigation"
   ],
+  "host_permissions": [
+    "http://*/*.md",
+    "https://*/*.md"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "matches": ["file://**/*.md"],
       "js": ["src/content.ts"],
       "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "resources": ["viewer.html"]
     }
   ]
 }
