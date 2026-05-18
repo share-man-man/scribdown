@@ -1,0 +1,173 @@
+/* VideoRenderer：块级 video 转换为 figure，边框沿用 image-frame 同源 SVG 平铺。 */
+.scribdown-markdown .scribdown-video-figure {
+  width: min(100%, 720px);
+  margin: 0 auto var(--scribdown-space-3);
+}
+
+.scribdown-markdown .scribdown-video-frame {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 92%, var(--scribdown-color-border) 8%);
+  background-size:
+    32px 29px,
+    auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.scribdown-markdown .scribdown-video-frame::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 7px -7px -7px 7px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--scribdown-color-border) 38%, transparent),
+      transparent 84%
+    ),
+    color-mix(in srgb, var(--scribdown-color-text-primary) 8%, transparent);
+  border-radius: 16px 18px 15px 17px;
+  transform: rotate(0.35deg);
+}
+
+/* 关键步骤：复用 markdown-edge SVG 平铺，与图片 frame 视觉对齐。 */
+.scribdown-markdown .scribdown-video-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
+    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+  background-position:
+    left top,
+    left bottom,
+    left top,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    96px 8px,
+    96px 8px,
+    8px 72px,
+    8px 72px;
+}
+
+.scribdown-markdown .scribdown-video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: #000;
+  border: 0;
+  border-radius: 6px 7px 5px 6px;
+  box-shadow: none;
+}
+
+.scribdown-markdown .scribdown-video:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--scribdown-color-accent) 72%, transparent);
+  outline-offset: 4px;
+}
+
+.scribdown-markdown .scribdown-video-fallback {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-video-frame--failed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  padding: var(--scribdown-space-4);
+  background:
+    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
+    color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
+}
+
+.scribdown-markdown .scribdown-video-frame--failed::after {
+  background-image:
+    var(--scribdown-image-fallback-edge-horizontal),
+    var(--scribdown-image-fallback-edge-horizontal),
+    var(--scribdown-image-fallback-edge-vertical), var(--scribdown-image-fallback-edge-vertical);
+  background-size:
+    64px 8px,
+    64px 8px,
+    8px 64px,
+    8px 64px;
+}
+
+.scribdown-markdown .scribdown-video-frame--failed .scribdown-video {
+  display: none;
+}
+
+.scribdown-markdown .scribdown-video-frame--failed .scribdown-video-fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  color: var(--scribdown-color-text-primary);
+  text-align: center;
+}
+
+/* 失败态图标：手绘风方框 + 居中三角形播放符号，区别于图片裂痕图标。 */
+.scribdown-markdown .scribdown-video-fallback-icon {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 58px;
+  height: 46px;
+  margin-bottom: var(--scribdown-space-3);
+  border: 2px solid var(--scribdown-color-text-primary);
+  background: color-mix(in srgb, var(--scribdown-color-surface) 78%, var(--scribdown-color-accent) 8%);
+  transform: rotate(-1.5deg);
+}
+
+.scribdown-markdown .scribdown-video-fallback-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 9px 0 9px 14px;
+  border-color: transparent transparent transparent var(--scribdown-color-accent);
+  transform: translate(-40%, -50%);
+}
+
+.scribdown-markdown .scribdown-video-fallback-text {
+  font-family: var(--scribdown-font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.scribdown-markdown .scribdown-video-fallback-source {
+  max-width: 100%;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--scribdown-color-text-secondary);
+  font-family: var(--scribdown-font-code);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.scribdown-markdown :not(.scribdown-video-frame) > video {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  margin: 0 auto var(--scribdown-space-3);
+  background: #000;
+  border-radius: var(--scribdown-radius-md);
+}

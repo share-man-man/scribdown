@@ -43,5 +43,8 @@
 /* 12. 全屏图片查看器 */
 @import "./styles/image-viewer.css";
 
-/* 13. 表格 */
+/* 13. 视频：figure / 边框 / fallback */
+@import "./styles/video.css";
+
+/* 14. 表格 */
 @import "./styles/table.css";
