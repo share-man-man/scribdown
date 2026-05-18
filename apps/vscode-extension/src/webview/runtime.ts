@@ -1,6 +1,12 @@
 import morphdom from "morphdom";
 import { hydrateMarkdownPreview } from "@scribdown/markdown-renderer";
-import { SOURCE_LINE_ACTIVE_CLASS_NAME, SOURCE_LINE_DATA_ATTRIBUTE } from "@scribdown/shared";
+import {
+  SOURCE_LINE_ACTIVE_CLASS_NAME,
+  SOURCE_LINE_DATA_ATTRIBUTE,
+  SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
+  SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
+  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME
+} from "@scribdown/shared";
 
 /**
  * VS Code Webview API 的最小能力声明。
@@ -88,19 +94,19 @@ export function hydrateScribdownPreview(rootElement: ParentNode): void {
   hydrateMarkdownPreview(rootElement);
 }
 
-/**
- * 预览滚动调试日志前缀，便于在 Webview 控制台按此关键字过滤。
- */
-const PREVIEW_SCROLL_LOG_PREFIX = "[scribdown:preview-scroll]";
+// /**
+//  * 预览滚动调试日志前缀，便于在 Webview 控制台按此关键字过滤。
+//  */
+// const PREVIEW_SCROLL_LOG_PREFIX = "[scribdown:preview-scroll]";
 
-/**
- * 打印一条预览滚动调试日志，用于排查滚动由哪个来源触发。
- * @param trigger 触发滚动的来源标识。
- * @param detail 附加的调试信息。
- */
-function logPreviewScroll(trigger: string, detail: Record<string, unknown>): void {
-  console.log(PREVIEW_SCROLL_LOG_PREFIX, trigger, detail);
-}
+// /**
+//  * 打印一条预览滚动调试日志，用于排查滚动由哪个来源触发。
+//  * @param trigger 触发滚动的来源标识。
+//  * @param detail 附加的调试信息。
+//  */
+// function logPreviewScroll(trigger: string, detail: Record<string, unknown>): void {
+//   console.log(PREVIEW_SCROLL_LOG_PREFIX, trigger, detail);
+// }
 
 /**
  * 在 VS Code Webview 环境中挂载消息桥与渲染更新逻辑。
@@ -137,6 +143,8 @@ export function bootstrapVscodePreviewRuntime(
   let suppressedScrollY: number | undefined;
   // 当前光标定位高亮的元素；undefined 表示当前无高亮元素。
   let activeHighlightElement: HTMLElement | undefined;
+  // 上次离屏提示所在边缘；undefined 表示高亮块当前在视口内。
+  let lastOffscreenHintEdge: "top" | "bottom" | undefined;
   // 源码行锚点索引，缓存锚点测量结果。
   const anchorIndex = createSourceLineAnchorIndex(previewRootElement);
 
@@ -145,6 +153,11 @@ export function bootstrapVscodePreviewRuntime(
   cursorHighlightOverlay.classList.add(SOURCE_LINE_ACTIVE_CLASS_NAME);
   cursorHighlightOverlay.style.display = "none";
   document.body.appendChild(cursorHighlightOverlay);
+
+  // 关键步骤：高亮块在视口外时，用贴边的弧形辉光浮层提示其方向。
+  const offscreenHintOverlay = document.createElement("div");
+  offscreenHintOverlay.classList.add(SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME);
+  document.body.appendChild(offscreenHintOverlay);
 
   /**
    * 把光标定位高亮浮层定位覆盖到目标元素之上。
@@ -184,6 +197,49 @@ export function bootstrapVscodePreviewRuntime(
     if (activeHighlightElement) {
       showCursorHighlight(activeHighlightElement);
     }
+  };
+
+  /**
+   * 在指定边缘闪一次弧形辉光，提示视口外高亮块的方向。
+   * @param edge 提示所在边缘：top 表示高亮块在上方，bottom 表示在下方。
+   */
+  const flashOffscreenHint = (edge: "top" | "bottom"): void => {
+    // 目标边缘对应的修饰 class。
+    const edgeClassName =
+      edge === "top"
+        ? SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME
+        : SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME;
+
+    offscreenHintOverlay.className = `${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME} ${edgeClassName}`;
+
+    // 关键步骤：浮层为复用元素，重置动画以便每次都重新触发闪烁。
+    offscreenHintOverlay.style.animation = "none";
+    void offscreenHintOverlay.offsetWidth;
+    offscreenHintOverlay.style.animation = "";
+  };
+
+  /**
+   * 判断当前高亮块是否在视口外，必要时在对应边缘闪一次方向提示。
+   * @param force 为 true 时只要在视口外就闪（用于光标移动）；
+   *   为 false 时仅在「进入视口外」或「方向翻转」的状态切换时闪（用于滚动）。
+   */
+  const evaluateOffscreenHint = (force: boolean): void => {
+    if (!activeHighlightElement) {
+      lastOffscreenHintEdge = undefined;
+      return;
+    }
+
+    // 高亮块相对视口的矩形。
+    const rect = activeHighlightElement.getBoundingClientRect();
+    // 高亮块所在边缘：完全在视口上方为 top，完全在下方为 bottom，部分可见为 undefined。
+    const edge: "top" | "bottom" | undefined =
+      rect.bottom <= 0 ? "top" : rect.top >= window.innerHeight ? "bottom" : undefined;
+
+    if (edge && (force || edge !== lastOffscreenHintEdge)) {
+      flashOffscreenHint(edge);
+    }
+
+    lastOffscreenHintEdge = edge;
   };
 
   // 内容尺寸变化（重渲染外的图片/字体加载、窗口缩放等）会改变锚点偏移，使缓存失效。
@@ -243,6 +299,9 @@ export function bootstrapVscodePreviewRuntime(
       // 关键步骤：光标消息只更新高亮浮层，不触发滚动；滚动统一由编辑器可视区同步驱动。
       showCursorHighlight(targetElement);
 
+      // 关键步骤：光标移动是显式操作，只要高亮块在视口外就闪一次方向提示。
+      evaluateOffscreenHint(true);
+
       return;
     }
 
@@ -268,10 +327,13 @@ export function bootstrapVscodePreviewRuntime(
           suppressedScrollY !== undefined &&
           Math.abs(window.scrollY - suppressedScrollY) < 1;
 
-        logPreviewScroll(isProgrammaticEcho ? "programmatic-echo" : "user-scroll", {
-          scrollY: window.scrollY,
-          suppressedScrollY
-        });
+        // logPreviewScroll(isProgrammaticEcho ? "programmatic-echo" : "user-scroll", {
+        //   scrollY: window.scrollY,
+        //   suppressedScrollY
+        // });
+
+        // 关键步骤：滚动可能让高亮块移出视口，在「进入视口外/方向翻转」时闪一次方向提示。
+        evaluateOffscreenHint(false);
 
         // 关键步骤：跳过程序化滚动自身触发的 scroll 回声，避免无谓的往返消息。
         if (isProgrammaticEcho) {
@@ -528,11 +590,11 @@ function scrollPreviewToSourceLine(
 
   window.scrollTo(0, targetY);
 
-  logPreviewScroll("set-preview-scroll", {
-    sourceLine,
-    targetY,
-    scrolledY: window.scrollY
-  });
+  // logPreviewScroll("set-preview-scroll", {
+  //   sourceLine,
+  //   targetY,
+  //   scrolledY: window.scrollY
+  // });
 
   // 返回滚动后的实际位置（已被浏览器约束到有效区间），供回声跳过比对。
   return window.scrollY;

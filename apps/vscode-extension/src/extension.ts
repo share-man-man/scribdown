@@ -8,6 +8,9 @@ import {
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
   SCRIBDOWN_PAGE_CLASS_NAME,
   SOURCE_LINE_ACTIVE_CLASS_NAME,
+  SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
+  SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
+  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
   VSCODE_PREVIEW_TITLE
 } from "@scribdown/shared";
 
@@ -756,6 +759,46 @@ function createPreviewShellHtml(
       @keyframes ${SOURCE_LINE_ACTIVE_CLASS_NAME}-flash {
         0%,
         70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      .${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME} {
+        position: fixed;
+        left: 0;
+        right: 0;
+        height: 28px;
+        z-index: 2147483646;
+        pointer-events: none;
+        opacity: 0;
+      }
+      /* 高亮块在视口上方：顶部弧形辉光闪一下，提示向上 */
+      .${SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME} {
+        top: 0;
+        background: radial-gradient(
+          ellipse 100% 100% at 50% 0%,
+          rgba(255, 184, 0, 0.55),
+          transparent 72%
+        );
+        animation: ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash 0.8s ease-out forwards;
+      }
+      /* 高亮块在视口下方：底部弧形辉光闪一下，提示向下 */
+      .${SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME} {
+        bottom: 0;
+        background: radial-gradient(
+          ellipse 100% 100% at 50% 100%,
+          rgba(255, 184, 0, 0.55),
+          transparent 72%
+        );
+        animation: ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash 0.8s ease-out forwards;
+      }
+      @keyframes ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash {
+        0% {
+          opacity: 0;
+        }
+        35% {
           opacity: 1;
         }
         100% {

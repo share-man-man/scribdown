@@ -72,3 +72,20 @@ export const SOURCE_LINE_DATA_ATTRIBUTE = "data-source-line";
  * 编辑器光标所在源码行对应预览块的高亮 class。
  */
 export const SOURCE_LINE_ACTIVE_CLASS_NAME = "scribdown-source-line-active";
+
+/**
+ * 高亮块位于预览视口外时，提示其方向的边缘弧形闪烁 class。
+ */
+export const SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME = "scribdown-source-line-offscreen-hint";
+
+/**
+ * 边缘提示位于视口顶部（高亮块在视口上方）的修饰 class。
+ */
+export const SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME =
+  "scribdown-source-line-offscreen-hint--top";
+
+/**
+ * 边缘提示位于视口底部（高亮块在视口下方）的修饰 class。
+ */
+export const SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME =
+  "scribdown-source-line-offscreen-hint--bottom";
