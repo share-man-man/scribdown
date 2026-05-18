@@ -11,17 +11,55 @@ import {
 import uiStyles from "@scribdown/ui-handdrawn/styles.css?inline";
 
 /**
+ * 文档渲染控制参数。
+ */
+interface RenderMarkdownToDocumentOptions {
+  enableCodeHighlight?: boolean;
+}
+
+/**
+ * 把内联 CSS 里的 `/assets/*` 绝对路径改写为扩展资源 URL。
+ * content script 运行在宿主页面时，`url("/assets/...")` 会被当成宿主根路径，
+ * 必须显式改成 `chrome-extension://<id>/assets/...` 才能稳定加载。
+ * @param cssText 原始内联 CSS 文本。
+ * @returns 适配扩展环境后的 CSS 文本。
+ */
+function resolveExtensionAssetUrls(cssText: string): string {
+  if (typeof chrome === "undefined" || !chrome.runtime?.getURL) {
+    return cssText;
+  }
+
+  /** 扩展根路径 URL（以 `/` 结尾）。 */
+  const extensionRootUrl = chrome.runtime.getURL("");
+
+  return cssText.replace(
+    /url\((['"]?)\/(assets\/[^)"']+)\1\)/g,
+    (_fullMatch: string, quote: string, assetPath: string) => {
+      /** 当前资源的扩展绝对 URL。 */
+      const absoluteAssetUrl = new URL(assetPath, extensionRootUrl).toString();
+      return `url(${quote}${absoluteAssetUrl}${quote})`;
+    }
+  );
+}
+
+/**
  * 把给定 Markdown 文本渲染到当前 document，统一替换 head 标签与 body 结构。
  * 由 file:// content script 与扩展 viewer 页共享，保证两个入口渲染一致。
  * @param rawMarkdown 原始 Markdown 字符串。
  * @param title 用于 document.title 的标题文本。
+ * @param options 渲染控制参数。
  */
 export async function renderMarkdownToDocument(
   rawMarkdown: string,
-  title: string
+  title: string,
+  options: RenderMarkdownToDocumentOptions = {}
 ): Promise<void> {
+  /** 是否启用代码高亮（默认启用）。 */
+  const enableCodeHighlight = options.enableCodeHighlight ?? true;
   // 关键步骤：将原始 Markdown 渲染为安全 HTML。
-  const renderedHtml = await renderMarkdownPreview(rawMarkdown);
+  const renderedHtml = await renderMarkdownPreview(rawMarkdown, {
+    enableCodeHighlight
+  });
 
   // 重置 <head>，去掉宿主页面残留的元信息和样式。
   document.head.innerHTML = "";
@@ -38,7 +76,7 @@ export async function renderMarkdownToDocument(
 
   /** 注入的内联样式节点。 */
   const styleEl = document.createElement("style");
-  styleEl.textContent = uiStyles;
+  styleEl.textContent = resolveExtensionAssetUrls(uiStyles);
   document.head.appendChild(styleEl);
 
   // 用渲染结果替换 <body> 内容。

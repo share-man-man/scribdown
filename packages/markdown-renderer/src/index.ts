@@ -23,6 +23,7 @@ const SOURCE_LINE_HAST_PROPERTY = SOURCE_LINE_DATA_ATTRIBUTE.replace(
  * Markdown 渲染参数。
  */
 interface RenderMarkdownOptions {
+  enableCodeHighlight?: boolean;
   sanitizeHtml?: boolean;
   sanitize?: (unsafeHtml: string) => string;
 }
@@ -31,6 +32,7 @@ interface RenderMarkdownOptions {
  * Markdown 预览渲染参数。
  */
 export interface RenderMarkdownPreviewOptions {
+  enableCodeHighlight?: boolean;
   sanitizeHtml?: boolean;
 }
 
@@ -481,8 +483,11 @@ async function renderMarkdown(
 
   // 关键步骤：sanitize 之后再做 Shiki 高亮，把 token 的 span/style 添加到信任过滤后的代码体内。
   const sanitizedHtml = await applyMarkdownSanitize(renderedHtml, options);
-  const highlightedHtml = await highlightMarkdownCodeBlocks(sanitizedHtml);
+  if (options.enableCodeHighlight === false) {
+    return sanitizedHtml;
+  }
 
+  const highlightedHtml = await highlightMarkdownCodeBlocks(sanitizedHtml);
   return highlightedHtml;
 }
 
@@ -497,9 +502,12 @@ export async function renderMarkdownPreview(
   options: RenderMarkdownPreviewOptions = {}
 ): Promise<string> {
   // 预览模式默认开启 HTML 清洗。
+  /** 是否启用代码高亮（默认启用）。 */
+  const enableCodeHighlight = options.enableCodeHighlight ?? true;
+  // 预览模式默认开启 HTML 清洗。
   const sanitizeHtml = options.sanitizeHtml ?? true;
 
-  return renderMarkdown(markdownText, { sanitizeHtml });
+  return renderMarkdown(markdownText, { sanitizeHtml, enableCodeHighlight });
 }
 
 /**

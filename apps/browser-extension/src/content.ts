@@ -33,5 +33,8 @@ const MARKDOWN_PLAINTEXT_MIME_TYPES = new Set<string>([
     window.location.pathname.split("/").pop() ?? "Markdown"
   );
 
-  await renderMarkdownToDocument(rawMarkdown, filename);
+  await renderMarkdownToDocument(rawMarkdown, filename, {
+    // file:// 内容脚本下禁用 Shiki 动态高亮，避免语言包分块按宿主 origin 加载导致 CORS 失败。
+    enableCodeHighlight: false
+  });
 })();
