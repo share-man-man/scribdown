@@ -71,6 +71,13 @@
   border: 0;
   padding: var(--scribdown-space-2) var(--scribdown-space-3);
   text-align: left;
+  /* 关键步骤：列宽下限，压到此值仍超出则整表横向滚动，避免窄列被逐字挤压。 */
+  min-width: 4rem;
+  /* 关键步骤：列宽上限，超出则单元格内换行（行变高），避免长文本把整表撑宽。 */
+  max-width: 22rem;
+  /* 关键步骤：短词（如 ID）不逐字拆，仅超长 token 放不下时才断行。 */
+  word-break: normal;
+  overflow-wrap: anywhere;
   background-color: var(--scribdown-color-surface);
   background-image:
     var(--scribdown-table-cell-border-horizontal-svg),
