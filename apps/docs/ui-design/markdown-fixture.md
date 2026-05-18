@@ -319,7 +319,13 @@ HTML 注释不会显示：
 
 ## 视频示例
 
-<video src="https://example.com/demo.mp4" controls></video>
+正常视频：
+
+<video src="https://www.runoob.com/try/demo_source/movie.mp4" controls width="640" poster="https://inews.gtimg.com/newsapp_bt/0/13263837859/1000"></video>
+
+加载失败的视频（仅显示控件占位与失败提示）：
+
+<video src="https://example.invalid/broken-video-404.mp4" controls width="640"></video>
 
 ## 提示块与容器
 
