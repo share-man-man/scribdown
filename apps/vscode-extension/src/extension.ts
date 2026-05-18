@@ -102,31 +102,11 @@ const SCROLL_SYNC_SOURCE_RETENTION_MS = 250;
 const EDITOR_SCROLL_SYNC_THROTTLE_MS = 16;
 
 /**
- * 光标变化后抑制纯滚动同步的时间窗口（毫秒）。
- * 方向键移动光标时会同时触发选区变化与可视区变化两个事件，
- * 该窗口内的可视区变化视为光标移动的副产物，交由光标定位消息一并处理，
- * 避免预览先后执行两套基准不同的对齐而跳动。
- */
-const CURSOR_DRIVEN_SCROLL_SUPPRESS_MS = 150;
-
-/**
  * Webview 消息最小结构。
  */
 interface PreviewMessagePayload {
   type: string;
   sourceLine?: number;
-}
-
-/**
- * 编辑器光标定位描述。
- */
-interface CursorAnchorDescriptor {
-  /** 光标所在源码行号（1-based）。 */
-  sourceLine: number;
-  /** 编辑器可视区顶部源码行号（1-based）。 */
-  visibleTopLine: number;
-  /** 编辑器可视区底部源码行号（1-based）。 */
-  visibleBottomLine: number;
 }
 
 /**
@@ -154,11 +134,6 @@ class ScribdownPreviewController implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
 
   /**
-   * 预览当前顶部对应的源码行号（1-based），用于重渲染后恢复位置与双向同步。
-   */
-  private previewSourceLine = 1;
-
-  /**
    * 当前滚动同步驱动方，用于过滤另一侧的回声事件。
    */
   private scrollSyncSource: ScrollSyncSource | undefined;
@@ -182,11 +157,6 @@ class ScribdownPreviewController implements vscode.Disposable {
    * 编辑器滚动同步节流间隔内待发送的最新源码行号；undefined 表示无待发送值。
    */
   private editorScrollPendingLine: number | undefined;
-
-  /**
-   * 上次编辑器光标变化的时间戳（毫秒），用于抑制光标移动副产生的纯滚动同步。
-   */
-  private lastCursorChangeAt = 0;
 
   /**
    * 创建控制器并注册文档监听。
@@ -341,7 +311,6 @@ class ScribdownPreviewController implements vscode.Disposable {
       this.clearScrollSync();
       this.panel = undefined;
       this.previewDocumentUriText = undefined;
-      this.previewSourceLine = 1;
     });
 
     // Webview 消息监听。
@@ -416,20 +385,13 @@ class ScribdownPreviewController implements vscode.Disposable {
         baseHref: ensureTrailingSlash(baseUri.toString())
       });
 
-      // 关键步骤：重渲染后的位置恢复属于编辑器权威位置，标记驱动方以过滤其回声，
-      // 避免恢复滚动反向触发编辑器 revealRange。
-      this.markScrollSyncSource(SCROLL_SYNC_SOURCE.editor);
-
-      await this.panel.webview.postMessage({
-        type: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
-        sourceLine: this.previewSourceLine
-      });
-
-      // 关键步骤：重渲染替换了预览 DOM，按当前光标位置重新应用高亮与定位。
+      // 关键步骤：morphdom 增量更新会原地保留预览滚动位置，重渲染后无需再恢复滚动。
+      // 首次打开预览时需把预览对齐到编辑器顶部可见行，并按光标位置重新应用高亮。
       const previewEditor = this.getPreviewEditor();
 
       if (previewEditor) {
-        this.postPreviewCursorSync(resolveCursorAnchor(previewEditor));
+        this.postEditorScrollSync(resolveEditorTopLine(previewEditor));
+        this.postPreviewCursorSync(resolveCursorSourceLine(previewEditor));
       }
     } catch (error) {
       // 渲染错误文本。
@@ -464,15 +426,6 @@ class ScribdownPreviewController implements vscode.Disposable {
 
     // 顶部可视行对应的源码行号（编辑器行号 0-based，源码行号 1-based）。
     const sourceLine = firstVisibleRange.start.line + 1;
-
-    // 重渲染恢复位置依赖最新行号，立即更新，不受节流与抑制影响。
-    this.previewSourceLine = sourceLine;
-
-    // 关键步骤：光标移动会同时触发可视区变化，该滚动交由光标定位消息处理，
-    // 跳过纯滚动同步，避免预览先后执行两套基准不同的对齐而跳动。
-    if (Date.now() - this.lastCursorChangeAt < CURSOR_DRIVEN_SCROLL_SUPPRESS_MS) {
-      return;
-    }
 
     this.scheduleEditorScrollSync(sourceLine);
   }
@@ -539,28 +492,22 @@ class ScribdownPreviewController implements vscode.Disposable {
   }
 
   /**
-   * 处理编辑器光标变化，把光标所在源码行同步到预览高亮与定位。
+   * 处理编辑器光标变化，把光标所在源码行同步到预览高亮。
    * @param event 编辑器选区变化事件。
    */
   private handleEditorCursorChange(event: vscode.TextEditorSelectionChangeEvent): void {
-    // 记录光标变化时间，供 handleEditorScroll 抑制随之而来的纯滚动同步。
-    this.lastCursorChangeAt = Date.now();
-    this.postPreviewCursorSync(resolveCursorAnchor(event.textEditor));
+    this.postPreviewCursorSync(resolveCursorSourceLine(event.textEditor));
   }
 
   /**
-   * 向预览发送光标定位高亮消息，并标记编辑器为驱动方以过滤预览侧滚动回声。
-   * @param cursorAnchor 编辑器光标定位描述。
+   * 向预览发送光标高亮消息。
+   * 仅更新光标所在块的高亮浮层，不触发滚动；滚动统一由编辑器可视区同步处理。
+   * @param sourceLine 光标所在源码行号（1-based）。
    */
-  private postPreviewCursorSync(cursorAnchor: CursorAnchorDescriptor): void {
-    // 关键步骤：标记编辑器为当前驱动方，过滤定位滚动引发的预览侧回声。
-    this.markScrollSyncSource(SCROLL_SYNC_SOURCE.editor);
-
+  private postPreviewCursorSync(sourceLine: number): void {
     void this.panel?.webview.postMessage({
       type: SET_PREVIEW_CURSOR_MESSAGE_TYPE,
-      sourceLine: cursorAnchor.sourceLine,
-      visibleTopLine: cursorAnchor.visibleTopLine,
-      visibleBottomLine: cursorAnchor.visibleBottomLine
+      sourceLine
     });
   }
 
@@ -573,8 +520,9 @@ class ScribdownPreviewController implements vscode.Disposable {
       activeEditor &&
       activeEditor.document.uri.toString() === this.previewDocumentUriText
     ) {
-      // 切回绑定文档，按当前光标位置重新高亮与定位。
-      this.postPreviewCursorSync(resolveCursorAnchor(activeEditor));
+      // 切回绑定文档，按顶部可视行重新对齐预览，并按光标位置重新高亮。
+      this.postEditorScrollSync(resolveEditorTopLine(activeEditor));
+      this.postPreviewCursorSync(resolveCursorSourceLine(activeEditor));
       return;
     }
 
@@ -605,13 +553,9 @@ class ScribdownPreviewController implements vscode.Disposable {
    */
   private handlePreviewScroll(sourceLine: number): void {
     // 编辑器驱动滚动时，预览侧上报属于回声，跳过以避免循环。
-    // 此处先于记录行号返回，避免回声的小数测量值覆盖编辑器写入的整数行号。
     if (this.scrollSyncSource === SCROLL_SYNC_SOURCE.editor) {
       return;
     }
-
-    // 预览自身驱动的滚动，记录最新顶部行号供重渲染恢复位置。
-    this.previewSourceLine = sourceLine;
 
     // 当前预览绑定文档对应的可见编辑器。
     const previewEditor = vscode.window.visibleTextEditors.find(
@@ -716,21 +660,24 @@ function getActiveMarkdownDocument(): vscode.TextDocument | undefined {
 }
 
 /**
- * 计算编辑器光标的源码行号及其在可视区内的纵向比例。
+ * 计算编辑器光标所在源码行号。
  * @param editor 目标编辑器。
- * @returns 光标定位描述。
+ * @returns 光标所在源码行号（1-based）。
  */
-function resolveCursorAnchor(editor: vscode.TextEditor): CursorAnchorDescriptor {
-  // 光标所在编辑器行号（0-based）。
-  const cursorLine = editor.selection.active.line;
+function resolveCursorSourceLine(editor: vscode.TextEditor): number {
+  return editor.selection.active.line + 1;
+}
+
+/**
+ * 计算编辑器顶部可视行对应的源码行号。
+ * @param editor 目标编辑器。
+ * @returns 顶部可视行源码行号（1-based）；无可视范围时回退到光标行。
+ */
+function resolveEditorTopLine(editor: vscode.TextEditor): number {
   // 首个可视行范围。
   const visibleRange = editor.visibleRanges[0];
-  // 编辑器可视区顶部源码行号（1-based），无可视范围时回退到光标行。
-  const visibleTopLine = (visibleRange ? visibleRange.start.line : cursorLine) + 1;
-  // 编辑器可视区底部源码行号（1-based），无可视范围时回退到光标行。
-  const visibleBottomLine = (visibleRange ? visibleRange.end.line : cursorLine) + 1;
 
-  return { sourceLine: cursorLine + 1, visibleTopLine, visibleBottomLine };
+  return (visibleRange ? visibleRange.start.line : editor.selection.active.line) + 1;
 }
 
 /**

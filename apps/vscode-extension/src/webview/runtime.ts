@@ -1,3 +1,4 @@
+import morphdom from "morphdom";
 import { hydrateMarkdownPreview } from "@scribdown/markdown-renderer";
 import { SOURCE_LINE_ACTIVE_CLASS_NAME, SOURCE_LINE_DATA_ATTRIBUTE } from "@scribdown/shared";
 
@@ -30,20 +31,6 @@ interface NormalizedRuntimeMessage {
   baseHref?: string;
   renderedHtml?: string;
   sourceLine?: number;
-  visibleTopLine?: number;
-  visibleBottomLine?: number;
-}
-
-/**
- * 光标定位滚动请求：把光标所在块对齐到编辑器中该块起始行的纵向位置。
- */
-interface CursorAlignRequest {
-  /** 光标所在源码行号（1-based）。 */
-  sourceLine: number;
-  /** 编辑器可视区顶部源码行号（1-based）。 */
-  visibleTopLine: number;
-  /** 编辑器可视区底部源码行号（1-based）。 */
-  visibleBottomLine: number;
 }
 
 /**
@@ -102,9 +89,18 @@ export function hydrateScribdownPreview(rootElement: ParentNode): void {
 }
 
 /**
- * 光标定位滚动的节流间隔（毫秒）：间隔内的多次光标变化合并为一次定位滚动，避免预览频繁晃动。
+ * 预览滚动调试日志前缀，便于在 Webview 控制台按此关键字过滤。
  */
-const CURSOR_ALIGN_THROTTLE_MS = 150;
+const PREVIEW_SCROLL_LOG_PREFIX = "[scribdown:preview-scroll]";
+
+/**
+ * 打印一条预览滚动调试日志，用于排查滚动由哪个来源触发。
+ * @param trigger 触发滚动的来源标识。
+ * @param detail 附加的调试信息。
+ */
+function logPreviewScroll(trigger: string, detail: Record<string, unknown>): void {
+  console.log(PREVIEW_SCROLL_LOG_PREFIX, trigger, detail);
+}
 
 /**
  * 在 VS Code Webview 环境中挂载消息桥与渲染更新逻辑。
@@ -141,74 +137,8 @@ export function bootstrapVscodePreviewRuntime(
   let suppressedScrollY: number | undefined;
   // 当前光标定位高亮的元素；undefined 表示当前无高亮元素。
   let activeHighlightElement: HTMLElement | undefined;
-  // 光标定位滚动上次实际执行的时间戳（毫秒）。
-  let cursorAlignLastAt = 0;
-  // 光标定位滚动节流的尾随定时器句柄，0 表示当前无待处理定时器。
-  let cursorAlignTrailingTimer = 0;
-  // 节流间隔内待处理的最新光标定位请求；undefined 表示无待处理值。
-  let cursorAlignPending: CursorAlignRequest | undefined;
   // 源码行锚点索引，缓存锚点测量结果。
   const anchorIndex = createSourceLineAnchorIndex(previewRootElement);
-
-  /**
-   * 立即执行一次光标定位滚动，并记录滚动位置用于跳过 scroll 回声。
-   * @param request 光标定位滚动请求。
-   */
-  const runCursorAlign = (request: CursorAlignRequest): void => {
-    // 光标定位滚动后的实际纵向位置。
-    const scrolledY = alignPreviewToSourceLine(anchorIndex.getAnchors(), request);
-
-    if (scrolledY !== undefined) {
-      suppressedScrollY = scrolledY;
-    }
-  };
-
-  /**
-   * 以节流方式安排光标定位滚动：间隔外立即执行（leading），
-   * 间隔内仅记录最新请求并安排一次尾随执行（trailing）。
-   * @param request 光标定位滚动请求。
-   */
-  const scheduleCursorAlign = (request: CursorAlignRequest): void => {
-    // 当前时间戳。
-    const nowMs = Date.now();
-    // 距上次实际执行经过的毫秒数。
-    const elapsedMs = nowMs - cursorAlignLastAt;
-
-    if (elapsedMs >= CURSOR_ALIGN_THROTTLE_MS) {
-      // 已超出节流间隔，立即执行并清理待处理状态。
-      cursorAlignLastAt = nowMs;
-      cursorAlignPending = undefined;
-
-      if (cursorAlignTrailingTimer !== 0) {
-        window.clearTimeout(cursorAlignTrailingTimer);
-        cursorAlignTrailingTimer = 0;
-      }
-
-      runCursorAlign(request);
-      return;
-    }
-
-    // 处于节流间隔内：记录最新请求，已有尾随定时器则复用。
-    cursorAlignPending = request;
-
-    if (cursorAlignTrailingTimer !== 0) {
-      return;
-    }
-
-    // 关键步骤：安排一次尾随执行，确保光标停止后预览定位到最终位置。
-    cursorAlignTrailingTimer = window.setTimeout(() => {
-      cursorAlignTrailingTimer = 0;
-
-      // 尾随执行时的待处理请求。
-      const pendingAlign = cursorAlignPending;
-      cursorAlignPending = undefined;
-
-      if (pendingAlign) {
-        cursorAlignLastAt = Date.now();
-        runCursorAlign(pendingAlign);
-      }
-    }, CURSOR_ALIGN_THROTTLE_MS - elapsedMs);
-  };
 
   // 关键步骤：光标定位高亮采用独立浮层，覆盖在目标块之上，不向预览内容 DOM 注入 class。
   const cursorHighlightOverlay = document.createElement("div");
@@ -310,15 +240,8 @@ export function bootstrapVscodePreviewRuntime(
         return;
       }
 
-      // 关键步骤：高亮立即随光标移动，把浮层覆盖到目标块之上。
+      // 关键步骤：光标消息只更新高亮浮层，不触发滚动；滚动统一由编辑器可视区同步驱动。
       showCursorHighlight(targetElement);
-
-      // 关键步骤：定位滚动按节流执行，避免光标频繁变化时预览频繁晃动。
-      scheduleCursorAlign({
-        sourceLine: cursorSourceLine,
-        visibleTopLine: normalizedMessage.visibleTopLine ?? cursorSourceLine,
-        visibleBottomLine: normalizedMessage.visibleBottomLine ?? cursorSourceLine
-      });
 
       return;
     }
@@ -340,11 +263,18 @@ export function bootstrapVscodePreviewRuntime(
       scrollReportFrameHandle = window.requestAnimationFrame(() => {
         scrollReportFrameHandle = 0;
 
-        // 关键步骤：跳过程序化滚动自身触发的 scroll 回声，避免无谓的往返消息。
-        if (
+        // 当前 scroll 事件是否为程序化滚动自身触发的回声。
+        const isProgrammaticEcho =
           suppressedScrollY !== undefined &&
-          Math.abs(window.scrollY - suppressedScrollY) < 1
-        ) {
+          Math.abs(window.scrollY - suppressedScrollY) < 1;
+
+        logPreviewScroll(isProgrammaticEcho ? "programmatic-echo" : "user-scroll", {
+          scrollY: window.scrollY,
+          suppressedScrollY
+        });
+
+        // 关键步骤：跳过程序化滚动自身触发的 scroll 回声，避免无谓的往返消息。
+        if (isProgrammaticEcho) {
           suppressedScrollY = undefined;
           return;
         }
@@ -389,19 +319,12 @@ function normalizeRuntimeMessage(message: unknown): NormalizedRuntimeMessage | u
   const renderedHtmlField = messageRecord.renderedHtml;
   // 源码行号字段。
   const sourceLineField = messageRecord.sourceLine;
-  // 编辑器可视区顶部源码行号字段。
-  const visibleTopLineField = messageRecord.visibleTopLine;
-  // 编辑器可视区底部源码行号字段。
-  const visibleBottomLineField = messageRecord.visibleBottomLine;
 
   return {
     type: messageTypeField,
     baseHref: typeof baseHrefField === "string" ? baseHrefField : undefined,
     renderedHtml: typeof renderedHtmlField === "string" ? renderedHtmlField : undefined,
-    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined,
-    visibleTopLine: typeof visibleTopLineField === "number" ? visibleTopLineField : undefined,
-    visibleBottomLine:
-      typeof visibleBottomLineField === "number" ? visibleBottomLineField : undefined
+    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined
   };
 }
 
@@ -422,7 +345,22 @@ function applyRenderedContent(
   const nextRenderedHtml = message.renderedHtml ?? "";
 
   previewBaseElement.setAttribute("href", nextBaseHref);
-  previewRootElement.innerHTML = nextRenderedHtml;
+
+  // 关键步骤：在游离节点上构建并 hydrate 新内容，使代码块等结构与现有 DOM 对齐，
+  // morphdom 才能逐节点比对而非按标签差异整块销毁重建。
+  const incomingRoot = previewRootElement.ownerDocument.createElement(
+    previewRootElement.tagName
+  );
+  incomingRoot.innerHTML = nextRenderedHtml;
+  hydrateScribdownPreview(incomingRoot);
+
+  // 关键步骤：增量更新预览 DOM，仅替换真正变化的节点，
+  // 未变节点原地保留，避免整体替换 innerHTML 造成的闪烁、图片重载与滚动抖动。
+  morphdom(previewRootElement, incomingRoot, { childrenOnly: true });
+
+  // 关键步骤：morphdom 同步属性会抹掉 hydration 运行时写入的图片加载状态类，
+  // 重新 hydrate 由 updateMarkdownImageState 依据真实加载结果纠正；
+  // 代码块 hydrate 带幂等守卫，已包裹的块会被跳过。
   hydrateScribdownPreview(previewRootElement);
 }
 
@@ -585,50 +523,16 @@ function scrollPreviewToSourceLine(
     return undefined;
   }
 
-  window.scrollTo(0, resolveSourceLineOffsetTop(anchors, sourceLine));
+  // 目标纵向位置：源码行锚点换算出的文档像素偏移。
+  const targetY = resolveSourceLineOffsetTop(anchors, sourceLine);
 
-  // 返回滚动后的实际位置（已被浏览器约束到有效区间），供回声跳过比对。
-  return window.scrollY;
-}
+  window.scrollTo(0, targetY);
 
-/**
- * 滚动预览，使光标所在块对齐到「编辑器中该块起始行」的纵向位置。
- * 以块起始行（锚点行）而非光标行为对齐基准：编辑器里锚点行在可视区的纵向比例，
- * 即预览里该块应处的纵向比例，从而做到编辑器锚点行与预览块逐像素对齐。
- * @param anchors 全部源码行锚点（按行号升序）。
- * @param request 光标定位滚动请求。
- * @returns 程序化滚动后的实际纵向位置；未执行滚动时返回 undefined。
- */
-function alignPreviewToSourceLine(
-  anchors: SourceLineAnchor[],
-  request: CursorAlignRequest
-): number | undefined {
-  if (anchors.length === 0) {
-    return undefined;
-  }
-
-  // 光标所在块的锚点索引（行号不大于光标行的最后一个锚点）。
-  const anchorIndex = findLastAnchorIndexAtMost(
-    anchors,
-    request.sourceLine,
-    (anchor) => anchor.line
-  );
-  // 光标所在块的锚点（含锚点行号与文档像素偏移）。
-  const matchedAnchor = anchors[Math.max(0, anchorIndex)];
-
-  // 编辑器可视区行跨度。
-  const visibleLineSpan = request.visibleBottomLine - request.visibleTopLine;
-  // 锚点行在编辑器可视区内的纵向比例（0 顶部，1 底部）；跨度非正时对齐顶部。
-  const anchorFraction =
-    visibleLineSpan > 0
-      ? Math.min(
-          1,
-          Math.max(0, (matchedAnchor.line - request.visibleTopLine) / visibleLineSpan)
-        )
-      : 0;
-
-  // 关键步骤：把锚点块按锚点行的编辑器纵向比例定位，不在块内按行号插值。
-  window.scrollTo(0, matchedAnchor.offsetTop - anchorFraction * window.innerHeight);
+  logPreviewScroll("set-preview-scroll", {
+    sourceLine,
+    targetY,
+    scrolledY: window.scrollY
+  });
 
   // 返回滚动后的实际位置（已被浏览器约束到有效区间），供回声跳过比对。
   return window.scrollY;
