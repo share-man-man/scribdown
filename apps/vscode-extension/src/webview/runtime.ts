@@ -232,6 +232,11 @@ export function bootstrapVscodePreviewRuntime(
     cursorHighlightOverlay.style.width = `${rect.width}px`;
     cursorHighlightOverlay.style.height = `${rect.height}px`;
     cursorHighlightOverlay.style.display = "block";
+
+    // 关键步骤：浮层为复用元素，重置动画以便每次定位都重新触发 1s 闪烁。
+    cursorHighlightOverlay.style.animation = "none";
+    void cursorHighlightOverlay.offsetWidth;
+    cursorHighlightOverlay.style.animation = "";
   };
 
   /**

@@ -803,6 +803,17 @@ function createPreviewShellHtml(
         border-radius: 4px;
         background-color: rgba(255, 184, 0, 0.4);
         box-shadow: 0 0 0 4px rgba(255, 184, 0, 0.4);
+        /* 高亮仅出现 1s 后淡出，提示当前光标所在源码行 */
+        animation: ${SOURCE_LINE_ACTIVE_CLASS_NAME}-flash 1s ease-out forwards;
+      }
+      @keyframes ${SOURCE_LINE_ACTIVE_CLASS_NAME}-flash {
+        0%,
+        70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
       }
     </style>
   </head>
