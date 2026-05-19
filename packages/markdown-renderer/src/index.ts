@@ -700,19 +700,60 @@ async function ensureHighlighterLanguage(
   }
 }
 
+// HTML 命名实体与对应字符的映射，覆盖代码块中常见的转义结果。
+const HTML_NAMED_ENTITIES: Record<string, string> = {
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  amp: "&"
+};
+
+// 匹配命名 / 十进制 / 十六进制三种字符实体；hex / dec 大小写均兼容。
+const HTML_ENTITY_PATTERN = /&(?:(lt|gt|quot|apos|amp)|#x([0-9a-fA-F]+)|#(\d+));/g;
+
 /**
- * 还原 HTML 文本中常见的字符实体。
+ * 还原 HTML 文本中的字符实体（命名 + 十进制 + 十六进制）。
+ *
+ * 关键步骤：单次左到右扫描，避免“先解 `&amp;` 再解 `&lt;`”导致的二次解码漏洞，
+ * 同时识别 `&#x3C;` 等十六进制实体（hast-util-to-html 在 Node 环境下会输出该形式）。
+ *
  * @param encodedText HTML 转义后的文本。
  * @returns 还原后的原始文本。
  */
 function decodeHtmlEntities(encodedText: string): string {
-  return encodedText
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'")
-    .replace(/&amp;/g, "&");
+  return encodedText.replace(
+    HTML_ENTITY_PATTERN,
+    (matched, namedEntity?: string, hexCodePoint?: string, decimalCodePoint?: string) => {
+      if (namedEntity) {
+        return HTML_NAMED_ENTITIES[namedEntity] ?? matched;
+      }
+      if (hexCodePoint) {
+        return safeFromCodePoint(parseInt(hexCodePoint, 16), matched);
+      }
+      if (decimalCodePoint) {
+        return safeFromCodePoint(parseInt(decimalCodePoint, 10), matched);
+      }
+      return matched;
+    }
+  );
+}
+
+/**
+ * 安全地把 Unicode 码点转成字符，越界 / NaN 时回退原始片段，避免抛错。
+ * @param codePoint Unicode 码点（10/16 进制解析后的数值）。
+ * @param fallback 解析失败时返回的原始 HTML 片段。
+ * @returns 对应字符或原始片段。
+ */
+function safeFromCodePoint(codePoint: number, fallback: string): string {
+  if (!Number.isFinite(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
+    return fallback;
+  }
+  try {
+    return String.fromCodePoint(codePoint);
+  } catch {
+    return fallback;
+  }
 }
 
 /**
