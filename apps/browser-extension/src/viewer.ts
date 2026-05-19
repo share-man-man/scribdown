@@ -51,8 +51,8 @@ function renderError(message: string, sourceUrl: string | null): void {
     link.rel = "noopener noreferrer";
     link.style.cssText =
       "display: inline-block; margin-top: 16px; color: #2b63c6; text-decoration: underline;";
-    // 关键步骤：先通知 background 对该 URL 跳过一次重定向，再放行导航，
-    // 否则点击后会被 webNavigation 监听器再次拦截回 viewer。
+    // 关键步骤：先通知 background 注册一次性 bypass，再放行导航，
+    // 否则原 URL 重新加载后会被 content script 再次按 contentType 拦回 viewer。
     link.addEventListener("click", (event) => {
       event.preventDefault();
       chrome.runtime
@@ -119,8 +119,8 @@ function extractFilename(sourceUrl: string): string {
 
   // 关键步骤：尊重 popup 总开关。用户在 viewer 已加载后关闭开关并刷新（或直接打开
   // viewer URL 时扩展处于关闭态），不再渲染而是把页面替换为原始 URL。
-  // background 的 webNavigation 监听器同样会读 storage 决定是否拦截，
-  // 因此这里只需 location.replace，无需额外 bypass 协调。
+  // content script 同样会读 storage 决定是否介入，因此这里只需 location.replace，
+  // 无需额外 bypass 协调。
   /** storage 中的当前启用状态（未设置视为启用）。 */
   const enabledResult = await chrome.storage.local.get(
     EXTENSION_ENABLED_STORAGE_KEY
