@@ -107,3 +107,15 @@ body {
 .scribdown-popup__switch--on .scribdown-popup__switch-knob {
   transform: translateX(20px);
 }
+
+/* 切换后出现的「需刷新页面」提示行：弱化的强调色边框 + 小号文案。 */
+.scribdown-popup__tip {
+  margin: 0;
+  padding: var(--scribdown-space-2) var(--scribdown-space-3);
+  border-radius: var(--scribdown-radius-sm);
+  border: 1px dashed var(--scribdown-color-accent);
+  background: color-mix(in srgb, var(--scribdown-color-accent) 8%, var(--scribdown-color-surface));
+  color: var(--scribdown-color-text-primary);
+  font-size: 12px;
+  line-height: 1.5;
+}

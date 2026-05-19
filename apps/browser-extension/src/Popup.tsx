@@ -22,6 +22,11 @@ async function readEnabled(): Promise<boolean> {
 export function Popup(): ReactElement {
   /** 扩展当前是否启用。 */
   const [enabled, setEnabled] = useState<boolean>(true);
+  /**
+   * 是否展示「刷新页面以生效」提示。
+   * 仅在用户本次会话内手动切换过开关后出现，避免初次打开 popup 就误导用户。
+   */
+  const [showRefreshTip, setShowRefreshTip] = useState<boolean>(false);
 
   useEffect(() => {
     void readEnabled().then(setEnabled);
@@ -51,6 +56,8 @@ export function Popup(): ReactElement {
     /** 切换后的启用状态。 */
     const next = !enabled;
     setEnabled(next);
+    // 关键步骤：content script 已经注入的页面不会回头执行，需要用户刷新一次才能让新状态生效。
+    setShowRefreshTip(true);
     void chrome.storage.local.set({ [EXTENSION_ENABLED_STORAGE_KEY]: next });
   };
 
@@ -83,6 +90,12 @@ export function Popup(): ReactElement {
           <span className="scribdown-popup__switch-knob" />
         </button>
       </div>
+
+      {showRefreshTip && (
+        <p className="scribdown-popup__tip" role="status">
+          切换已保存，刷新当前页面后生效。
+        </p>
+      )}
     </main>
   );
 }
