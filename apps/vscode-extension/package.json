@@ -15,6 +15,7 @@
   "categories": [
     "Other"
   ],
+  "icon": "assets/icon.png",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -23,6 +24,7 @@
   ],
   "files": [
     "dist/**",
+    "assets/**",
     "package.json",
     "LICENSE"
   ],
@@ -32,7 +34,10 @@
         "command": "scribdown.openPreview",
         "title": "Open Scribdown Preview",
         "category": "Scribdown",
-        "icon": "$(markdown)"
+        "icon": {
+          "light": "assets/icon.svg",
+          "dark": "assets/icon.svg"
+        }
       }
     ],
     "menus": {
