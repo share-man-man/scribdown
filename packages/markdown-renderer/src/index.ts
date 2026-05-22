@@ -473,6 +473,13 @@ const IMAGE_VIEWER_MAX_ZOOM = 4;
 // 图片查看器每次缩放步进。
 const IMAGE_VIEWER_ZOOM_STEP = 0.25;
 
+// 滚轮 deltaY 转换为缩放增量的比例系数：触控板单次事件 deltaY 通常较小（个位数），
+// 选 0.005 让一次轻微滑动只产生 ~0.5%-5% 的缩放变化，避免触控板上跳变过大。
+const IMAGE_VIEWER_WHEEL_ZOOM_FACTOR = 0.010;
+
+// 单次滚轮事件允许的最大缩放变化量，防止鼠标滚轮一格 deltaY=100 时跳得过远。
+const IMAGE_VIEWER_WHEEL_ZOOM_MAX_DELTA = 0.1;
+
 // 图片查看器适配视口时预留的安全比例。
 const IMAGE_VIEWER_FIT_RATIO = 0.92;
 
@@ -1666,7 +1673,12 @@ function handleMarkdownMermaidViewerWheel(event: WheelEvent): void {
   if (!viewerState) {
     return;
   }
-  const zoomDelta = event.deltaY < 0 ? IMAGE_VIEWER_ZOOM_STEP : -IMAGE_VIEWER_ZOOM_STEP;
+  // 与 deltaY 成比例并夹紧到上限，让触控板细滑动产生细粒度缩放、鼠标滚轮单格仍可见。
+  const rawDelta = -event.deltaY * IMAGE_VIEWER_WHEEL_ZOOM_FACTOR;
+  const zoomDelta = Math.max(
+    -IMAGE_VIEWER_WHEEL_ZOOM_MAX_DELTA,
+    Math.min(IMAGE_VIEWER_WHEEL_ZOOM_MAX_DELTA, rawDelta)
+  );
   event.preventDefault();
   updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue + zoomDelta, {
     x: event.clientX,
@@ -2876,8 +2888,12 @@ function handleMarkdownImageViewerWheel(event: WheelEvent): void {
     return;
   }
 
-  // 滚轮方向换算出的缩放步进。
-  const zoomDelta = event.deltaY < 0 ? IMAGE_VIEWER_ZOOM_STEP : -IMAGE_VIEWER_ZOOM_STEP;
+  // 与 deltaY 成比例并夹紧到上限，让触控板细滑动产生细粒度缩放、鼠标滚轮单格仍可见。
+  const rawDelta = -event.deltaY * IMAGE_VIEWER_WHEEL_ZOOM_FACTOR;
+  const zoomDelta = Math.max(
+    -IMAGE_VIEWER_WHEEL_ZOOM_MAX_DELTA,
+    Math.min(IMAGE_VIEWER_WHEEL_ZOOM_MAX_DELTA, rawDelta)
+  );
 
   event.preventDefault();
   updateMarkdownImageViewerZoom(viewerState, viewerState.zoomValue + zoomDelta, {

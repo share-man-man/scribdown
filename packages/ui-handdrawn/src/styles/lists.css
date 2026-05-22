@@ -7,7 +7,10 @@
 
 .scribdown-markdown ol:not(.scribdown-toc-list) {
   margin: 0 0 var(--scribdown-space-3);
-  padding-left: 30px;
+  padding-left: 0;
+  list-style: none;
+  /* 启用有序列表序号计数器，配合 ::before 渲染手绘字体的数字。 */
+  counter-reset: scribdown-ol-counter;
 }
 
 .scribdown-markdown li:not(.scribdown-toc-item) {
@@ -20,16 +23,35 @@
 }
 
 .scribdown-markdown ol:not(.scribdown-toc-list) > li:not(.scribdown-toc-item) {
-  padding-left: 6px;
+  padding-left: 32px;
+  counter-increment: scribdown-ol-counter;
 }
 
 .scribdown-markdown ol:not(.scribdown-toc-list) > li:not(.scribdown-toc-item)::marker {
+  /* 自定义 ::before 渲染数字，隐藏浏览器默认 marker，避免数字重复。 */
+  content: none;
+}
+
+.scribdown-markdown ol:not(.scribdown-toc-list) > li:not(.scribdown-toc-item)::before {
+  content: counter(scribdown-ol-counter) ".";
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 26px;
   color: var(--scribdown-color-warning);
-  font-family: "Caveat", "Comic Sans MS", "Bradley Hand", "Segoe Print", "LXGW WenKai", cursive;
-  font-size: 16px;
+  font-family: "Caveat", "Comic Sans MS", "Bradley Hand", "Segoe Print", "LXGW WenKai",
+    var(--scribdown-font-heading);
+  font-size: 22px;
   font-style: normal;
   font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
   text-shadow: 0.7px 0 color-mix(in srgb, var(--scribdown-color-warning) 24%, transparent);
+  transform: rotate(-4deg);
+}
+
+.scribdown-markdown ol:not(.scribdown-toc-list) > li:not(.scribdown-toc-item):nth-child(2n)::before {
+  transform: rotate(3deg) translateY(1px);
 }
 
 .scribdown-markdown li:not(.scribdown-toc-item) > ul,
