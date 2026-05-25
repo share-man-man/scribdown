@@ -48,6 +48,8 @@
   --scribdown-code-line-gutter-width: calc(
     var(--scribdown-code-line-number-width) + var(--scribdown-code-line-number-gap)
   );
+  /* 代码块正文最大高度：取视口 60% 与 32rem 的较小值，避免超长代码块独占屏幕。 */
+  --scribdown-code-block-max-height: min(60vh, 32rem);
 
   position: relative;
   z-index: 0;
@@ -555,10 +557,13 @@
   grid-template-columns: var(--scribdown-code-line-gutter-width) minmax(0, 1fr);
   padding: 4px 0 6px;
   min-height: 28px;
+  /* 关键步骤：超出高度由 body 统一纵向滚动，保证行号与代码同步移动；横向滚动仍由内部 pre 独立处理。 */
+  max-height: var(--scribdown-code-block-max-height);
   margin: 0 4px;
   background: var(--scribdown-color-surface);
   border-radius: 0 0 9px 11px;
-  overflow: hidden;
+  overflow: hidden auto;
+  scrollbar-color: color-mix(in srgb, var(--scribdown-code-ink) 30%, transparent) transparent;
 }
 
 /* 关键步骤：行号列独立成固定宽度网格列，不参与代码横向滚动。 */
