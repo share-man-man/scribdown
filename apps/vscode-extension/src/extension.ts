@@ -235,24 +235,40 @@ class ScribdownPreviewController implements vscode.Disposable {
       return;
     }
 
-    // 记录当前预览绑定文档 URI。
-    this.previewDocumentUriText = activeDocument.uri.toString();
-
     if (!this.panel) {
       // 首次打开时创建新面板。
       this.panel = this.createPreviewPanel(activeDocument);
       this.registerPanelListeners(this.panel);
     } else {
-      // 已有面板时直接复用并更新资源根目录。
+      // 已有面板时通过命令显式打开：把焦点带到预览面板。
       this.panel.reveal(vscode.ViewColumn.Beside, true);
-      this.panel.title = createPreviewPanelTitle(activeDocument);
-      this.panel.webview.options = {
-        enableScripts: true,
-        localResourceRoots: resolveLocalResourceRoots(activeDocument.uri, this.extensionUri)
-      };
     }
 
-    await this.renderDocumentToPanel(activeDocument);
+    await this.bindPanelToDocument(activeDocument);
+  }
+
+  /**
+   * 把当前预览面板绑定到指定 Markdown 文档：更新标题、资源根目录与渲染内容。
+   * 仅更新绑定与内容，不调用 panel.reveal，避免抢占用户焦点。
+   * @param document 目标 Markdown 文档。
+   */
+  private async bindPanelToDocument(document: vscode.TextDocument): Promise<void> {
+    if (!this.panel) {
+      return;
+    }
+
+    // 关键步骤：切换绑定文档时清理滚动同步状态，避免上一个文档的驱动方残留过滤掉新文档的首次同步。
+    this.clearScrollSync();
+
+    // 记录当前预览绑定文档 URI。
+    this.previewDocumentUriText = document.uri.toString();
+    this.panel.title = createPreviewPanelTitle(document);
+    this.panel.webview.options = {
+      enableScripts: true,
+      localResourceRoots: resolveLocalResourceRoots(document.uri, this.extensionUri)
+    };
+
+    await this.renderDocumentToPanel(document);
   }
 
   /**
@@ -515,7 +531,8 @@ class ScribdownPreviewController implements vscode.Disposable {
   }
 
   /**
-   * 处理激活编辑器变化：光标离开绑定文档时清除高亮，切回时按光标重新高亮。
+   * 处理激活编辑器变化：切到其他 Markdown 文档时自动重新绑定预览；
+   * 切回当前绑定文档时按光标重新高亮；切到非 Markdown 文档时清除高亮。
    * @param activeEditor 当前激活编辑器，可能为 undefined。
    */
   private handleActiveEditorChange(activeEditor: vscode.TextEditor | undefined): void {
@@ -529,7 +546,13 @@ class ScribdownPreviewController implements vscode.Disposable {
       return;
     }
 
-    // 光标离开绑定文档，清除预览高亮。
+    if (activeEditor && activeEditor.document.languageId === MARKDOWN_LANGUAGE_ID) {
+      // 关键步骤：切到其他 Markdown 文档时，自动把预览重新绑定到新文档。
+      void this.bindPanelToDocument(activeEditor.document);
+      return;
+    }
+
+    // 光标离开绑定文档且未切到其他 Markdown 文档，清除预览高亮。
     this.postClearPreviewCursor();
   }
 
