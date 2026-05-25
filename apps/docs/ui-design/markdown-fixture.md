@@ -197,6 +197,125 @@ Diff 代码块：
 + 新的文案
 ```
 
+超长代码块（用于验证最大高度与纵向滚动，行号与代码同步滚动）：
+
+```ts
+/**
+ * 任务调度器示例：演示超长代码块的纵向滚动表现。
+ */
+import { EventEmitter } from "node:events";
+
+/**
+ * 单个任务的元数据。
+ */
+interface TaskMetadata {
+  /** 任务唯一标识。 */
+  id: string;
+  /** 任务展示名称。 */
+  name: string;
+  /** 任务优先级，数值越小越优先。 */
+  priority: number;
+  /** 任务创建时间戳（毫秒）。 */
+  createdAt: number;
+}
+
+/**
+ * 任务执行结果。
+ */
+interface TaskResult<TPayload> {
+  /** 是否执行成功。 */
+  ok: boolean;
+  /** 成功时返回的负载。 */
+  payload?: TPayload;
+  /** 失败时的错误信息。 */
+  error?: string;
+}
+
+/**
+ * 简单的任务调度器：按优先级出队执行，支持失败重试。
+ */
+export class TaskScheduler<TPayload> extends EventEmitter {
+  /** 待执行任务队列。 */
+  private readonly pendingTasks: TaskMetadata[] = [];
+  /** 单任务最大重试次数。 */
+  private readonly maxRetryCount: number;
+  /** 当前是否在执行中。 */
+  private isRunning = false;
+
+  /**
+   * 创建调度器实例。
+   * @param maxRetryCount 单任务最大重试次数，默认 3 次。
+   */
+  constructor(maxRetryCount = 3) {
+    super();
+    this.maxRetryCount = maxRetryCount;
+  }
+
+  /**
+   * 入队一个任务并按优先级保持有序。
+   * @param task 待入队任务元数据。
+   */
+  public enqueue(task: TaskMetadata): void {
+    // 关键步骤：按优先级插入，避免每次出队都重新排序。
+    const insertIndex = this.pendingTasks.findIndex((item) => item.priority > task.priority);
+
+    if (insertIndex === -1) {
+      this.pendingTasks.push(task);
+    } else {
+      this.pendingTasks.splice(insertIndex, 0, task);
+    }
+
+    this.emit("enqueued", task);
+  }
+
+  /**
+   * 启动调度循环，直到队列清空。
+   * @param runTask 单任务的实际执行函数。
+   */
+  public async run(runTask: (task: TaskMetadata) => Promise<TaskResult<TPayload>>): Promise<void> {
+    if (this.isRunning) {
+      return;
+    }
+
+    this.isRunning = true;
+
+    try {
+      while (this.pendingTasks.length > 0) {
+        // 当前要执行的任务。
+        const currentTask = this.pendingTasks.shift();
+
+        if (!currentTask) {
+          break;
+        }
+
+        // 剩余重试次数。
+        let remainingRetries = this.maxRetryCount;
+        // 当前任务最近一次执行结果。
+        let lastResult: TaskResult<TPayload> | undefined;
+
+        while (remainingRetries > 0) {
+          lastResult = await runTask(currentTask);
+
+          if (lastResult.ok) {
+            this.emit("succeeded", currentTask, lastResult.payload);
+            break;
+          }
+
+          remainingRetries -= 1;
+        }
+
+        if (!lastResult?.ok) {
+          this.emit("failed", currentTask, lastResult?.error ?? "unknown error");
+        }
+      }
+    } finally {
+      this.isRunning = false;
+      this.emit("drained");
+    }
+  }
+}
+```
+
 ## 表格示例
 
 | 节点 | 状态 | 说明 |
