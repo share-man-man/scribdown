@@ -361,8 +361,22 @@ $$
 flowchart TD
     A[Markdown Source] --> B[remark-parse]
     B --> C[mdast]
-    C --> D[Renderer]
-    D --> E[Preview UI]
+    C --> D[remark-gfm]
+    C --> E[remark-math]
+    C --> F[remark-frontmatter]
+    D --> G[remark-rehype]
+    E --> G
+    F --> G
+    G --> H[hast]
+    H --> I[rehype-sanitize]
+    I --> J[rehype-highlight]
+    J --> K[rehype-mermaid]
+    K --> L[rehype-katex]
+    L --> M[Renderer]
+    M --> N[Preview UI]
+    N --> O[Browser Extension]
+    N --> P[VSCode Webview]
+    N --> Q[Docs Site]
 ```
 
 序列图：
@@ -370,9 +384,54 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant User
+    participant Editor
+    participant Extension
+    participant Renderer
+    participant Sanitizer
+    participant Highlighter
     participant Preview
-    User->>Preview: Open Markdown
+    User->>Editor: Edit Markdown
+    Editor->>Extension: onDidChangeTextDocument
+    Extension->>Renderer: render(source)
+    Renderer->>Renderer: parse mdast
+    Renderer->>Sanitizer: sanitizeHtml(tree)
+    Sanitizer-->>Renderer: safe hast
+    Renderer->>Highlighter: highlightCode(blocks)
+    Highlighter-->>Renderer: highlighted html
+    Renderer-->>Extension: html string
+    Extension->>Preview: postMessage(html)
+    Preview->>Preview: mount mermaid + katex
     Preview-->>User: Rendered HTML
+    User->>Preview: Click anchor
+    Preview-->>User: Scroll to heading
+```
+
+横向较宽的流程图（用于验证自动缩小但保留可读性）：
+
+```mermaid
+flowchart LR
+    A[Source] --> B[Lexer]
+    B --> C[Parser]
+    C --> D[AST]
+    D --> E[Transform]
+    E --> F[Sanitize]
+    F --> G[Highlight]
+    G --> H[Hydrate]
+    H --> I[Mermaid]
+    I --> J[Math]
+    J --> K[Embed]
+    K --> L[Preview]
+    L --> M[Webview]
+    M --> N[Theme]
+    N --> O[Anchor]
+    O --> P[TOC]
+    P --> Q[Search]
+    Q --> R[Export]
+    R --> S[Print]
+    S --> T[Share]
+    T --> U[Cache]
+    U --> V[Telemetry]
+    V --> W[Done]
 ```
 
 渲染失败（无效语法）：

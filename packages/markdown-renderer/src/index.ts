@@ -1141,11 +1141,30 @@ async function loadMermaid(): Promise<MermaidApi | undefined> {
       // 动态导入：仅在确实出现 mermaid 块时才下载 mermaid 主包。
       const mermaidModule = (await import("mermaid")) as { default: MermaidApi };
       const mermaidApi = mermaidModule.default;
-      // startOnLoad=false 由 hydrate 主动控制渲染时机；securityLevel=loose 允许 hash 链接。
+      // startOnLoad=false 由 hydrate 主动控制渲染时机；securityLevel=strict 阻断脚本注入。
+      // useMaxWidth=false：让 mermaid 输出带固有宽高属性的 SVG，避免它内联 width:100%/max-width
+      // 强行覆盖 CSS，从而把缩放完全交给画布上的 max-width/max-height:100% 配合 viewBox 等比适配。
       mermaidApi.initialize({
         startOnLoad: false,
         securityLevel: "strict",
-        theme: "default"
+        theme: "default",
+        flowchart: { useMaxWidth: false },
+        sequence: { useMaxWidth: false },
+        class: { useMaxWidth: false },
+        state: { useMaxWidth: false },
+        gantt: { useMaxWidth: false },
+        er: { useMaxWidth: false },
+        journey: { useMaxWidth: false },
+        pie: { useMaxWidth: false },
+        requirement: { useMaxWidth: false },
+        c4: { useMaxWidth: false },
+        mindmap: { useMaxWidth: false },
+        timeline: { useMaxWidth: false },
+        gitGraph: { useMaxWidth: false },
+        quadrantChart: { useMaxWidth: false },
+        xyChart: { useMaxWidth: false },
+        sankey: { useMaxWidth: false },
+        block: { useMaxWidth: false }
       });
       return mermaidApi;
     })().catch((loadError: unknown) => {

@@ -37,8 +37,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 240px;
+  /* 给 body 一个确定高度，使内部 canvas 的 height:100% 能解析，
+     从而让 SVG 的 max-height:100% 触发等比缩放，避免极端长宽比图表被压成一条。 */
+  height: clamp(280px, 50vh, 480px);
   padding: 24px;
+  box-sizing: border-box;
   background:
     radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
     color-mix(in srgb, var(--scribdown-color-surface) 94%, var(--scribdown-color-border) 6%);
@@ -96,13 +99,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
-  overflow: auto;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
+/* SVG 用 max-width/max-height 100% + auto 让浏览器按 viewBox 等比缩放，
+   总有一边贴合 canvas 边缘，保证整图可见；细节由右下角全屏查看器提供。 */
 .scribdown-markdown .scribdown-mermaid__canvas svg {
-  max-width: 100%;
+  display: block;
+  width: auto;
   height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 /* Loading 态：画布尚未填充 SVG 时的占位脉冲。 */
