@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactElement, useEffect, useState } from "react";
+import { ChangeEvent, ReactElement, useEffect, useRef, useState } from "react";
 import { PROJECT_NAME } from "@scribdown/shared";
 import "@scribdown/ui-handdrawn/styles.css";
 import {
@@ -90,6 +90,46 @@ export function Popup(): ReactElement {
   const [fileAccessAllowed, setFileAccessAllowed] = useState<boolean | null>(
     null
   );
+  /**
+   * 当前展开的说明气泡 id。同时只允许展开一个，避免气泡相互遮挡。
+   * - "refresh"：自动刷新开关行的说明
+   * - "interval"：刷新间隔行的说明
+   * - null：全部收起
+   */
+  const [openTip, setOpenTip] = useState<"refresh" | "interval" | null>(null);
+  /** 自动刷新行说明气泡的锚定容器引用，用于检测点击是否在其外部。 */
+  const refreshTipAnchorRef = useRef<HTMLSpanElement>(null);
+  /** 刷新间隔行说明气泡的锚定容器引用，用于检测点击是否在其外部。 */
+  const intervalTipAnchorRef = useRef<HTMLSpanElement>(null);
+
+  // 关键步骤：气泡展开时监听全局 mousedown / Escape，点击外部或按 Esc 关闭。
+  useEffect(() => {
+    if (!openTip) return;
+    /** 当前展开气泡对应的锚点引用，用于命中测试。 */
+    const activeAnchorRef =
+      openTip === "refresh" ? refreshTipAnchorRef : intervalTipAnchorRef;
+    /**
+     * 点击锚定容器外部时收起气泡。
+     * @param event 全局 mousedown 事件。
+     */
+    const handlePointerDown = (event: MouseEvent): void => {
+      if (activeAnchorRef.current?.contains(event.target as Node)) return;
+      setOpenTip(null);
+    };
+    /**
+     * 按下 Escape 时收起气泡。
+     * @param event 键盘事件。
+     */
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") setOpenTip(null);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openTip]);
 
   useEffect(() => {
     void readInitialState().then((state) => {
@@ -207,9 +247,30 @@ export function Popup(): ReactElement {
       <header className="scribdown-popup__header">
         <span className="scribdown-popup__logo">✏️</span>
         <h1 className="scribdown-popup__title">{PROJECT_NAME}</h1>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label="启用 Scribdown"
+          title={enabled ? "已启用 Scribdown" : "已关闭 Scribdown"}
+          className={
+            enabled
+              ? "scribdown-popup__switch scribdown-popup__switch--header scribdown-popup__switch--on"
+              : "scribdown-popup__switch scribdown-popup__switch--header"
+          }
+          onClick={handleToggle}
+        >
+          <span className="scribdown-popup__switch-knob" />
+        </button>
       </header>
 
-      {showFileAccessBanner && (
+      {!enabled && (
+        <p className="scribdown-popup__empty" role="status">
+          已关闭，访问 .md 不再被接管。
+        </p>
+      )}
+
+      {enabled && showFileAccessBanner && (
         <div className="scribdown-popup__banner" role="alert">
           <div className="scribdown-popup__banner-meta">
             <span className="scribdown-popup__banner-title">
@@ -230,108 +291,113 @@ export function Popup(): ReactElement {
         </div>
       )}
 
-      <div className="scribdown-popup__toggle">
-        <div className="scribdown-popup__toggle-meta">
-          <span className="scribdown-popup__toggle-label">启用 Scribdown</span>
-          <span className="scribdown-popup__toggle-hint">
-            {enabled ? "已启用：自动接管 .md 文件预览" : "已关闭：访问 .md 不再被接管"}
-          </span>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          aria-label="启用 Scribdown"
-          className={
-            enabled
-              ? "scribdown-popup__switch scribdown-popup__switch--on"
-              : "scribdown-popup__switch"
-          }
-          onClick={handleToggle}
-        >
-          <span className="scribdown-popup__switch-knob" />
-        </button>
-      </div>
-
-      <div className="scribdown-popup__toggle">
-        <div className="scribdown-popup__toggle-meta">
-          <span className="scribdown-popup__toggle-label">本地文件自动刷新</span>
-          <span className="scribdown-popup__toggle-hint">
-            {refreshEnabled
-              ? `已开启：每 ${intervalSec} 秒回拉一次本地 .md 文件`
-              : "已关闭：本地 .md 更新后需手动刷新页面"}
-          </span>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={refreshEnabled}
-          aria-label="本地文件自动刷新"
+      {enabled && fileAccessAllowed === true && (
+        <div
           className={
             refreshEnabled
-              ? "scribdown-popup__switch scribdown-popup__switch--on"
-              : "scribdown-popup__switch"
+              ? "scribdown-popup__group scribdown-popup__group--bounded"
+              : "scribdown-popup__group"
           }
-          onClick={handleRefreshToggle}
+          role="group"
+          aria-label="本地文件自动刷新设置"
         >
-          <span className="scribdown-popup__switch-knob" />
-        </button>
-      </div>
-
-      {refreshEnabled && (
-        <div className="scribdown-popup__field">
-          <div className="scribdown-popup__field-meta">
-            <label
-              className="scribdown-popup__field-label"
-              htmlFor="scribdown-refresh-interval"
-            >
-              刷新间隔
-            </label>
-            <span className="scribdown-popup__field-hint">
-              {MIN_REFRESH_INTERVAL_SEC} – {MAX_REFRESH_INTERVAL_SEC} 秒之间
-            </span>
-          </div>
-          <div className="scribdown-popup__field-input">
-            <input
-              id="scribdown-refresh-interval"
-              type="number"
-              inputMode="numeric"
-              min={MIN_REFRESH_INTERVAL_SEC}
-              max={MAX_REFRESH_INTERVAL_SEC}
-              step={1}
-              value={intervalSec}
-              onChange={handleIntervalChange}
-              className="scribdown-popup__field-number"
-            />
-            <span className="scribdown-popup__field-unit">秒</span>
-          </div>
-        </div>
-      )}
-
-      {!showFileAccessBanner && (
-        <div className="scribdown-popup__field">
-          <div className="scribdown-popup__field-meta">
-            <span className="scribdown-popup__field-label">本地 .md 访问</span>
-            <span className="scribdown-popup__field-hint">
-              {fileAccessAllowed === null
-                ? "正在读取权限状态…"
-                : fileAccessAllowed
-                  ? "已开启：file:// 文件也会跟随刷新"
-                  : "未开启：file:// 文件无法被接管和自动刷新"}
-            </span>
-          </div>
-          <button
-            type="button"
+          <div
             className={
-              fileAccessAllowed
-                ? "scribdown-popup__action scribdown-popup__action--muted"
-                : "scribdown-popup__action"
+              refreshEnabled
+                ? "scribdown-popup__toggle scribdown-popup__toggle--group-head"
+                : "scribdown-popup__toggle"
             }
-            onClick={handleOpenFileAccessSettings}
-            aria-label="打开扩展详情页以管理本地文件访问权限"
           >
-            {fileAccessAllowed ? "管理" : "去开启"}
-          </button>
+            <span
+              className="scribdown-popup__label-with-info"
+              ref={refreshTipAnchorRef}
+            >
+              <span className="scribdown-popup__toggle-label">
+                本地文件自动刷新
+              </span>
+              <button
+                type="button"
+                className="scribdown-popup__info"
+                aria-label="查看本地文件自动刷新说明"
+                aria-expanded={openTip === "refresh"}
+                onClick={() =>
+                  setOpenTip((current) => (current === "refresh" ? null : "refresh"))
+                }
+              >
+                ?
+              </button>
+              {openTip === "refresh" && (
+                <span className="scribdown-popup__info-tip" role="tooltip">
+                  {refreshEnabled
+                    ? `已开启：每 ${intervalSec} 秒回拉一次本地 .md 文件`
+                    : "已关闭：本地 .md 更新后需手动刷新页面"}
+                </span>
+              )}
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={refreshEnabled}
+              aria-label="本地文件自动刷新"
+              className={
+                refreshEnabled
+                  ? "scribdown-popup__switch scribdown-popup__switch--on"
+                  : "scribdown-popup__switch"
+              }
+              onClick={handleRefreshToggle}
+            >
+              <span className="scribdown-popup__switch-knob" />
+            </button>
+          </div>
+
+          {refreshEnabled && (
+            <div className="scribdown-popup__field scribdown-popup__field--group-tail">
+              <span
+                className="scribdown-popup__label-with-info"
+                ref={intervalTipAnchorRef}
+              >
+                <label
+                  className="scribdown-popup__field-label"
+                  htmlFor="scribdown-refresh-interval"
+                >
+                  刷新间隔
+                </label>
+                <button
+                  type="button"
+                  className="scribdown-popup__info"
+                  aria-label="查看刷新间隔取值范围"
+                  aria-expanded={openTip === "interval"}
+                  onClick={() =>
+                    setOpenTip((current) =>
+                      current === "interval" ? null : "interval"
+                    )
+                  }
+                >
+                  ?
+                </button>
+                {openTip === "interval" && (
+                  <span className="scribdown-popup__info-tip" role="tooltip">
+                    取值范围 {MIN_REFRESH_INTERVAL_SEC} – {MAX_REFRESH_INTERVAL_SEC}{" "}
+                    秒
+                  </span>
+                )}
+              </span>
+              <div className="scribdown-popup__field-input">
+                <input
+                  id="scribdown-refresh-interval"
+                  type="number"
+                  inputMode="numeric"
+                  min={MIN_REFRESH_INTERVAL_SEC}
+                  max={MAX_REFRESH_INTERVAL_SEC}
+                  step={1}
+                  value={intervalSec}
+                  onChange={handleIntervalChange}
+                  className="scribdown-popup__field-number"
+                />
+                <span className="scribdown-popup__field-unit">秒</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

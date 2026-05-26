@@ -22,6 +22,21 @@ body {
   border-bottom: 1px solid var(--scribdown-color-border);
 }
 
+/* 标题区右侧的总开关：把 logo / 标题挤到左，开关推到最右。 */
+.scribdown-popup__switch--header {
+  margin-left: auto;
+}
+
+/* 总开关关闭时的空状态提示，弱化样式即可，不抢眼。 */
+.scribdown-popup__empty {
+  margin: 0;
+  padding: var(--scribdown-space-2) var(--scribdown-space-3);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--scribdown-color-text-secondary);
+  text-align: center;
+}
+
 .scribdown-popup__logo {
   font-size: 20px;
   line-height: 1;
@@ -47,23 +62,78 @@ body {
   border: 1px solid var(--scribdown-color-border);
 }
 
-.scribdown-popup__toggle-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
 .scribdown-popup__toggle-label {
   font-size: 14px;
   font-weight: 600;
   color: var(--scribdown-color-text-primary);
 }
 
-.scribdown-popup__toggle-hint {
-  font-size: 11px;
+/* label + 信息按钮的内嵌行容器，作为说明气泡的定位锚点。 */
+.scribdown-popup__label-with-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 圆形 ? 信息按钮，点击展开说明气泡，视觉上接近表单 help 图标。 */
+.scribdown-popup__info {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--scribdown-color-text-secondary);
+  background: transparent;
   color: var(--scribdown-color-text-secondary);
-  line-height: 1.4;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--scribdown-duration-base) var(--scribdown-easing-standard),
+    border-color var(--scribdown-duration-base) var(--scribdown-easing-standard);
+}
+
+.scribdown-popup__info:hover,
+.scribdown-popup__info[aria-expanded="true"] {
+  border-color: var(--scribdown-color-text-primary);
+  color: var(--scribdown-color-text-primary);
+}
+
+.scribdown-popup__info:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 2px;
+}
+
+/* 说明气泡：暗底浅字的小卡片，从信息按钮下方弹出，带指向 ? 的箭头。 */
+.scribdown-popup__info-tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: 240px;
+  padding: 6px 10px;
+  border-radius: var(--scribdown-radius-sm);
+  background: var(--scribdown-color-text-primary);
+  color: var(--scribdown-color-surface);
+  font-size: 11px;
+  line-height: 1.5;
+  box-shadow: var(--scribdown-shadow-sm);
+}
+
+.scribdown-popup__info-tip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  /* 三角对齐到 ? 按钮中心：label 大致宽度未知，固定一个偏移让箭头落在按钮附近即可。 */
+  left: 12px;
+  border: 5px solid transparent;
+  border-bottom-color: var(--scribdown-color-text-primary);
 }
 
 /* 开关本体：仿手绘风扁圆形按钮，关态灰底、开态强调色。 */
@@ -120,23 +190,10 @@ body {
   border: 1px solid var(--scribdown-color-border);
 }
 
-.scribdown-popup__field-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
 .scribdown-popup__field-label {
   font-size: 14px;
   font-weight: 600;
   color: var(--scribdown-color-text-primary);
-}
-
-.scribdown-popup__field-hint {
-  font-size: 11px;
-  color: var(--scribdown-color-text-secondary);
-  line-height: 1.4;
 }
 
 .scribdown-popup__field-input {
@@ -169,6 +226,45 @@ body {
   color: var(--scribdown-color-text-secondary);
 }
 
+/* 自动刷新开关 + 刷新间隔的紧密组：只做布局容器，自身不带 card 样式，避免单子项时与子卡片双重边框。 */
+.scribdown-popup__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 有组尾时，由 group 容器统一提供 card 边框，头/尾共享外框形成紧密组合。
+ * 不使用 overflow: hidden，以便 info 气泡可以从卡片中溢出展示。 */
+.scribdown-popup__group--bounded {
+  border-radius: var(--scribdown-radius-sm);
+  background: var(--scribdown-color-surface);
+  border: 1px solid var(--scribdown-color-border);
+}
+
+/* 组头（开关行）：丢掉自身 card 样式，由 group 容器统一提供。 */
+.scribdown-popup__toggle--group-head {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/*
+ * 组尾（间隔行）：与组头同卡片，仅靠顶部分隔线 + 左缩进体现父子关系，保持极简。
+ */
+.scribdown-popup__field--group-tail {
+  border: 0;
+  border-top: 1px solid var(--scribdown-color-border);
+  border-radius: 0;
+  background: transparent;
+  padding-left: calc(var(--scribdown-space-3) * 2);
+}
+
+/* 组尾内的 label 降权到子项字号 / 字重，与父行的「本地文件自动刷新」拉开。 */
+.scribdown-popup__field--group-tail .scribdown-popup__field-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* 行动按钮：用于本地文件访问等需要跳转到外部页的操作。 */
 .scribdown-popup__action {
   flex: 0 0 auto;
@@ -193,17 +289,6 @@ body {
 .scribdown-popup__action:focus-visible {
   outline: 2px solid var(--scribdown-color-accent);
   outline-offset: 2px;
-}
-
-/* 弱化态：权限已开启时按钮只作为「管理」入口存在，视觉降权。 */
-.scribdown-popup__action--muted {
-  color: var(--scribdown-color-text-secondary);
-  background: var(--scribdown-color-bg);
-  border-color: var(--scribdown-color-border);
-}
-
-.scribdown-popup__action--muted:hover {
-  background: color-mix(in srgb, var(--scribdown-color-border) 30%, var(--scribdown-color-bg));
 }
 
 /* 顶部强提示横幅：当前 tab 是本地 .md 且未授权访问时，把常规卡片升级为这种醒目样式。 */
