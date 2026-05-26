@@ -60,9 +60,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 /**
- * 监听运行时消息，协调一次性 bypass：
+ * 监听运行时消息，协调一次性 bypass 与 file:// 代理拉取：
  * - `scribdown:bypass-once`：viewer 错误页准备跳回原 URL 前注册一次性放行。
  * - `scribdown:consume-bypass`：content script 在跳 viewer 前查询并消费该标记。
+ * - `scribdown:fetch-file`：file:// 页面 content script 的 origin 为 null，无法直接
+ *   fetch 本地文件；改由 service worker 在 `chrome-extension://` origin 下代办，
+ *   依赖 manifest 中的 `file:///*` host permission 与用户在扩展详情页打开的
+ *   「允许访问文件网址」开关。
  */
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== "object") return false;
@@ -83,6 +87,34 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const bypassed = bypassUrls.delete(url);
     sendResponse({ bypassed });
     return false;
+  }
+
+  if (type === "scribdown:fetch-file" && typeof url === "string") {
+    // 关键步骤：仅允许代理 file:// 协议，避免被滥用为任意来源的 fetch 跳板。
+    if (!url.startsWith("file://")) {
+      sendResponse({ ok: false, error: "unsupported scheme" });
+      return false;
+    }
+    void (async () => {
+      try {
+        /** service worker 在扩展 origin 下发起的文件回拉请求。 */
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) {
+          sendResponse({ ok: false, error: `HTTP ${response.status}` });
+          return;
+        }
+        /** 拉取到的文件文本内容。 */
+        const text = await response.text();
+        sendResponse({ ok: true, text });
+      } catch (err) {
+        sendResponse({
+          ok: false,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    })();
+    // 关键步骤：返回 true 表示稍后异步调用 sendResponse，保持消息通道打开。
+    return true;
   }
 
   return false;

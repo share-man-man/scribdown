@@ -1,4 +1,5 @@
 import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
+import { startPollingSource } from "./poll-source";
 import { renderMarkdownToDocument } from "./render-markdown";
 
 // 仅当当前文档 Content-Type 是这些纯文本/Markdown 变体时才介入。
@@ -41,6 +42,34 @@ async function renderFileUrlInPlace(): Promise<void> {
   await renderMarkdownToDocument(rawMarkdown, filename, {
     // file:// origin 下分块加载语言包会触发 CORS 失败，禁用 Shiki 动态高亮。
     enableCodeHighlight: false
+  });
+
+  // 关键步骤：启动文件轮询，磁盘内容更新后无需手动刷新即可看到最新版本。
+  // 注意：content script 在 file:// 页面里的 origin 是 null，直接 fetch 会被 CORS 拦掉，
+  // 因此改走 background service worker 代理（chrome-extension origin），
+  // 依赖 manifest 中的 `file:///*` host permission + 用户在扩展详情页开启
+  // 「允许访问文件网址」。popup 内提供了开启入口。
+  startPollingSource({
+    initialContent: rawMarkdown,
+    fetchLatest: async () => {
+      /** background 代理拉取的响应；ok=false 时附带 error 描述。 */
+      const response = (await chrome.runtime.sendMessage({
+        type: "scribdown:fetch-file",
+        url: window.location.href
+      })) as { ok?: boolean; text?: string; error?: string } | undefined;
+      if (!response?.ok || typeof response.text !== "string") {
+        throw new Error(response?.error ?? "fetch via background failed");
+      }
+      return response.text;
+    },
+    onChange: async (latest) => {
+      /** 重渲染前保留的纵向滚动位置，避免内容刷新后视口跳到顶部。 */
+      const previousScrollY = window.scrollY;
+      await renderMarkdownToDocument(latest, filename, {
+        enableCodeHighlight: false
+      });
+      window.scrollTo(0, previousScrollY);
+    }
   });
 }
 
