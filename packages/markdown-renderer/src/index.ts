@@ -6,8 +6,14 @@ import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
-import { type Highlighter, createHighlighter } from "shiki";
+import githubLightTheme from "@shikijs/themes/github-light";
+import { type HighlighterCore, createHighlighterCore } from "shiki/core";
+import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import { unified } from "unified";
+import {
+  CODE_HIGHLIGHTER_EAGER_LOADERS,
+  CODE_HIGHLIGHTER_LAZY_LANGS
+} from "./code-highlighter-langs";
 
 /**
  * 源码行号在 hast 节点上的属性名（camelCase）。
@@ -604,30 +610,14 @@ const CODE_BLOCK_COPY_ARIA_LABEL = "复制代码";
 // 代码块复制按钮已复制可访问名称。
 const CODE_BLOCK_COPY_ARIA_LABEL_COPIED = "已复制";
 
-// Shiki 高亮主题，与手绘奶黄底色搭配的暖色调亮色主题。
+// Shiki 高亮主题名（与 githubLightTheme 默认导出对应），用于 codeToHtml 选项。
 const CODE_HIGHLIGHTER_THEME = "github-light";
 
-// Shiki 高亮预加载语言列表，覆盖 fixture 中出现的常见语言。
-const CODE_HIGHLIGHTER_LANGUAGES = [
-  "bash",
-  "css",
-  "diff",
-  "html",
-  "javascript",
-  "json",
-  "jsx",
-  "markdown",
-  "shell",
-  "tsx",
-  "typescript",
-  "yaml"
-] as const;
-
 // 单例 Shiki 高亮器的初始化 Promise，确保整个进程只初始化一次。
-let codeHighlighterPromise: Promise<Highlighter> | undefined;
+let codeHighlighterPromise: Promise<HighlighterCore> | undefined;
 
-// 已经预加载到 Shiki 实例里的语言集合。
-const codeHighlighterLoadedLanguages = new Set<string>(CODE_HIGHLIGHTER_LANGUAGES);
+// 标记懒加载语言的请求去重：同一语言并发命中时复用同一 import Promise。
+const codeHighlighterLazyLoadPromises = new Map<string, Promise<void>>();
 
 // 匹配渲染后 `<pre ...><code class="language-X" ...>...</code></pre>` 的正则，用于 Shiki 替换。
 // 捕获 pre 与 code（class 之后）的附加属性（如 data-source-line），替换时原样保留，
@@ -724,13 +714,18 @@ async function applyMarkdownSanitize(
 
 /**
  * 取得（必要时初始化）Shiki 单例高亮器。
+ * 使用 shiki/core + 显式 grammar 列表，避免默认 bundle 把 200+ 语言全部打进 dist。
  * @returns 已就绪的 Shiki 高亮器实例。
  */
-async function getCodeHighlighter(): Promise<Highlighter> {
+async function getCodeHighlighter(): Promise<HighlighterCore> {
   if (!codeHighlighterPromise) {
-    codeHighlighterPromise = createHighlighter({
-      themes: [CODE_HIGHLIGHTER_THEME],
-      langs: [...CODE_HIGHLIGHTER_LANGUAGES]
+    codeHighlighterPromise = createHighlighterCore({
+      themes: [githubLightTheme],
+      // eager loaders 通过动态 import 拆为独立 chunk，初始化时并发拉取；
+      // 主 bundle 不再内联 grammar JSON，体积更小，多个 grammar 也可并行加载。
+      langs: CODE_HIGHLIGHTER_EAGER_LOADERS,
+      // oniguruma 引擎 + wasm；shiki/wasm 内部走 base64 内联，扩展环境无需额外资源声明。
+      engine: createOnigurumaEngine(import("shiki/wasm"))
     });
   }
 
@@ -798,7 +793,7 @@ interface CodeBlockHighlightInput {
  * @returns 高亮后的代码块 HTML。
  */
 async function highlightSingleCodeBlock(
-  highlighter: Highlighter,
+  highlighter: HighlighterCore,
   input: CodeBlockHighlightInput
 ): Promise<string> {
   // 代码块标注的语言标识。
@@ -841,22 +836,36 @@ async function highlightSingleCodeBlock(
  * @returns 高亮时可使用的语言标识。
  */
 async function ensureHighlighterLanguage(
-  highlighter: Highlighter,
+  highlighter: HighlighterCore,
   normalizedLanguage: string
 ): Promise<string> {
   if (normalizedLanguage.length === 0) {
     return "text";
   }
 
-  if (codeHighlighterLoadedLanguages.has(normalizedLanguage)) {
+  // highlighter.getLoadedLanguages() 自带别名解析（grammar 自身声明的 aliases 也会被登记）。
+  if (highlighter.getLoadedLanguages().includes(normalizedLanguage)) {
     return normalizedLanguage;
   }
 
+  /** 从懒加载注册表查找对应 grammar import 函数。 */
+  const lazyLoader = CODE_HIGHLIGHTER_LAZY_LANGS[normalizedLanguage];
+  if (!lazyLoader) {
+    return "text";
+  }
+
+  // 并发命中同一语言时复用同一 Promise，避免重复 import / loadLanguage。
+  let pending = codeHighlighterLazyLoadPromises.get(normalizedLanguage);
+  if (!pending) {
+    pending = (async () => {
+      const grammarModule = await lazyLoader();
+      await highlighter.loadLanguage(grammarModule.default);
+    })();
+    codeHighlighterLazyLoadPromises.set(normalizedLanguage, pending);
+  }
+
   try {
-    await highlighter.loadLanguage(
-      normalizedLanguage as Parameters<Highlighter["loadLanguage"]>[0]
-    );
-    codeHighlighterLoadedLanguages.add(normalizedLanguage);
+    await pending;
     return normalizedLanguage;
   } catch {
     return "text";

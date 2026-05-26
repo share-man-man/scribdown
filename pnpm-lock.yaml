@@ -148,6 +148,12 @@ importers:
       '@scribdown/shared':
         specifier: workspace:*
         version: link:../shared
+      '@shikijs/langs':
+        specifier: ^3.5.0
+        version: 3.23.0
+      '@shikijs/themes':
+        specifier: ^3.5.0
+        version: 3.23.0
       dompurify:
         specifier: ^3.2.7
         version: 3.4.0

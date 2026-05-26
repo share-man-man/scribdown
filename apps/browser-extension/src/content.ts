@@ -39,16 +39,22 @@ async function renderFileUrlInPlace(): Promise<void> {
     window.location.pathname.split("/").pop() ?? "Markdown"
   );
 
-  await renderMarkdownToDocument(rawMarkdown, filename, {
-    // file:// origin 下分块加载语言包会触发 CORS 失败，禁用 Shiki 动态高亮。
-    enableCodeHighlight: false
-  });
+  // vite.config.ts 的 renderBuiltUrl 已把动态 chunk URL 统一改写为
+  // `chrome.runtime.getURL(...)`，shiki grammar 与 wasm 引擎都从扩展 origin 加载，
+  // 不再受 file:// 的 CORS 限制，因此 file:// 场景也启用代码高亮。
+  await renderMarkdownToDocument(rawMarkdown, filename);
 
   // 关键步骤：启动文件轮询，磁盘内容更新后无需手动刷新即可看到最新版本。
   // 注意：content script 在 file:// 页面里的 origin 是 null，直接 fetch 会被 CORS 拦掉，
   // 因此改走 background service worker 代理（chrome-extension origin），
   // 依赖 manifest 中的 `file:///*` host permission + 用户在扩展详情页开启
   // 「允许访问文件网址」。popup 内提供了开启入口。
+  //
+  // DevTools 可见性说明：background SW 发起的 fetch(file://...) 请求，Chrome 只展示在
+  // 同属 chrome-extension:// origin 的页面（如 viewer.html）的网络面板里。
+  // 在 file:// 标签页自己的网络面板中看不到这些请求，但轮询实际仍在运行。
+  // 如需观察轮询活动，可在 chrome://extensions → Scribdown → Service Worker 处打开
+  // background SW 的专属 DevTools 查看。
   startPollingSource({
     initialContent: rawMarkdown,
     fetchLatest: async () => {
@@ -65,9 +71,9 @@ async function renderFileUrlInPlace(): Promise<void> {
     onChange: async (latest) => {
       /** 重渲染前保留的纵向滚动位置，避免内容刷新后视口跳到顶部。 */
       const previousScrollY = window.scrollY;
-      await renderMarkdownToDocument(latest, filename, {
-        enableCodeHighlight: false
-      });
+      // 关键步骤：shiki 实例与 grammar chunk 在初次渲染后已全部缓存，
+      // 后续重渲染复用缓存，开销可忽略，无需禁用代码高亮。
+      await renderMarkdownToDocument(latest, filename);
       window.scrollTo(0, previousScrollY);
     }
   });
