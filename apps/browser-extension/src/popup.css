@@ -169,6 +169,74 @@ body {
   color: var(--scribdown-color-text-secondary);
 }
 
+/* 行动按钮：用于本地文件访问等需要跳转到外部页的操作。 */
+.scribdown-popup__action {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--scribdown-color-surface);
+  background: var(--scribdown-color-accent);
+  border: 1px solid var(--scribdown-color-accent);
+  border-radius: var(--scribdown-radius-sm);
+  cursor: pointer;
+  transition: background var(--scribdown-duration-base) var(--scribdown-easing-standard),
+    border-color var(--scribdown-duration-base) var(--scribdown-easing-standard),
+    color var(--scribdown-duration-base) var(--scribdown-easing-standard);
+}
+
+.scribdown-popup__action:hover {
+  background: color-mix(in srgb, var(--scribdown-color-accent) 85%, #000);
+}
+
+.scribdown-popup__action:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 2px;
+}
+
+/* 弱化态：权限已开启时按钮只作为「管理」入口存在，视觉降权。 */
+.scribdown-popup__action--muted {
+  color: var(--scribdown-color-text-secondary);
+  background: var(--scribdown-color-bg);
+  border-color: var(--scribdown-color-border);
+}
+
+.scribdown-popup__action--muted:hover {
+  background: color-mix(in srgb, var(--scribdown-color-border) 30%, var(--scribdown-color-bg));
+}
+
+/* 顶部强提示横幅：当前 tab 是本地 .md 且未授权访问时，把常规卡片升级为这种醒目样式。 */
+.scribdown-popup__banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--scribdown-space-3);
+  padding: var(--scribdown-space-3);
+  border-radius: var(--scribdown-radius-sm);
+  border: 1px solid #c0392b;
+  background: color-mix(in srgb, #c0392b 10%, var(--scribdown-color-surface));
+}
+
+.scribdown-popup__banner-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.scribdown-popup__banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c0392b;
+}
+
+.scribdown-popup__banner-text {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--scribdown-color-text-primary);
+}
+
 /* 切换后出现的「需刷新页面」提示行：弱化的强调色边框 + 小号文案。 */
 .scribdown-popup__tip {
   margin: 0;
