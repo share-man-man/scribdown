@@ -1,0 +1,168 @@
+/* ─── Floating Toolbar ──────────────────────────────────────────────── */
+/* 固定在右上角，垂直排列，卡片手绘风。 */
+.scribdown-toolbar {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scribdown-toolbar-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--scribdown-color-surface);
+  border: 1.5px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-sm);
+  box-shadow: var(--scribdown-shadow-sm);
+  color: var(--scribdown-color-text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--scribdown-duration-fast) var(--scribdown-easing-standard),
+    background var(--scribdown-duration-fast) var(--scribdown-easing-standard),
+    box-shadow var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+  -webkit-font-smoothing: antialiased;
+}
+
+.scribdown-toolbar-btn:hover {
+  background: var(--scribdown-color-bg);
+  color: var(--scribdown-color-accent);
+  box-shadow: var(--scribdown-shadow-md);
+}
+
+.scribdown-toolbar-btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.scribdown-toolbar-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* 按钮 tooltip（aria-label），hover 时显示在按钮左侧。 */
+.scribdown-toolbar-btn::after {
+  content: attr(aria-label);
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  background: var(--scribdown-color-text-primary);
+  border-radius: 6px;
+  color: var(--scribdown-color-surface);
+  font-family: var(--scribdown-font-body);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-toolbar-btn:hover::after {
+  opacity: 1;
+}
+
+/* 目录面板 */
+.scribdown-toolbar-toc-panel {
+  position: fixed;
+  top: 16px;
+  right: 60px;
+  z-index: 8999;
+  width: 260px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--scribdown-color-surface);
+  border: 1.5px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-md);
+  box-shadow: var(--scribdown-shadow-md);
+  padding: var(--scribdown-space-3) var(--scribdown-space-4);
+  display: none;
+}
+
+.scribdown-toolbar-toc-panel.is-open {
+  display: block;
+}
+
+.scribdown-toolbar-toc-panel-title {
+  font-family: var(--scribdown-font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--scribdown-color-accent);
+  margin: 0 0 var(--scribdown-space-2);
+  padding-bottom: var(--scribdown-space-2);
+  border-bottom: 1px solid var(--scribdown-color-border);
+}
+
+.scribdown-toolbar-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scribdown-toolbar-toc-list a {
+  display: block;
+  padding: 3px 0;
+  color: var(--scribdown-color-text-secondary);
+  font-family: var(--scribdown-font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-toolbar-toc-list a:hover {
+  color: var(--scribdown-color-accent);
+  text-decoration: none;
+}
+
+/* 按标题层级缩进 */
+.scribdown-toolbar-toc-list li[data-level="1"] a { padding-left: 0; }
+.scribdown-toolbar-toc-list li[data-level="2"] a { padding-left: 12px; }
+.scribdown-toolbar-toc-list li[data-level="3"] a { padding-left: 24px; }
+.scribdown-toolbar-toc-list li[data-level="4"] a { padding-left: 36px; }
+.scribdown-toolbar-toc-list li[data-level="5"] a { padding-left: 48px; }
+.scribdown-toolbar-toc-list li[data-level="6"] a { padding-left: 60px; }
+
+/* 折叠态：隐藏非折叠按钮 */
+.scribdown-toolbar.is-collapsed .scribdown-toolbar-btn:not(.scribdown-toolbar-btn--toggle) {
+  display: none;
+}
+
+/* 折叠按钮旋转指示：展开态向下，折叠态向右 */
+.scribdown-toolbar-btn--toggle svg {
+  transition: transform var(--scribdown-duration-base) var(--scribdown-easing-standard);
+}
+
+.scribdown-toolbar.is-collapsed .scribdown-toolbar-btn--toggle svg {
+  transform: rotate(-90deg);
+}
+
+/* 宽度标签徽章 */
+.scribdown-toolbar-btn[data-width-label]::before {
+  content: attr(data-width-label);
+  font-family: var(--scribdown-font-code);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--scribdown-color-text-secondary);
+}
+
+.scribdown-toolbar-btn[data-width-label]:hover::before {
+  color: var(--scribdown-color-accent);
+}
+
+/* 宽度按钮不显示 svg，而显示文字徽章 */
+.scribdown-toolbar-btn[data-width-label] svg {
+  display: none;
+}

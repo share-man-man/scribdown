@@ -1,4 +1,12 @@
-import { SOURCE_LINE_DATA_ATTRIBUTE } from "@scribdown/shared";
+import {
+  CONTENT_WIDTH_STORAGE_KEY,
+  SCRIBDOWN_MARKDOWN_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME,
+  SOURCE_LINE_DATA_ATTRIBUTE,
+  TOOLBAR_COLLAPSED_STORAGE_KEY
+} from "@scribdown/shared";
 import DOMPurify from "dompurify";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -2007,6 +2015,15 @@ export function hydrateMarkdownPreview(rootElement: ParentNode): void {
   // 关键步骤：mermaid 必须先于代码块 hydrate，避免被通用 code chrome 包装。
   hydrateMermaidBlocks(rootElement);
   hydrateCodeBlocks(rootElement);
+  // 关键步骤：挂载浮动工具栏（回到顶部 / 目录 / 页面宽度），仅在浏览器环境生效。
+  const ownerDocument =
+    rootElement.nodeType === Node.DOCUMENT_NODE
+      ? (rootElement as Document)
+      : (rootElement as Element).ownerDocument;
+  if (ownerDocument) {
+    applyContentWidth(ownerDocument, loadContentWidth());
+    mountPageToolbar(ownerDocument, rootElement);
+  }
 }
 
 /**
@@ -4660,4 +4677,267 @@ function createVideoFallbackHast(sourceUrl: string): HastNode {
       }
     ]
   };
+}
+
+// ─── Page Toolbar ────────────────────────────────────────────────────────────
+
+// 页面宽度预设列表（label 用于按钮徽章，value 为 CSS max-width 值）。
+const TOOLBAR_WIDTH_PRESETS: Array<{ label: string; value: string }> = [
+  { label: "600", value: "600px" },
+  { label: "840", value: "840px" },
+  { label: "1120", value: "1120px" },
+  { label: "full", value: "none" }
+];
+
+// 默认内容宽度。
+const TOOLBAR_DEFAULT_WIDTH = "840px";
+
+/**
+ * 从 localStorage 读取工具栏折叠状态，默认展开。
+ * @returns 是否折叠。
+ */
+function loadToolbarCollapsed(): boolean {
+  try {
+    return localStorage.getItem(TOOLBAR_COLLAPSED_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 将工具栏折叠状态写入 localStorage。
+ * @param collapsed 是否折叠。
+ */
+function saveToolbarCollapsed(collapsed: boolean): void {
+  try {
+    if (collapsed) {
+      localStorage.setItem(TOOLBAR_COLLAPSED_STORAGE_KEY, "1");
+    } else {
+      localStorage.removeItem(TOOLBAR_COLLAPSED_STORAGE_KEY);
+    }
+  } catch {
+    // localStorage 不可用时静默跳过。
+  }
+}
+
+/**
+ * 从 localStorage 读取已保存的内容宽度，不可用时返回默认值。
+ * @returns 宽度 CSS 值字符串。
+ */
+function loadContentWidth(): string {
+  try {
+    return localStorage.getItem(CONTENT_WIDTH_STORAGE_KEY) ?? TOOLBAR_DEFAULT_WIDTH;
+  } catch {
+    return TOOLBAR_DEFAULT_WIDTH;
+  }
+}
+
+/**
+ * 将内容宽度写入 localStorage。
+ * @param value 宽度 CSS 值字符串。
+ */
+function saveContentWidth(value: string): void {
+  try {
+    localStorage.setItem(CONTENT_WIDTH_STORAGE_KEY, value);
+  } catch {
+    // localStorage 不可用时静默跳过。
+  }
+}
+
+/**
+ * 把内容宽度应用到文档根节点的 CSS 自定义属性。
+ * @param ownerDocument 目标 document。
+ * @param value 宽度 CSS 值字符串。
+ */
+function applyContentWidth(ownerDocument: Document, value: string): void {
+  ownerDocument.documentElement.style.setProperty("--scribdown-content-width", value);
+}
+
+/**
+ * 提取渲染区域内所有带 id 的标题，供目录面板使用。
+ * @param ownerDocument 目标 document。
+ * @returns 标题条目数组。
+ */
+function collectToolbarHeadings(
+  ownerDocument: Document
+): Array<{ level: number; text: string; id: string }> {
+  const container = ownerDocument.querySelector(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`);
+  if (!container) return [];
+
+  return Array.from(
+    container.querySelectorAll<HTMLHeadingElement>("h1,h2,h3,h4,h5,h6")
+  )
+    .filter((el) => el.id.length > 0)
+    .map((el) => ({
+      level: parseInt(el.tagName[1], 10),
+      text: el.textContent?.trim() ?? "",
+      id: el.id
+    }));
+}
+
+/**
+ * 创建一个工具栏按钮。
+ * @param ownerDocument 目标 document。
+ * @param ariaLabel 可访问名称（同时用作 tooltip）。
+ * @param svgContent 按钮内嵌 SVG 字符串。
+ * @returns 按钮元素。
+ */
+function createPageToolbarBtn(
+  ownerDocument: Document,
+  ariaLabel: string,
+  svgContent: string
+): HTMLButtonElement {
+  const btn = ownerDocument.createElement("button");
+  btn.type = "button";
+  btn.className = SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME;
+  btn.setAttribute("aria-label", ariaLabel);
+  btn.innerHTML = svgContent;
+  return btn;
+}
+
+/**
+ * 在页面右上角挂载浮动工具栏，包含：回到顶部、目录、页面宽度切换。
+ * 重复调用时先移除旧实例，保证每次 hydrate 只有一个工具栏。
+ * 非浏览器环境（无 window）下不执行。
+ * @param ownerDocument 目标 document。
+ * @param rootElement 预览根节点，用于刷新目录。
+ */
+function mountPageToolbar(ownerDocument: Document, rootElement: ParentNode): void {
+  if (typeof ownerDocument.defaultView?.scrollTo !== "function") {
+    // 非浏览器环境（如 Node.js 单测）跳过。
+    return;
+  }
+
+  // 移除旧实例，避免重渲染后重复挂载。
+  ownerDocument.querySelector(`.${SCRIBDOWN_TOOLBAR_CLASS_NAME}`)?.remove();
+  ownerDocument.querySelector(`.${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME}`)?.remove();
+
+  const ownerWindow = ownerDocument.defaultView;
+
+  /** 工具栏容器。 */
+  const toolbar = ownerDocument.createElement("div");
+  toolbar.className = SCRIBDOWN_TOOLBAR_CLASS_NAME;
+
+  // 恢复上次折叠状态。
+  const isCollapsed = loadToolbarCollapsed();
+  if (isCollapsed) {
+    toolbar.classList.add("is-collapsed");
+  }
+
+  // ── 折叠/展开切换按钮（始终可见）──
+  const toggleBtn = createPageToolbarBtn(
+    ownerDocument,
+    isCollapsed ? "展开工具栏" : "折叠工具栏",
+    '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M9 4v10M4 9l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      "</svg>"
+  );
+  toggleBtn.classList.add(`${SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME}--toggle`);
+  toggleBtn.addEventListener("click", () => {
+    const collapsed = toolbar.classList.toggle("is-collapsed");
+    toggleBtn.setAttribute("aria-label", collapsed ? "展开工具栏" : "折叠工具栏");
+    saveToolbarCollapsed(collapsed);
+    if (collapsed) {
+      tocPanel.classList.remove("is-open");
+    }
+  });
+
+  // ── 回到顶部按钮 ──
+  const backTopBtn = createPageToolbarBtn(
+    ownerDocument,
+    "回到顶部",
+    '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M9 14V5M9 5L5 9M9 5l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<line x1="4" y1="3.5" x2="14" y2="3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      "</svg>"
+  );
+  backTopBtn.addEventListener("click", () => {
+    ownerWindow?.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // ── 目录面板 ──
+  /** 目录浮动面板。 */
+  const tocPanel = ownerDocument.createElement("div");
+  tocPanel.className = SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME;
+
+  const tocTitle = ownerDocument.createElement("div");
+  tocTitle.className = "scribdown-toolbar-toc-panel-title";
+  tocTitle.textContent = "目录";
+  tocPanel.appendChild(tocTitle);
+
+  const tocList = ownerDocument.createElement("ul");
+  tocList.className = "scribdown-toolbar-toc-list";
+
+  const headings = collectToolbarHeadings(ownerDocument);
+  if (headings.length === 0) {
+    const empty = ownerDocument.createElement("li");
+    empty.style.cssText =
+      "font-size:13px;color:var(--scribdown-color-text-secondary);padding:4px 0";
+    empty.textContent = "暂无标题";
+    tocList.appendChild(empty);
+  } else {
+    for (const heading of headings) {
+      const item = ownerDocument.createElement("li");
+      item.dataset.level = String(heading.level);
+      const link = ownerDocument.createElement("a");
+      link.href = `#${heading.id}`;
+      link.textContent = heading.text;
+      link.addEventListener("click", () => {
+        tocPanel.classList.remove("is-open");
+      });
+      item.appendChild(link);
+      tocList.appendChild(item);
+    }
+  }
+  tocPanel.appendChild(tocList);
+
+  /** 目录切换按钮。 */
+  const tocBtn = createPageToolbarBtn(
+    ownerDocument,
+    "目录",
+    '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<line x1="3" y1="5" x2="15" y2="5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="3" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      "</svg>"
+  );
+  tocBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    tocPanel.classList.toggle("is-open");
+  });
+
+  // 点击面板外部时收起目录。
+  ownerDocument.addEventListener("click", (e) => {
+    if (!tocPanel.contains(e.target as Node) && e.target !== tocBtn) {
+      tocPanel.classList.remove("is-open");
+    }
+  });
+
+  // ── 宽度切换按钮 ──
+  let currentWidth = loadContentWidth();
+  let widthIndex = TOOLBAR_WIDTH_PRESETS.findIndex((p) => p.value === currentWidth);
+  if (widthIndex === -1) widthIndex = 1;
+
+  const widthBtn = createPageToolbarBtn(ownerDocument, "切换页面宽度", "");
+  widthBtn.dataset.widthLabel = TOOLBAR_WIDTH_PRESETS[widthIndex].label;
+
+  widthBtn.addEventListener("click", () => {
+    widthIndex = (widthIndex + 1) % TOOLBAR_WIDTH_PRESETS.length;
+    const preset = TOOLBAR_WIDTH_PRESETS[widthIndex];
+    widthBtn.dataset.widthLabel = preset.label;
+    widthBtn.setAttribute("aria-label", `宽度：${preset.label}`);
+    applyContentWidth(ownerDocument, preset.value);
+    saveContentWidth(preset.value);
+  });
+
+  toolbar.appendChild(toggleBtn);
+  toolbar.appendChild(backTopBtn);
+  toolbar.appendChild(tocBtn);
+  toolbar.appendChild(widthBtn);
+
+  ownerDocument.body.appendChild(toolbar);
+  ownerDocument.body.appendChild(tocPanel);
+
+  // rootElement 引用仅为了满足 TS 类型不报「未使用」——目录已在 collectToolbarHeadings 中查询 document。
+  void rootElement;
 }

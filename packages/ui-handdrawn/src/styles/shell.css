@@ -11,7 +11,7 @@
 }
 
 .scribdown-app {
-  max-width: 840px;
+  max-width: var(--scribdown-content-width, 840px);
   margin: 0 auto;
   padding: var(--scribdown-space-6) var(--scribdown-space-5) var(--scribdown-space-7);
 }

@@ -89,3 +89,29 @@ export const SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME =
  */
 export const SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME =
   "scribdown-source-line-offscreen-hint--bottom";
+
+/**
+ * 浮动工具栏容器 class。
+ */
+export const SCRIBDOWN_TOOLBAR_CLASS_NAME = "scribdown-toolbar";
+
+/**
+ * 工具栏单个按钮 class。
+ */
+export const SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME = "scribdown-toolbar-btn";
+
+/**
+ * 工具栏目录面板 class。
+ */
+export const SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME =
+  "scribdown-toolbar-toc-panel";
+
+/**
+ * localStorage 中保存页面内容宽度的 key。
+ */
+export const CONTENT_WIDTH_STORAGE_KEY = "scribdown-content-width";
+
+/**
+ * localStorage 中保存工具栏折叠状态的 key。
+ */
+export const TOOLBAR_COLLAPSED_STORAGE_KEY = "scribdown-toolbar-collapsed";
