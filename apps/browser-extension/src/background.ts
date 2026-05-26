@@ -15,170 +15,104 @@ const DISABLED_BADGE_BACKGROUND = "#c0392b";
 const ENABLED_TITLE = "Scribdown";
 /** 关闭态下工具栏标题，明确告知用户当前不接管 .md。 */
 const DISABLED_TITLE = "Scribdown（已关闭）";
-/** file:// .md 但未开启「允许访问文件网址」时的 per-tab 徽标文案。 */
+/** 未开启「允许访问文件网址」时的全局徽标文案。 */
 const FILE_ACCESS_BADGE_TEXT = "!";
-/** file:// .md 但未授权时 hover 标题，引导用户去 popup 开启。 */
+/** 未开启「允许访问文件网址」时的 hover 标题，引导用户去 popup 开启。 */
 const FILE_ACCESS_NEEDED_TITLE = "Scribdown · 需开启「允许访问文件网址」";
-/** 匹配本地 markdown 文件 URL 的正则；扩展名后允许查询串或锚点。 */
-const LOCAL_MARKDOWN_URL_PATTERN = /^file:\/\/.+\.(?:md|markdown|mdx)(?:$|[?#])/i;
-
-/** 当前已打上 `!` 徽标的 tab id 集合，扩展开关切换时用于批量清理。 */
-const fileAccessFlaggedTabIds = new Set<number>();
 
 /**
- * 根据启用状态刷新工具栏图标的徽标与标题。
- * 关闭时显示 `OFF` 徽标 + 灰化标题；启用时清空徽标。
- * @param enabled 当前是否启用扩展。
+ * 综合扩展启用状态与「允许访问文件网址」状态刷新工具栏图标。
+ * 三种状态（从高到低）：
+ *  1. 扩展关闭 → `OFF` 徽标，淡化标题；
+ *  2. 扩展开着但文件访问关 → `!` 徽标，hover 提示需要开启；
+ *  3. 全部正常 → 清空徽标，标题恢复扩展名。
+ *
+ * 之所以不再用 per-tab 徽标：当「允许访问文件网址」关闭时，Chrome 直接
+ * 把 file:// 标签页的 `tab.url` 对扩展隐藏，per-tab URL 匹配根本无从触发；
+ * 改用全局徽标后，无论在哪个 tab、Chrome 是否暴露 URL，都能可靠提示。
  */
-function applyActionState(enabled: boolean): void {
-  // 关键步骤：徽标文案为空字符串即清除显示。
-  void chrome.action.setBadgeText({ text: enabled ? "" : DISABLED_BADGE_TEXT });
-  void chrome.action.setBadgeBackgroundColor({ color: DISABLED_BADGE_BACKGROUND });
-  void chrome.action.setTitle({ title: enabled ? ENABLED_TITLE : DISABLED_TITLE });
-}
-
-/**
- * 从 chrome.storage.local 读取启用状态并同步到工具栏图标。
- * 未设置时默认启用，与 popup 行为保持一致。
- */
-async function syncActionFromStorage(): Promise<void> {
+async function syncBadgeFromState(): Promise<void> {
   /** storage 中的原始启用状态值。 */
   const result = await chrome.storage.local.get(EXTENSION_ENABLED_STORAGE_KEY);
   /** 是否启用，未显式置 false 视为启用。 */
-  const enabled = result[EXTENSION_ENABLED_STORAGE_KEY] !== false;
-  applyActionState(enabled);
-}
+  const extensionEnabled = result[EXTENSION_ENABLED_STORAGE_KEY] !== false;
 
-/**
- * 读取 storage 中扩展是否启用。
- * @returns 是否启用，未显式置 false 视为启用。
- */
-async function readExtensionEnabled(): Promise<boolean> {
-  /** storage 读取结果。 */
-  const result = await chrome.storage.local.get(EXTENSION_ENABLED_STORAGE_KEY);
-  return result[EXTENSION_ENABLED_STORAGE_KEY] !== false;
-}
-
-/**
- * 清掉某个 tab 上的「需开启文件访问」per-tab 徽标。
- * @param tabId 目标 tab id。
- */
-async function clearFileAccessBadgeForTab(tabId: number): Promise<void> {
-  if (!fileAccessFlaggedTabIds.has(tabId)) return;
-  fileAccessFlaggedTabIds.delete(tabId);
-  // 关键步骤：把 text/title 重置为 null（继承全局值），而不是空字符串，
-  // 否则就把 OFF 全局徽标在该 tab 上挡掉了。
-  try {
-    await chrome.action.setBadgeText({ tabId, text: null as unknown as string });
-    await chrome.action.setTitle({ tabId, title: null as unknown as string });
-  } catch {
-    // tab 已关闭等情况忽略。
-  }
-}
-
-/**
- * 评估某个 tab 是否需要打「需开启文件访问」徽标，并按需更新。
- * @param tab 目标 tab。
- */
-async function evaluateTabForFileAccess(
-  tab: chrome.tabs.Tab | undefined
-): Promise<void> {
-  if (!tab || typeof tab.id !== "number") return;
-  /** 扩展整体是否启用；关闭时让全局 OFF 兜底，不打 per-tab 徽标。 */
-  const extensionEnabled = await readExtensionEnabled();
   if (!extensionEnabled) {
-    await clearFileAccessBadgeForTab(tab.id);
-    return;
-  }
-  /** 当前 tab 的 URL，未授权时可能为空字符串。 */
-  const url = tab.url ?? "";
-  if (!LOCAL_MARKDOWN_URL_PATTERN.test(url)) {
-    await clearFileAccessBadgeForTab(tab.id);
-    return;
-  }
-  /** 用户是否已开启「允许访问文件网址」。 */
-  const allowed = await chrome.extension.isAllowedFileSchemeAccess();
-  if (allowed) {
-    await clearFileAccessBadgeForTab(tab.id);
-    return;
-  }
-  // 关键步骤：file:// .md 且未授权 → 打 `!` 徽标 + hover 提示。
-  fileAccessFlaggedTabIds.add(tab.id);
-  try {
-    await chrome.action.setBadgeText({
-      tabId: tab.id,
-      text: FILE_ACCESS_BADGE_TEXT
-    });
-    await chrome.action.setBadgeBackgroundColor({
-      tabId: tab.id,
+    // 关键步骤：扩展关闭最高优先级，直接显示 OFF 兜底，跳过文件访问判定。
+    void chrome.action.setBadgeText({ text: DISABLED_BADGE_TEXT });
+    void chrome.action.setBadgeBackgroundColor({
       color: DISABLED_BADGE_BACKGROUND
     });
-    await chrome.action.setTitle({
-      tabId: tab.id,
-      title: FILE_ACCESS_NEEDED_TITLE
-    });
-  } catch {
-    // tab 已关闭等情况忽略。
+    void chrome.action.setTitle({ title: DISABLED_TITLE });
+    return;
   }
-}
 
-/**
- * 清空所有已被打 per-tab 徽标的 tab。
- * 扩展整体关闭时调用，避免 OFF 全局徽标被 per-tab `!` 挡住。
- */
-async function clearAllFileAccessBadges(): Promise<void> {
-  /** 拷贝一份以便迭代时安全 delete。 */
-  const ids = Array.from(fileAccessFlaggedTabIds);
-  await Promise.all(ids.map((id) => clearFileAccessBadgeForTab(id)));
+  /** 用户是否已开启「允许访问文件网址」。 */
+  const allowed = await chrome.extension.isAllowedFileSchemeAccess();
+  if (!allowed) {
+    void chrome.action.setBadgeText({ text: FILE_ACCESS_BADGE_TEXT });
+    void chrome.action.setBadgeBackgroundColor({
+      color: DISABLED_BADGE_BACKGROUND
+    });
+    void chrome.action.setTitle({ title: FILE_ACCESS_NEEDED_TITLE });
+    return;
+  }
+
+  // 关键步骤：徽标文案为空字符串即清除显示。
+  void chrome.action.setBadgeText({ text: "" });
+  void chrome.action.setTitle({ title: ENABLED_TITLE });
 }
 
 // 关键步骤：service worker 启动/安装时即同步一次，避免初次安装看到「无状态」图标。
 chrome.runtime.onInstalled.addListener(() => {
-  void syncActionFromStorage();
+  void syncBadgeFromState();
 });
 chrome.runtime.onStartup.addListener(() => {
-  void syncActionFromStorage();
+  void syncBadgeFromState();
 });
 // service worker 冷启动时同样需要同步一次（onStartup 仅在浏览器启动触发）。
-void syncActionFromStorage();
+void syncBadgeFromState();
 
 // 监听 storage 变化，popup 切换或其他窗口写入时即时更新图标。
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if (!(EXTENSION_ENABLED_STORAGE_KEY in changes)) return;
-  /** 切换后的启用状态。 */
-  const enabled = changes[EXTENSION_ENABLED_STORAGE_KEY].newValue !== false;
-  applyActionState(enabled);
-  // 关键步骤：扩展关闭时清空所有 per-tab 徽标，让全局 OFF 显示；
-  //         开启时重新评估当前活动 tab 是否需要 `!` 徽标。
-  if (!enabled) {
-    void clearAllFileAccessBadges();
-  } else {
-    void chrome.tabs
-      .query({ active: true, lastFocusedWindow: true })
-      .then(([tab]) => evaluateTabForFileAccess(tab));
+  void syncBadgeFromState();
+});
+
+// 关键步骤：Chrome 没有提供「允许访问文件网址」状态变化事件；切换 tab 是用户操作里
+// 最频繁的事件，借机重查一次文件访问状态以追平徽标。
+chrome.tabs.onActivated.addListener(() => {
+  void syncBadgeFromState();
+});
+
+/** 周期重查文件访问状态的 alarm 名；Chrome 没有现成事件，只能轮询。 */
+const FILE_ACCESS_POLL_ALARM = "scribdown:file-access-poll";
+/** 兜底轮询周期（分钟）。chrome.alarms 在 SW 休眠时也会唤醒，无须担心被回收。 */
+const FILE_ACCESS_POLL_PERIOD_MINUTES = 0.5;
+
+// 关键步骤：注册一次性周期 alarm；存在则替换，不会重复堆积。
+void chrome.alarms.create(FILE_ACCESS_POLL_ALARM, {
+  periodInMinutes: FILE_ACCESS_POLL_PERIOD_MINUTES
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== FILE_ACCESS_POLL_ALARM) return;
+  void syncBadgeFromState();
+});
+
+// 关键步骤：从 popup 收到「刷新徽标」请求时立刻重查，缩短用户在扩展详情页改完开关后
+// 切回 popup 那一刻徽标与 popup 状态不一致的窗口。
+chrome.runtime.onMessage.addListener((message) => {
+  if (
+    message &&
+    typeof message === "object" &&
+    (message as { type?: unknown }).type === "scribdown:refresh-badge"
+  ) {
+    void syncBadgeFromState();
   }
-});
-
-// 关键步骤：tab 内 URL 变化或加载完成时，重新评估是否需要 `!` 徽标。
-chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
-  if (!changeInfo.url && changeInfo.status !== "complete") return;
-  void evaluateTabForFileAccess(tab);
-});
-
-// 关键步骤：切换到某个 tab 时，重新评估它的徽标状态（chrome.action 标题是 per-tab 的）。
-chrome.tabs.onActivated.addListener(({ tabId }) => {
-  void chrome.tabs.get(tabId).then(
-    (tab) => evaluateTabForFileAccess(tab),
-    () => {
-      // tab 已不存在等情况忽略。
-    }
-  );
-});
-
-// 关键步骤：tab 关闭时从已标记集合中移除，防止内存泄漏。
-chrome.tabs.onRemoved.addListener((tabId) => {
-  fileAccessFlaggedTabIds.delete(tabId);
+  // 关键步骤：不阻止其他 onMessage 监听者处理同一条消息。
+  return false;
 });
 
 /**

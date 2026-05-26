@@ -90,12 +90,6 @@ export function Popup(): ReactElement {
   const [fileAccessAllowed, setFileAccessAllowed] = useState<boolean | null>(
     null
   );
-  /**
-   * 用户当前活动 tab 是否是本地 .md 文件。
-   * 用于在「需要授权 + 正好在本地 .md」时把卡片升级为顶部强提示。
-   */
-  const [currentTabIsLocalMarkdown, setCurrentTabIsLocalMarkdown] =
-    useState<boolean>(false);
 
   useEffect(() => {
     void readInitialState().then((state) => {
@@ -105,23 +99,15 @@ export function Popup(): ReactElement {
     });
 
     /**
-     * 同步「允许访问文件网址」状态与当前 tab 是否是本地 .md。
-     * Chrome 没有提供该开关的变化事件，需要在 popup 打开 / 重新聚焦时主动重查。
+     * 同步「允许访问文件网址」状态。
+     * Chrome 没有提供该开关的变化事件，需要在 popup 打开 / 重新聚焦时主动重查；
+     * 同时让 background 重查一次徽标，确保用户从扩展详情页切回时图标 ! 能及时消失。
      */
     const refreshFileAccess = (): void => {
       void chrome.extension.isAllowedFileSchemeAccess().then((allowed) => {
         setFileAccessAllowed(allowed);
       });
-      // 关键步骤：popup 自己是独立窗口，需要用 lastFocusedWindow 拿到工具栏所在窗口的活动 tab。
-      void chrome.tabs
-        .query({ active: true, lastFocusedWindow: true })
-        .then(([tab]) => {
-          /** 当前 tab 的 URL，未授权 file:// 访问时可能拿不到。 */
-          const url = tab?.url ?? "";
-          setCurrentTabIsLocalMarkdown(
-            /^file:\/\/.+\.(?:md|markdown|mdx)(?:$|[?#])/i.test(url)
-          );
-        });
+      void chrome.runtime.sendMessage({ type: "scribdown:refresh-badge" });
     };
     refreshFileAccess();
 
@@ -209,11 +195,12 @@ export function Popup(): ReactElement {
   };
 
   /**
-   * 是否需要顶部强提示：当前 tab 是本地 .md 且未开启「允许访问文件网址」。
+   * 是否需要顶部强提示：未开启「允许访问文件网址」。
    * `fileAccessAllowed === null` 阶段不展示，避免加载瞬间闪现。
+   * 不再要求当前 tab 是本地 .md：当文件访问关闭时，Chrome 会对扩展隐藏
+   * file:// 标签页的 URL，按 tab 判断会漏掉很多场景。
    */
-  const showFileAccessBanner =
-    currentTabIsLocalMarkdown && fileAccessAllowed === false;
+  const showFileAccessBanner = fileAccessAllowed === false;
 
   return (
     <main className="scribdown-popup">
@@ -226,10 +213,10 @@ export function Popup(): ReactElement {
         <div className="scribdown-popup__banner" role="alert">
           <div className="scribdown-popup__banner-meta">
             <span className="scribdown-popup__banner-title">
-              ⚠️ 当前是本地 .md 文件
+              ⚠️ 「允许访问文件网址」未开启
             </span>
             <span className="scribdown-popup__banner-text">
-              需要开启「允许访问文件网址」，Scribdown 才能接管渲染与自动刷新。
+              本地 .md 文件无法被 Scribdown 接管与自动刷新。打开开关后即可生效。
             </span>
           </div>
           <button
