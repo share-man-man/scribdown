@@ -25,6 +25,24 @@ export default defineConfig({
       }
     }
   },
+  // 关键步骤：把动态 chunk 引用改写为运行时 `chrome.runtime.getURL(...)`。
+  // - 原因：content script 注入到 file:// 页面后，Vite 的 `__vitePreload` 会通过
+  //   `<link rel="modulepreload" href="assets/xxx.js">` 预加载分块，浏览器以 file://
+  //   的 baseURI 解析得到 `file:///assets/xxx.js`，触发 CORS。
+  // - 这里强制把 JS 资源 URL 换成扩展 origin 下的绝对地址，让 <link href> 与后续
+  //   `import()` 一并落到 `chrome-extension://<id>/assets/...`。
+  // - 仅对 JS 宿主生效；CSS 中 `url(/assets/*)` 由 render-markdown.ts 的
+  //   resolveExtensionAssetUrls 单独处理。
+  experimental: {
+    renderBuiltUrl: (filename, { hostType }) => {
+      if (hostType === "js") {
+        return {
+          runtime: `globalThis.chrome.runtime.getURL(${JSON.stringify(filename)})`
+        };
+      }
+      return { relative: true };
+    }
+  },
   server: {
     // 关键步骤：允许 chrome-extension:// 来源访问 dev server，content script HMR 依赖此项。
     cors: {
