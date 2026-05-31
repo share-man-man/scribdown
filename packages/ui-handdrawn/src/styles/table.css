@@ -32,6 +32,12 @@
     var(--scribdown-table-ink-token) 8%,
     var(--scribdown-color-surface)
   );
+  /* 行 hover 填充色：与 zebra（8%）拉开明显差距，单一阅读光带清晰可见。 */
+  --scribdown-table-row-hover-fill: color-mix(
+    in srgb,
+    var(--scribdown-table-ink-token) 32%,
+    var(--scribdown-color-surface)
+  );
 
   position: relative;
   z-index: 0;
@@ -118,6 +124,13 @@
    须落到单元格上才能生效，不能写在 tr 上。 */
 .scribdown-markdown table > tbody > tr:nth-child(even) > td {
   background-color: var(--scribdown-table-row-stripe-fill);
+}
+
+/* 关键步骤：tbody 行 hover 高亮；选择器特异度需高于 zebra，确保覆盖奇偶行。
+   仅设色不加 transition，与手绘风格的瞬时反馈更搭。 */
+.scribdown-markdown table > tbody > tr:hover > td,
+.scribdown-markdown table > tbody > tr:nth-child(even):hover > td {
+  background-color: var(--scribdown-table-row-hover-fill);
 }
 
 /* 关键步骤：thead 使用独立纹理层，确保文本与边线不受遮挡。 */
