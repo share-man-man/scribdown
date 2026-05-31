@@ -557,22 +557,59 @@
   grid-template-columns: var(--scribdown-code-line-gutter-width) minmax(0, 1fr);
   padding: 4px 0 6px;
   min-height: 28px;
-  /* 关键步骤：超出高度由 body 统一纵向滚动，保证行号与代码同步移动；横向滚动仍由内部 pre 独立处理。 */
+  /* 关键步骤：body 统一处理横/纵双向滚动条，行号列用 sticky 钉左侧，
+     避免长代码块的横向滚动条被纵向内容挤到视窗外。 */
   max-height: var(--scribdown-code-block-max-height);
   margin: 0 4px;
-  background: var(--scribdown-color-surface);
+  /* 关键步骤：cover + shadow 双层背景实现横向/纵向滚动渐显阴影。
+     cover 用 background-attachment: local 跟随内容滚动，露出底下固定（scroll）的 shadow；
+     横向 cover/shadow 贴在 gutter 右缘，纵向 cover/shadow 贴在 body 上沿，
+     cover 用 9999px 长边保证另一轴滚动时始终覆盖。 */
+  background-color: var(--scribdown-color-surface);
+  background-image:
+    /* cover-x：遮住 shadow-x，跟随内容横向移动 */
+    linear-gradient(to right, var(--scribdown-color-surface), transparent),
+    /* cover-y：遮住 shadow-y，跟随内容纵向移动 */
+    linear-gradient(to bottom, var(--scribdown-color-surface), transparent),
+    /* shadow-x：横向滚动时在 gutter 右缘渐显 */
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--scribdown-code-ink) 28%, transparent),
+      transparent
+    ),
+    /* shadow-y：纵向滚动时在 body 上沿渐显 */
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--scribdown-code-ink) 28%, transparent),
+      transparent
+    );
+  background-position:
+    var(--scribdown-code-line-gutter-width) 0,
+    0 0,
+    var(--scribdown-code-line-gutter-width) 0,
+    0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-size:
+    24px 9999px,
+    9999px 24px,
+    14px 100%,
+    100% 14px;
+  background-attachment: local, local, scroll, scroll;
   border-radius: 0 0 9px 11px;
-  overflow: hidden auto;
+  overflow: auto;
   scrollbar-color: color-mix(in srgb, var(--scribdown-code-ink) 30%, transparent) transparent;
 }
 
-/* 关键步骤：行号列独立成固定宽度网格列，不参与代码横向滚动。 */
+/* 关键步骤：行号列独立成固定宽度网格列，sticky 钉左侧，body 横向滚动时保持不动。 */
 .scribdown-markdown .scribdown-code-block__gutter {
-  position: relative;
+  position: sticky;
+  left: 0;
   z-index: 2;
   grid-column: 1;
   box-sizing: border-box;
   width: var(--scribdown-code-line-gutter-width);
+  /* 关键步骤：sticky 后必须自带背景，否则横向滚动时代码会从行号下方透出。 */
+  background: var(--scribdown-color-surface);
   padding-right: var(--scribdown-code-line-number-gap);
   color: color-mix(in srgb, var(--scribdown-code-ink) 60%, transparent);
   font-family: var(--scribdown-font-code);
@@ -629,7 +666,8 @@
   min-width: 0;
   margin: 0;
   padding: 0;
-  overflow-x: auto;
+  /* 关键步骤：横向滚动已上交 __body 统一处理，pre 不再独立出滚动条。 */
+  overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -638,7 +676,6 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1.65;
-  scrollbar-color: color-mix(in srgb, var(--scribdown-code-ink) 30%, transparent) transparent;
 }
 
 .scribdown-markdown .scribdown-code-block__body > pre::before {

@@ -26,6 +26,12 @@
   );
   /* thead 阴影纹理：复用代码块 chrome 的 rect-shadow 资产。 */
   --scribdown-table-head-shadow-svg: var(--scribdown-code-block-rect-shadow);
+  /* 间隔行（zebra）填充色：accent 极淡 tint，提升长表格可读性又不抢视觉。 */
+  --scribdown-table-row-stripe-fill: color-mix(
+    in srgb,
+    var(--scribdown-table-ink-token) 8%,
+    var(--scribdown-color-surface)
+  );
 
   position: relative;
   z-index: 0;
@@ -106,6 +112,12 @@
   font-family: var(--scribdown-font-heading);
   font-weight: 700;
   background-color: var(--scribdown-color-surface);
+}
+
+/* 关键步骤：tbody 偶数行加 zebra 填充；因 td 自带 background-color，
+   须落到单元格上才能生效，不能写在 tr 上。 */
+.scribdown-markdown table > tbody > tr:nth-child(even) > td {
+  background-color: var(--scribdown-table-row-stripe-fill);
 }
 
 /* 关键步骤：thead 使用独立纹理层，确保文本与边线不受遮挡。 */
