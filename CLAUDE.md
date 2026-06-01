@@ -47,4 +47,4 @@ pnpm run e2e            # Playwright E2E（首次需 pnpm exec playwright instal
 
 ## UI 验证约定
 
-改动可能影响渲染效果时，进入 http://127.0.0.1:5175，如果没有启动，则在根目录执行 `pnpm run dev` 启动验证。
+改动可能影响渲染效果时，进入 http://127.0.0.1:9175，如果没有启动，则在根目录执行 `pnpm run dev` 启动验证。

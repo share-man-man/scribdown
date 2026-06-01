@@ -5,13 +5,13 @@
       "name": "markdown-fixture-preview",
       "runtimeExecutable": "tail",
       "runtimeArgs": ["-f", "/dev/null"],
-      "port": 5175
+      "port": 9175
     },
     {
       "name": "docs",
       "runtimeExecutable": "tail",
       "runtimeArgs": ["-f", "/dev/null"],
-      "port": 5174
+      "port": 9174
     }
   ]
 }
