@@ -1,10 +1,14 @@
-/* ImageRenderer：块级图片转换为 figure，边框由 SVG 四边重复组成，和 blockquote::after 同源。 */
+/* ImageRenderer：块级图片转换为 figure；边框沿用 blockquote::after 的 frame-edge 方案，
+   通过 mask + background-color 让描边色由 token 接管。 */
 .scribdown-markdown .scribdown-image-figure {
   width: min(100%, 720px);
   margin: 0 auto var(--scribdown-space-3);
 }
 
 .scribdown-markdown .scribdown-image-frame {
+  /* 关键步骤：本地覆盖 frame-edge-color，避免和 blockquote 的 accent 撞色。 */
+  --scribdown-frame-edge-color: var(--scribdown-color-text-secondary);
+
   position: relative;
   isolation: isolate;
   display: block;
@@ -12,33 +16,26 @@
   width: 100%;
   padding: 6px;
   overflow: visible;
-  background:
-    radial-gradient(circle at 18px 20px, var(--scribdown-paper-grain) 0 1px, transparent 1.6px),
-    color-mix(in srgb, var(--scribdown-color-surface) 92%, var(--scribdown-color-border) 8%);
-  background-size:
-    32px 29px,
-    auto;
-  border-radius: 0;
+  background-color: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 92%,
+    var(--scribdown-color-border) 8%
+  );
+  background-image: var(--scribdown-code-block-rect-shadow);
+  background-position: left top;
+  background-repeat: repeat;
+  background-size: auto;
+  /* 关键步骤：保留视觉为方形，仅给 box-shadow 一个手绘风格的非对称圆角。 */
+  border-radius: var(--scribdown-radius-sm);
   box-shadow: none;
+  transition: box-shadow var(--scribdown-duration-base) var(--scribdown-easing-standard);
 }
 
-.scribdown-markdown .scribdown-image-frame::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 7px -7px -7px 7px;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      color-mix(in srgb, var(--scribdown-color-border) 38%, transparent),
-      transparent 84%
-    ),
-    color-mix(in srgb, var(--scribdown-color-text-primary) 8%, transparent);
-  border-radius: 16px 18px 15px 17px;
-  transform: rotate(0.35deg);
+.scribdown-markdown .scribdown-image-frame:hover {
+  box-shadow: var(--scribdown-shadow-md);
 }
 
-/* 关键步骤：用横向和纵向 SVG 边缘平铺，形成九宫格式可伸缩边框。 */
+/* 关键步骤：横/纵向 frame-edge SVG 四边平铺，描边色由 background-color 接管。 */
 .scribdown-markdown .scribdown-image-frame::after {
   content: "";
   position: absolute;
@@ -46,19 +43,50 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
-    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+    var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+    var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
     left top,
-    left bottom,
-    left top,
+    20% bottom,
+    left 40%,
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px,
-    96px 8px,
-    8px 72px,
-    8px 72px;
+    var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-image-frame::after {
+    background-color: var(--scribdown-frame-edge-color);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      20% bottom,
+      left 40%,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    mask-position:
+      left top,
+      20% bottom,
+      left 40%,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
 }
 
 .scribdown-markdown .scribdown-image {
@@ -68,7 +96,6 @@
   height: auto;
   background: color-mix(in srgb, var(--scribdown-color-surface) 86%, transparent);
   border: 0;
-  border-radius: 6px 7px 5px 6px;
   box-shadow: none;
   cursor: zoom-in;
 }

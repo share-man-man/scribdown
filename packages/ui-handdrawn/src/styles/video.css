@@ -22,23 +22,7 @@
   box-shadow: none;
 }
 
-.scribdown-markdown .scribdown-video-frame::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 7px -7px -7px 7px;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      color-mix(in srgb, var(--scribdown-color-border) 38%, transparent),
-      transparent 84%
-    ),
-    color-mix(in srgb, var(--scribdown-color-text-primary) 8%, transparent);
-  border-radius: 16px 18px 15px 17px;
-  transform: rotate(0.35deg);
-}
-
-/* 关键步骤：复用 markdown-edge SVG 平铺，与图片 frame 视觉对齐。 */
+/* 关键步骤：复用 blockquote 的 frame-edge SVG 平铺，与图片 frame 视觉对齐。 */
 .scribdown-markdown .scribdown-video-frame::after {
   content: "";
   position: absolute;
@@ -46,8 +30,8 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
-    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+    var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+    var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
     left top,
     left bottom,
@@ -55,10 +39,48 @@
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px,
-    96px 8px,
-    8px 72px,
-    8px 72px;
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical),
+    var(--scribdown-frame-edge-tile-vertical);
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-video-frame::after {
+    /* 关键步骤：用 mask 保留 SVG 形状，描边色交给 frame-edge-color token，便于主题化。 */
+    background-color: var(--scribdown-frame-edge-color);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
 }
 
 .scribdown-markdown .scribdown-video {

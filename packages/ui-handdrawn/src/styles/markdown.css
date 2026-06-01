@@ -1,23 +1,28 @@
 /* ─── Markdown 正文排版 ─────────────────────────────────────────────── */
 /* body-md：18px / 1.75 / 400 */
 .scribdown-markdown {
-  --scribdown-frame-edge-horizontal: url("../assets/frame-edge-horizontal.svg");
-  --scribdown-frame-edge-vertical: url("../assets/frame-edge-vertical.svg");
+  --scribdown-frame-edge-horizontal: url("../assets/rough-line-horizontal.svg");
+  --scribdown-frame-edge-vertical: url("../assets/rough-line-vertical.svg");
+  /* 手绘边框颜色：通过 mask + background-color 让外部 token 接管描边色。 */
+  --scribdown-frame-edge-color: var(--scribdown-color-accent);
+  /* 手绘边框 SVG 切片的平铺尺寸：长边 = 单段花纹长度，短边 = 描边粗细。
+     用于 background-size / mask-size，避免在各 CSS 文件里重复硬编码。 */
+  --scribdown-frame-edge-tile-horizontal: 200px 6px;
+  --scribdown-frame-edge-tile-vertical: 6px 200px;
+  /* 代码块行号分隔线（code-block-edge-vertical.svg）的平铺尺寸，花纹周期短于通用边框。 */
+  --scribdown-code-block-edge-tile-vertical: 6px 144px;
+  /* 表格外框（共用 code-block-edge svg）的平铺尺寸：横向 192×12，纵向 12×144，描边比通用边框略粗。 */
+  --scribdown-table-border-tile-horizontal: 192px 12px;
+  --scribdown-table-border-tile-vertical: 12px 144px;
   --scribdown-blockquote-bar: url("../assets/blockquote-bar.svg");
   --scribdown-underline-stroke: url("../assets/underline-stroke.svg");
   --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
   --scribdown-heading-mark: url("../assets/heading-mark.svg");
-  --scribdown-markdown-edge-horizontal: url("../assets/markdown-edge-horizontal.svg");
-  --scribdown-markdown-edge-vertical: url("../assets/markdown-edge-vertical.svg");
   --scribdown-image-fallback-edge-horizontal: url("../assets/image-fallback-edge-horizontal.svg");
   --scribdown-image-fallback-edge-vertical: url("../assets/image-fallback-edge-vertical.svg");
   --scribdown-code-block-edge-horizontal: url("../assets/code-block-edge-horizontal.svg");
   --scribdown-code-block-edge-vertical: url("../assets/code-block-edge-vertical.svg");
   --scribdown-code-block-rect-shadow: url("../assets/rect-shadow.svg");
-  --scribdown-code-block-card-bg-1: url("../assets/card-bg-1.svg");
-  --scribdown-code-block-card-bg-2: url("../assets/card-bg-2.svg");
-  --scribdown-code-block-card-bg-3: url("../assets/card-bg-3.svg");
-  --scribdown-code-block-card-bg-4: url("../assets/card-bg-4.svg");
   --scribdown-code-block-lang-tag-body: url("../assets/tag-body.svg");
   --scribdown-code-block-lang-tag-body-outline: url("../assets/tag-body-outline.svg");
   --scribdown-code-block-lang-tag-body-hatch: url("../assets/tag-body-hatch.svg");
@@ -26,32 +31,11 @@
   --scribdown-code-block-lang-tag-right-outline: url("../assets/tag-right-outline.svg");
   --scribdown-code-block-lang-tag-right-hatch: url("../assets/tag-right-hatch.svg");
   --scribdown-code-block-lang-tag-right-safe-width: 18px;
-  --scribdown-code-block-shadow-gray-token: var(--scribdown-color-text-secondary);
   --scribdown-code-block-chrome-shadow-token: var(--scribdown-color-border);
   --scribdown-code-block-chrome-shadow-fill: color-mix(
     in srgb,
     var(--scribdown-code-block-chrome-shadow-token) 40%,
     transparent
-  );
-  --scribdown-code-block-shadow-fill-1: color-mix(
-    in srgb,
-    var(--scribdown-code-block-shadow-gray-token) 78%,
-    var(--scribdown-color-surface)
-  );
-  --scribdown-code-block-shadow-fill-2: color-mix(
-    in srgb,
-    var(--scribdown-code-block-shadow-gray-token) 74%,
-    var(--scribdown-color-surface)
-  );
-  --scribdown-code-block-shadow-fill-3: color-mix(
-    in srgb,
-    var(--scribdown-code-block-shadow-gray-token) 70%,
-    var(--scribdown-color-surface)
-  );
-  --scribdown-code-block-shadow-fill-4: color-mix(
-    in srgb,
-    var(--scribdown-code-block-shadow-gray-token) 66%,
-    var(--scribdown-color-surface)
   );
 
   position: relative;
@@ -70,15 +54,15 @@
   word-break: break-word;
 }
 
-/* 外层边框：专属 markdown-edge 横/纵向笔触，分层叠加（wash/fill/gap/line/dry），呼应 blockquote 的实现。 */
+/* 外层边框：复用 blockquote 的 frame-edge SVG，保持视觉语言一致。 */
 .scribdown-markdown::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background-image:
-    var(--scribdown-markdown-edge-horizontal), var(--scribdown-markdown-edge-horizontal),
-    var(--scribdown-markdown-edge-vertical), var(--scribdown-markdown-edge-vertical);
+    var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+    var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
     left top,
     left bottom,
@@ -86,10 +70,48 @@
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px,
-    96px 8px,
-    8px 72px,
-    8px 72px;
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical),
+    var(--scribdown-frame-edge-tile-vertical);
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown::before {
+    /* 关键步骤：用 mask 保留 SVG 形状，描边色交给 frame-edge-color token，便于主题化。 */
+    background-color: var(--scribdown-frame-edge-color);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    mask-position:
+      left top,
+      left bottom,
+      left top,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
 }
 
 .scribdown-markdown > :first-child {
@@ -225,10 +247,18 @@
 .scribdown-markdown hr {
   height: 12px;
   border: none;
-  background-image: var(--scribdown-frame-edge-horizontal);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 8px;
+  /* 关键步骤：用 mask 保留 SVG 形状，描边色由 color-border token 接管，便于主题化。 */
+  background-color: var(--scribdown-color-border);
+  -webkit-mask-image: var(--scribdown-frame-edge-horizontal);
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 8px;
+  -webkit-mask-mode: alpha;
+  mask-image: var(--scribdown-frame-edge-horizontal);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 8px;
+  mask-mode: alpha;
   margin: var(--scribdown-space-3) 0;
   transform: rotate(-0.3deg);
 }

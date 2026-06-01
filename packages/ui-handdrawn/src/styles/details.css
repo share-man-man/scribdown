@@ -2,7 +2,6 @@
 .scribdown-markdown details {
   position: relative;
   box-sizing: border-box;
-  border-radius: var(--scribdown-radius-md);
   background: var(--scribdown-color-surface);
 }
 
@@ -18,15 +17,54 @@
     var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
     left top,
-    left bottom,
-    left top,
+    20% bottom,
+    left 40%,
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    96px 8px,
-    96px 8px,
-    8px 72px,
-    8px 72px;
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical),
+    var(--scribdown-frame-edge-tile-vertical);
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown details:not(.scribdown-toc-branch)::after,
+  .scribdown-markdown blockquote::after {
+    /* 关键步骤：用 mask 保留 SVG 形状，描边色交给 background-color，便于主题化。 */
+    background-color: var(--scribdown-frame-edge-color);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      20% bottom,
+      left 40%,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    mask-position:
+      left top,
+      20% bottom,
+      left 40%,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
 }
 
 .scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) {

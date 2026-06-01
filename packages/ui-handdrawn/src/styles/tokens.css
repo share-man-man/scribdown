@@ -6,7 +6,6 @@
   --scribdown-color-text-primary: #2d241f;
   --scribdown-color-text-secondary: #6a5b53;
   --scribdown-color-accent: #2f6a5f;
-  --scribdown-color-accent-visited: #24574e;
   --scribdown-color-link: #2b63c6;
   --scribdown-color-link-visited: #234fa1;
   --scribdown-color-mark: #d7a339;
@@ -45,7 +44,6 @@
   /* 四角独立写法，呼应手绘感 */
   --scribdown-radius-sm: 8px 10px 9px 11px;
   --scribdown-radius-md: 14px 16px 13px 17px;
-  --scribdown-radius-lg: 22px 24px 20px 26px;
 
   --scribdown-space-1: 4px;
   --scribdown-space-2: 8px;
@@ -54,13 +52,10 @@
   --scribdown-space-5: 24px;
   --scribdown-space-6: 32px;
   --scribdown-space-7: 48px;
-  --scribdown-space-8: 64px;
 
   --scribdown-duration-fast: 120ms;
   --scribdown-duration-base: 200ms;
   --scribdown-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --scribdown-easing-enter: cubic-bezier(0, 0, 0.2, 1);
-  --scribdown-easing-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* 暗色主题 token 覆盖 */
@@ -71,7 +66,6 @@
     --scribdown-color-text-primary: #e8ddd4;
     --scribdown-color-text-secondary: #9b8c82;
     --scribdown-color-accent: #5fbfad;
-    --scribdown-color-accent-visited: #4da595;
     --scribdown-color-link: #7ea7ff;
     --scribdown-color-link-visited: #5f86dd;
     --scribdown-color-mark: #c49a4a;

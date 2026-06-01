@@ -7,16 +7,15 @@
   margin: 0 0 var(--scribdown-space-3);
   padding: var(--scribdown-space-2) 16px var(--scribdown-space-2) 36px;
   background: var(--scribdown-color-blockquote-bg);
-  border-radius: var(--scribdown-radius-md);
 }
 
 .scribdown-markdown blockquote::before {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 2px;
-  width: 24px;
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  width: 20px;
   pointer-events: none;
   background-image: var(--scribdown-blockquote-bar);
   background-repeat: repeat-y;

@@ -72,10 +72,10 @@
     right -1px top 0px;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    192px 12px,
-    192px 12px,
-    12px 144px,
-    12px 144px;
+    var(--scribdown-table-border-tile-horizontal),
+    var(--scribdown-table-border-tile-horizontal),
+    var(--scribdown-table-border-tile-vertical),
+    var(--scribdown-table-border-tile-vertical);
 }
 
 .scribdown-markdown th,
@@ -228,10 +228,10 @@
       right top;
     -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     -webkit-mask-size:
-      192px 12px,
-      192px 12px,
-      12px 144px,
-      12px 144px;
+      var(--scribdown-table-border-tile-horizontal),
+      var(--scribdown-table-border-tile-horizontal),
+      var(--scribdown-table-border-tile-vertical),
+      var(--scribdown-table-border-tile-vertical);
     -webkit-mask-mode: alpha, alpha, alpha, alpha;
     mask-image:
       var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
@@ -243,10 +243,10 @@
       right -1px top 0px;
     mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     mask-size:
-      192px 12px,
-      192px 12px,
-      12px 144px,
-      12px 144px;
+      var(--scribdown-table-border-tile-horizontal),
+      var(--scribdown-table-border-tile-horizontal),
+      var(--scribdown-table-border-tile-vertical),
+      var(--scribdown-table-border-tile-vertical);
     mask-mode: alpha, alpha, alpha, alpha;
   }
 }

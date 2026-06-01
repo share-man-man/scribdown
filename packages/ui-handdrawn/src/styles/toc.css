@@ -12,8 +12,6 @@
 }
 
 .scribdown-markdown .scribdown-toc-summary {
-  --scribdown-toc-summary-underline: url("../assets/toc-summary-underline.svg");
-
   position: relative;
   display: flex;
   align-items: center;
@@ -29,31 +27,14 @@
   user-select: none;
 }
 
-.scribdown-markdown .scribdown-toc-summary:focus {
+.scribdown-markdown .scribdown-toc-summary:focus,
+.scribdown-markdown .scribdown-toc-summary:focus-visible {
   outline: none;
 }
 
 .scribdown-markdown .scribdown-toc-summary::marker,
 .scribdown-markdown .scribdown-toc-summary::-webkit-details-marker {
   display: none;
-}
-
-.scribdown-markdown .scribdown-toc-summary:focus-visible {
-  outline: none;
-}
-
-.scribdown-markdown .scribdown-toc-summary:focus-visible::after {
-  content: "";
-  position: absolute;
-  right: auto;
-  bottom: 1px;
-  left: 18px;
-  width: 48px;
-  height: 8px;
-  background-image: var(--scribdown-toc-summary-underline);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  opacity: 0.72;
 }
 
 .scribdown-markdown .scribdown-toc-summary::before {
