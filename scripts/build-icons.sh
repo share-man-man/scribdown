@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 由 design/logo/logo.svg 派生各扩展所需的图标产物，作为唯一图标源。
 # 浏览器插件需要 16/32/48/128 多尺寸 PNG；VS Code 需要 128 PNG（Marketplace）和原始 SVG（命令图标）。
-# 当前依赖 macOS 自带的 qlmanage 做 SVG→PNG 渲染（与项目设定的开发环境一致）。
+# 使用 rsvg-convert (librsvg) 做 SVG→PNG 渲染，默认保留透明背景；
+# qlmanage 会强制合成白底，不满足透明需求。
 
 set -euo pipefail
 
@@ -14,8 +15,27 @@ if [[ ! -f "$SOURCE_SVG" ]]; then
   exit 1
 fi
 
-if ! command -v qlmanage >/dev/null 2>&1; then
-  echo "[build-icons] 需要 macOS 的 qlmanage 工具来渲染 SVG → PNG" >&2
+# 关键步骤：选择 SVG → PNG 渲染器。
+# 优先 rsvg-convert（librsvg，本地命令，速度最快）；
+# 未安装则回退到 npx @resvg/resvg-js-cli，避免开发者必须手动 brew install。
+# 两者均默认保留 SVG 的透明背景，不会合成白底。
+if command -v rsvg-convert >/dev/null 2>&1; then
+  render_png() {
+    local size="$1"
+    local output_path="$2"
+    rsvg-convert -w "$size" -h "$size" "$SOURCE_SVG" -o "$output_path"
+  }
+elif command -v npx >/dev/null 2>&1; then
+  echo "[build-icons] 未检测到 rsvg-convert，回退至 npx @resvg/resvg-js-cli（首次会下载）"
+  render_png() {
+    local size="$1"
+    local output_path="$2"
+    npx --yes -p @resvg/resvg-js-cli resvg-js \
+      --fit-width "$size" \
+      "$SOURCE_SVG" "$output_path" >/dev/null
+  }
+else
+  echo "[build-icons] 需要 rsvg-convert 或 npx，请安装其一：brew install librsvg / 启用 Node.js" >&2
   exit 1
 fi
 
@@ -27,18 +47,12 @@ VSCODE_OUT="$ROOT_DIR/apps/vscode-extension/assets"
 
 mkdir -p "$BROWSER_OUT" "$VSCODE_OUT"
 
-# qlmanage 只能输出到目录内的 `<filename>.png`，需要先渲染再重命名。
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
-
 for size in "${BROWSER_SIZES[@]}"; do
-  qlmanage -t -s "$size" -o "$TMP_DIR" "$SOURCE_SVG" >/dev/null
-  mv "$TMP_DIR/logo.svg.png" "$BROWSER_OUT/icon-$size.png"
+  render_png "$size" "$BROWSER_OUT/icon-$size.png"
 done
 
 # VS Code Marketplace icon。
-qlmanage -t -s 128 -o "$TMP_DIR" "$SOURCE_SVG" >/dev/null
-mv "$TMP_DIR/logo.svg.png" "$VSCODE_OUT/icon.png"
+render_png 128 "$VSCODE_OUT/icon.png"
 
 # 原始 SVG 复制到 vscode-extension 资源目录，用于命令栏图标（VS Code 支持 SVG）。
 cp "$SOURCE_SVG" "$VSCODE_OUT/icon.svg"
