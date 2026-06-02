@@ -67,21 +67,16 @@ body {
 
 .fixture-preview__layout {
   flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 36vw);
   min-height: 0;
 }
 
 .fixture-preview__preview {
   min-width: 0;
-  padding: clamp(18px, 3vw, 40px);
   overflow: auto;
 }
 
-.fixture-preview__paper {
-  max-width: 860px;
-  margin: 0 auto;
-}
+/* 关键步骤：内容宽度与水平居中由 .scribdown-markdown + --scribdown-content-width 接管，
+   .fixture-preview__paper 不再额外控制布局。 */
 
 .fixture-preview__paper > :first-child {
   margin-top: 0;
@@ -91,39 +86,9 @@ body {
   margin-bottom: 0;
 }
 
-.fixture-preview__source {
-  min-width: 0;
-  border-left: 1px solid var(--scribdown-color-border);
-  background: #1f2328;
-  color: #d0d7de;
-  overflow: auto;
-}
-
-.fixture-preview__source pre {
-  margin: 0;
-  padding: 24px;
-}
-
-.fixture-preview__source code {
-  font-family: var(--scribdown-font-code);
-  font-size: 13px;
-  line-height: 1.65;
-  white-space: pre-wrap;
-}
-
 @media (max-width: 920px) {
   .fixture-preview__toolbar {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .fixture-preview__layout {
-    grid-template-columns: 1fr;
-  }
-
-  .fixture-preview__source {
-    max-height: 45vh;
-    border-left: 0;
-    border-top: 1px solid var(--scribdown-color-border);
   }
 }

@@ -8,6 +8,21 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition:
+    background var(--scribdown-duration-base) var(--scribdown-easing-standard),
+    border-color var(--scribdown-duration-base) var(--scribdown-easing-standard),
+    box-shadow var(--scribdown-duration-base) var(--scribdown-easing-standard),
+    padding var(--scribdown-duration-base) var(--scribdown-easing-standard);
+  border: 1.5px solid transparent;
+  border-radius: var(--scribdown-radius-md);
+}
+
+/* 关键步骤：展开后整组按钮以一个手绘面板呈现，承载视觉容器感。 */
+.scribdown-toolbar:not(.is-collapsed) {
+  background: var(--scribdown-color-surface);
+  border-color: var(--scribdown-color-border);
+  box-shadow: var(--scribdown-shadow-md);
+  padding: 6px;
 }
 
 .scribdown-toolbar-btn {
@@ -42,6 +57,36 @@
   box-shadow: none;
 }
 
+/* 关键步骤：展开态下面板已经承载边框/阴影，所有按钮去掉自身卡片样式，
+   作为面板内的"菜单条目"呈现，hover/active 才点亮柔和底色。 */
+.scribdown-toolbar:not(.is-collapsed) .scribdown-toolbar-btn {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: 999px;
+}
+
+/* 关键步骤：toggle 与二级菜单之间用一条细分隔线划分层级。
+   线放在 toggle 下方，依面板内宽度撑满，颜色弱于面板边框。 */
+.scribdown-toolbar:not(.is-collapsed) .scribdown-toolbar-btn--toggle {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--scribdown-color-border) 70%, transparent);
+  border-radius: 0;
+  height: auto;
+}
+
+.scribdown-toolbar:not(.is-collapsed) .scribdown-toolbar-btn:hover {
+  background: color-mix(in srgb, var(--scribdown-color-bg) 70%, transparent);
+  box-shadow: none;
+}
+
+.scribdown-toolbar:not(.is-collapsed) .scribdown-toolbar-btn:active {
+  transform: none;
+  background: color-mix(in srgb, var(--scribdown-color-bg) 90%, transparent);
+}
+
 .scribdown-toolbar-btn svg {
   display: block;
   flex-shrink: 0;
@@ -71,28 +116,37 @@
   opacity: 1;
 }
 
-/* 目录面板 */
+/* 目录抽屉：从左侧滑入，覆盖正文。 */
 .scribdown-toolbar-toc-panel {
   position: fixed;
-  top: 16px;
-  right: 60px;
-  z-index: 8999;
-  width: 260px;
-  max-height: calc(100vh - 32px);
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: min(320px, 86vw);
+  z-index: 9001;
   overflow-y: auto;
-  background: var(--scribdown-color-surface);
-  border: 1.5px solid var(--scribdown-color-border);
-  border-radius: var(--scribdown-radius-md);
+  /* 关键步骤：抽屉 25% 不透明度，叠加 backdrop blur 保证文字可读。 */
+  background: color-mix(in srgb, var(--scribdown-color-surface) 25%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-right: 1.5px solid var(--scribdown-color-border);
   box-shadow: var(--scribdown-shadow-md);
-  padding: var(--scribdown-space-3) var(--scribdown-space-4);
-  display: none;
+  padding: var(--scribdown-space-4);
+  /* 关键步骤：抽屉默认平移到左侧屏幕外，通过 transform 切换打开/关闭，
+     保持过渡动画的同时不脱离 a11y 焦点流。 */
+  transform: translateX(-100%);
+  transition: transform var(--scribdown-duration-base) var(--scribdown-easing-standard);
 }
 
 .scribdown-toolbar-toc-panel.is-open {
-  display: block;
+  transform: translateX(0);
 }
 
 .scribdown-toolbar-toc-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--scribdown-space-2);
   font-family: var(--scribdown-font-heading);
   font-size: 16px;
   font-weight: 700;
@@ -102,38 +156,51 @@
   border-bottom: 1px solid var(--scribdown-color-border);
 }
 
-.scribdown-toolbar-toc-list {
-  list-style: none;
-  margin: 0;
+/* 抽屉关闭按钮：右上角 × 图标，hover 时点亮。 */
+.scribdown-toolbar-toc-panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--scribdown-color-text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--scribdown-duration-fast) var(--scribdown-easing-standard),
+    background var(--scribdown-duration-fast) var(--scribdown-easing-standard);
 }
 
-.scribdown-toolbar-toc-list a {
+.scribdown-toolbar-toc-panel-close:hover {
+  background: color-mix(in srgb, var(--scribdown-color-bg) 70%, transparent);
+  color: var(--scribdown-color-accent);
+}
+
+.scribdown-toolbar-toc-panel-close svg {
   display: block;
-  padding: 3px 0;
-  color: var(--scribdown-color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* 抽屉内目录条目复用 .scribdown-toc-* 样式（见 toc.css），
+   这里仅做抽屉环境下的字号微调与空态文案样式。 */
+.scribdown-toolbar-toc-panel .scribdown-toc-nav {
+  margin-top: 0;
+}
+
+.scribdown-toolbar-toc-panel .scribdown-toc-nav a {
   font-family: var(--scribdown-font-body);
   font-size: 13px;
   line-height: 1.5;
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color var(--scribdown-duration-fast) var(--scribdown-easing-standard);
 }
 
-.scribdown-toolbar-toc-list a:hover {
-  color: var(--scribdown-color-accent);
-  text-decoration: none;
+.scribdown-toolbar-toc-panel-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--scribdown-color-text-secondary);
 }
-
-/* 按标题层级缩进 */
-.scribdown-toolbar-toc-list li[data-level="1"] a { padding-left: 0; }
-.scribdown-toolbar-toc-list li[data-level="2"] a { padding-left: 12px; }
-.scribdown-toolbar-toc-list li[data-level="3"] a { padding-left: 24px; }
-.scribdown-toolbar-toc-list li[data-level="4"] a { padding-left: 36px; }
-.scribdown-toolbar-toc-list li[data-level="5"] a { padding-left: 48px; }
-.scribdown-toolbar-toc-list li[data-level="6"] a { padding-left: 60px; }
 
 /* 折叠态：隐藏非折叠按钮 */
 .scribdown-toolbar.is-collapsed .scribdown-toolbar-btn:not(.scribdown-toolbar-btn--toggle) {

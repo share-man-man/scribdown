@@ -1,6 +1,14 @@
 /* ─── Markdown 正文排版 ─────────────────────────────────────────────── */
 /* body-md：18px / 1.75 / 400 */
 .scribdown-markdown {
+  /* 关键步骤：内容宽度由 --scribdown-content-width 固定（不是 max-width），
+     视口比该宽度小则保留内容尺寸并允许横向滚动，避免低分辨率下被压缩破坏排版。
+     box-sizing: border-box 让自身 padding 计入 width，外框严格匹配设定值。
+     full 档由 preset value="100%" 触发，自动填满父容器，无横向溢出。 */
+  box-sizing: border-box;
+  width: var(--scribdown-content-width, 840px);
+  margin-left: auto;
+  margin-right: auto;
   --scribdown-frame-edge-horizontal: url("../assets/rough-line-horizontal.svg");
   --scribdown-frame-edge-vertical: url("../assets/rough-line-vertical.svg");
   /* 手绘边框颜色：通过 mask + background-color 让外部 token 接管描边色。 */
@@ -16,7 +24,6 @@
   --scribdown-table-border-tile-vertical: 12px 144px;
   --scribdown-blockquote-bar: url("../assets/blockquote-bar.svg");
   --scribdown-underline-stroke: url("../assets/underline-stroke.svg");
-  --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
   --scribdown-heading-mark: url("../assets/heading-mark.svg");
   --scribdown-image-fallback-edge-horizontal: url("../assets/image-fallback-edge-horizontal.svg");
   --scribdown-image-fallback-edge-vertical: url("../assets/image-fallback-edge-vertical.svg");
@@ -46,7 +53,7 @@
   background-size:
     28px 25px,
     39px 34px;
-  padding: var(--scribdown-space-5);
+  padding: var(--scribdown-space-3);
   font-size: 16px;
   line-height: 1.65;
   font-weight: 400;

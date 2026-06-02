@@ -56,6 +56,10 @@
   --scribdown-duration-fast: 120ms;
   --scribdown-duration-base: 200ms;
   --scribdown-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 关键步骤：目录折叠箭头 SVG 由 inline TOC 与 toolbar 抽屉共用，
+     放在 :root 上避免抽屉脱离 .scribdown-markdown 作用域后变量失效。 */
+  --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
 }
 
 /* 暗色主题 token 覆盖 */

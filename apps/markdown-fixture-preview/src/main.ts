@@ -13,7 +13,6 @@ import "./styles.css";
 interface PreviewMounts {
   previewOutput: HTMLElement;
   productName: HTMLElement;
-  sourceOutput: HTMLElement;
   statusText: HTMLElement;
   titleText: HTMLElement;
   updatedAt: HTMLTimeElement;
@@ -48,7 +47,6 @@ function getPreviewMounts(): PreviewMounts {
   return {
     previewOutput: getRequiredElement("fixture-preview-output"),
     productName: getRequiredElement("fixture-preview-product"),
-    sourceOutput: getRequiredElement("fixture-preview-source"),
     statusText: getRequiredElement("fixture-preview-status"),
     titleText: getRequiredElement("fixture-preview-title"),
     updatedAt: getRequiredElement("fixture-preview-updated-at")
@@ -70,7 +68,6 @@ async function renderFixture(markdownText: string, mounts: PreviewMounts): Promi
 
   mounts.productName.textContent = PROJECT_NAME;
   mounts.titleText.textContent = MARKDOWN_FIXTURE_PREVIEW_TITLE;
-  mounts.sourceOutput.textContent = markdownText;
   mounts.previewOutput.innerHTML = renderedHtml;
   // 关键步骤：统一执行图片与代码块的 hydration，保持多端行为一致。
   hydrateMarkdownPreview(mounts.previewOutput);

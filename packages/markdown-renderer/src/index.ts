@@ -4262,11 +4262,7 @@ function createTocListItem(tocItem: TocTreeItem): MarkdownNode {
   // 当前条目是否拥有可折叠的子层级。
   const hasChildren = tocItem.children.length > 0;
   // 当前目录条目的 class 列表。
-  const tocItemClassNames = [
-    TOC_ITEM_CLASS_PREFIX,
-    `${TOC_ITEM_CLASS_PREFIX}--depth-${tocItem.depth}`,
-    ...(hasChildren ? [TOC_ITEM_BRANCH_CLASS_NAME] : [])
-  ];
+  const tocItemClassNames = createTocItemClassNames(tocItem.depth, hasChildren);
 
   return {
     type: "listItem",
@@ -4279,6 +4275,20 @@ function createTocListItem(tocItem: TocTreeItem): MarkdownNode {
     },
     children: hasChildren ? [createTocBranchNode(tocItem)] : [createTocLinkParagraphNode(tocItem)]
   };
+}
+
+/**
+ * 生成目录条目所需的 class 列表，inline TOC 与 toolbar 抽屉共用。
+ * @param depth 标题原始层级。
+ * @param hasChildren 是否拥有可折叠子层级。
+ * @returns class 列表。
+ */
+function createTocItemClassNames(depth: number, hasChildren: boolean): string[] {
+  return [
+    TOC_ITEM_CLASS_PREFIX,
+    `${TOC_ITEM_CLASS_PREFIX}--depth-${depth}`,
+    ...(hasChildren ? [TOC_ITEM_BRANCH_CLASS_NAME] : [])
+  ];
 }
 
 /**
@@ -4370,6 +4380,191 @@ function createTocBranchLinkNode(tocItem: TocTreeItem): MarkdownNode {
       }
     ]
   };
+}
+
+/**
+ * 从已渲染的 DOM 中收集带 id 的标题，转换为目录条目。
+ * 与 inline TOC 共用 {@link createHeadingIndex} 生成层级编号，使 toolbar 抽屉与文档内目录的层级逻辑一致。
+ * @param rootElement 含 Markdown 渲染结果的根节点。
+ * @returns 扁平目录标题条目。
+ */
+function collectTocHeadingsFromDom(rootElement: ParentNode): TocHeading[] {
+  /** Markdown 渲染容器；rootElement 自身或其后代命中 .scribdown-markdown 时即视为容器，否则视为未渲染。 */
+  const markdownContainer =
+    rootElement instanceof Element && rootElement.matches(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`)
+      ? rootElement
+      : rootElement.querySelector<HTMLElement>(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`);
+  if (!markdownContainer) {
+    return [];
+  }
+
+  /** 渲染区域内所有带 id 的标题元素。 */
+  const headingElements = Array.from(
+    markdownContainer.querySelectorAll<HTMLHeadingElement>(
+      "h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]"
+    )
+  );
+
+  /** 收集结果。 */
+  const tocHeadings: TocHeading[] = [];
+  /** 各标题层级的计数器。 */
+  const headingIndexCounts = Array.from({ length: 7 }, () => 0);
+  /** 文档内首个标题的层级，作为目录序号根层级。 */
+  let rootHeadingDepth: number | undefined;
+
+  for (const headingElement of headingElements) {
+    // 从标签名解析当前标题层级（h1..h6）。
+    const headingDepth = parseInt(headingElement.tagName.slice(1), 10);
+    if (!Number.isFinite(headingDepth)) {
+      continue;
+    }
+
+    // 标题可见文本。
+    const headingText = headingElement.textContent?.trim() ?? "";
+    // 标题锚点 id，由 inline TOC 渲染时写入。
+    const headingId = headingElement.id;
+    // 与 inline TOC 共用的层级编号生成逻辑。
+    const headingIndex = createHeadingIndex(
+      headingDepth,
+      headingIndexCounts,
+      rootHeadingDepth ?? headingDepth
+    );
+    rootHeadingDepth = rootHeadingDepth ?? headingDepth;
+
+    tocHeadings.push({
+      depth: headingDepth,
+      id: headingId,
+      index: headingIndex,
+      text: headingText || headingId
+    });
+  }
+
+  return tocHeadings;
+}
+
+/**
+ * 目录 DOM 构造选项，供 toolbar 抽屉等运行时入口复用。
+ */
+interface CreateTocNavElementOptions {
+  /** 点击目录链接时触发的回调，常用于关闭抽屉。 */
+  onLinkClick?: (event: MouseEvent) => void;
+  /** 嵌套分支是否默认展开，默认 true 与 inline TOC 对齐。 */
+  branchInitiallyOpen?: boolean;
+}
+
+/**
+ * 使用与 inline TOC 完全一致的 DOM 结构构建目录 nav 节点。
+ * @param ownerDocument 目标 document。
+ * @param tocTreeItems 目录树根节点集合。
+ * @param options 可选回调与展开策略。
+ * @returns 含完整目录列表的 nav 元素。
+ */
+function createTocNavElement(
+  ownerDocument: Document,
+  tocTreeItems: TocTreeItem[],
+  options: CreateTocNavElementOptions = {}
+): HTMLElement {
+  /** 嵌套分支默认展开开关。 */
+  const branchInitiallyOpen = options.branchInitiallyOpen ?? true;
+
+  const navElement = ownerDocument.createElement("nav");
+  navElement.setAttribute("aria-label", TOC_ARIA_LABEL);
+  navElement.className = TOC_NAV_CLASS_NAME;
+  navElement.appendChild(
+    createTocListElement(ownerDocument, tocTreeItems, false, { ...options, branchInitiallyOpen })
+  );
+  return navElement;
+}
+
+/**
+ * 构造目录列表元素，与 inline TOC 的 ol 结构保持一致。
+ * @param ownerDocument 目标 document。
+ * @param tocItems 当前层级的目录条目。
+ * @param isNested 是否为嵌套列表。
+ * @param options 共享构造选项。
+ * @returns ol 列表元素。
+ */
+function createTocListElement(
+  ownerDocument: Document,
+  tocItems: TocTreeItem[],
+  isNested: boolean,
+  options: Required<Pick<CreateTocNavElementOptions, "branchInitiallyOpen">> &
+    CreateTocNavElementOptions
+): HTMLOListElement {
+  const listElement = ownerDocument.createElement("ol");
+  listElement.className = isNested
+    ? `${TOC_LIST_CLASS_NAME} ${TOC_LIST_NESTED_CLASS_NAME}`
+    : TOC_LIST_CLASS_NAME;
+
+  for (const tocItem of tocItems) {
+    listElement.appendChild(createTocListItemElement(ownerDocument, tocItem, options));
+  }
+
+  return listElement;
+}
+
+/**
+ * 构造目录列表项，含可折叠分支与叶子链接两种形态。
+ * @param ownerDocument 目标 document。
+ * @param tocItem 当前目录条目。
+ * @param options 共享构造选项。
+ * @returns li 元素。
+ */
+function createTocListItemElement(
+  ownerDocument: Document,
+  tocItem: TocTreeItem,
+  options: Required<Pick<CreateTocNavElementOptions, "branchInitiallyOpen">> &
+    CreateTocNavElementOptions
+): HTMLLIElement {
+  /** 当前条目是否拥有可折叠的子层级。 */
+  const hasChildren = tocItem.children.length > 0;
+
+  const itemElement = ownerDocument.createElement("li");
+  itemElement.className = createTocItemClassNames(tocItem.depth, hasChildren).join(" ");
+  itemElement.dataset.tocIndex = tocItem.index;
+
+  if (hasChildren) {
+    // 分支条目：details + summary，summary 内并列展示分支标题与跳转锚点。
+    const branchElement = ownerDocument.createElement("details");
+    branchElement.className = TOC_BRANCH_CLASS_NAME;
+    branchElement.open = options.branchInitiallyOpen;
+
+    const summaryElement = ownerDocument.createElement("summary");
+    summaryElement.className = TOC_BRANCH_SUMMARY_CLASS_NAME;
+    summaryElement.append(ownerDocument.createTextNode(tocItem.text));
+
+    const branchLinkElement = ownerDocument.createElement("a");
+    branchLinkElement.href = `#${tocItem.id}`;
+    branchLinkElement.setAttribute(
+      "aria-label",
+      `${TOC_BRANCH_LINK_ARIA_LABEL_PREFIX}${tocItem.text}`
+    );
+    branchLinkElement.className = TOC_BRANCH_LINK_CLASS_NAME;
+    branchLinkElement.textContent = TOC_BRANCH_LINK_TEXT;
+    if (options.onLinkClick) {
+      branchLinkElement.addEventListener("click", options.onLinkClick);
+    }
+
+    summaryElement.appendChild(branchLinkElement);
+    branchElement.appendChild(summaryElement);
+    branchElement.appendChild(
+      createTocListElement(ownerDocument, tocItem.children, true, options)
+    );
+    itemElement.appendChild(branchElement);
+  } else {
+    // 叶子条目：与 inline TOC 一致，使用 <p> 包裹跳转链接，避免列表项基线偏移。
+    const paragraphElement = ownerDocument.createElement("p");
+    const linkElement = ownerDocument.createElement("a");
+    linkElement.href = `#${tocItem.id}`;
+    linkElement.textContent = tocItem.text;
+    if (options.onLinkClick) {
+      linkElement.addEventListener("click", options.onLinkClick);
+    }
+    paragraphElement.appendChild(linkElement);
+    itemElement.appendChild(paragraphElement);
+  }
+
+  return itemElement;
 }
 
 /**
@@ -4683,10 +4878,10 @@ function createVideoFallbackHast(sourceUrl: string): HastNode {
 
 // 页面宽度预设列表（label 用于按钮徽章，value 为 CSS max-width 值）。
 const TOOLBAR_WIDTH_PRESETS: Array<{ label: string; value: string }> = [
-  { label: "600", value: "600px" },
+  { label: "680", value: "680px" },
   { label: "840", value: "840px" },
-  { label: "1120", value: "1120px" },
-  { label: "full", value: "none" }
+  { label: "1080", value: "1080px" },
+  { label: "100%", value: "100%" }
 ];
 
 // 默认内容宽度。
@@ -4751,28 +4946,6 @@ function saveContentWidth(value: string): void {
  */
 function applyContentWidth(ownerDocument: Document, value: string): void {
   ownerDocument.documentElement.style.setProperty("--scribdown-content-width", value);
-}
-
-/**
- * 提取渲染区域内所有带 id 的标题，供目录面板使用。
- * @param ownerDocument 目标 document。
- * @returns 标题条目数组。
- */
-function collectToolbarHeadings(
-  ownerDocument: Document
-): Array<{ level: number; text: string; id: string }> {
-  const container = ownerDocument.querySelector(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`);
-  if (!container) return [];
-
-  return Array.from(
-    container.querySelectorAll<HTMLHeadingElement>("h1,h2,h3,h4,h5,h6")
-  )
-    .filter((el) => el.id.length > 0)
-    .map((el) => ({
-      level: parseInt(el.tagName[1], 10),
-      text: el.textContent?.trim() ?? "",
-      id: el.id
-    }));
 }
 
 /**
@@ -4862,34 +5035,45 @@ function mountPageToolbar(ownerDocument: Document, rootElement: ParentNode): voi
 
   const tocTitle = ownerDocument.createElement("div");
   tocTitle.className = "scribdown-toolbar-toc-panel-title";
-  tocTitle.textContent = "目录";
+
+  /** 标题文本节点。 */
+  const tocTitleText = ownerDocument.createElement("span");
+  tocTitleText.textContent = "目录";
+  tocTitle.appendChild(tocTitleText);
+
+  /** 抽屉关闭按钮（右上角 ×）。 */
+  const tocCloseBtn = ownerDocument.createElement("button");
+  tocCloseBtn.type = "button";
+  tocCloseBtn.className = "scribdown-toolbar-toc-panel-close";
+  tocCloseBtn.setAttribute("aria-label", "关闭目录");
+  tocCloseBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    '<path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+    "</svg>";
+  tocCloseBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    tocPanel.classList.remove("is-open");
+  });
+  tocTitle.appendChild(tocCloseBtn);
+
   tocPanel.appendChild(tocTitle);
 
-  const tocList = ownerDocument.createElement("ul");
-  tocList.className = "scribdown-toolbar-toc-list";
-
-  const headings = collectToolbarHeadings(ownerDocument);
-  if (headings.length === 0) {
-    const empty = ownerDocument.createElement("li");
-    empty.style.cssText =
-      "font-size:13px;color:var(--scribdown-color-text-secondary);padding:4px 0";
-    empty.textContent = "暂无标题";
-    tocList.appendChild(empty);
+  // 关键步骤：与 inline [TOC] 共用层级数据 + DOM 结构，确保两处目录的层级渲染逻辑一致。
+  const tocHeadings = collectTocHeadingsFromDom(rootElement);
+  if (tocHeadings.length === 0) {
+    const emptyElement = ownerDocument.createElement("p");
+    emptyElement.className = "scribdown-toolbar-toc-panel-empty";
+    emptyElement.textContent = "暂无标题";
+    tocPanel.appendChild(emptyElement);
   } else {
-    for (const heading of headings) {
-      const item = ownerDocument.createElement("li");
-      item.dataset.level = String(heading.level);
-      const link = ownerDocument.createElement("a");
-      link.href = `#${heading.id}`;
-      link.textContent = heading.text;
-      link.addEventListener("click", () => {
+    const tocTree = createTocTree(tocHeadings);
+    const tocNavElement = createTocNavElement(ownerDocument, tocTree, {
+      onLinkClick: () => {
         tocPanel.classList.remove("is-open");
-      });
-      item.appendChild(link);
-      tocList.appendChild(item);
-    }
+      }
+    });
+    tocPanel.appendChild(tocNavElement);
   }
-  tocPanel.appendChild(tocList);
 
   /** 目录切换按钮。 */
   const tocBtn = createPageToolbarBtn(
@@ -4937,7 +5121,4 @@ function mountPageToolbar(ownerDocument: Document, rootElement: ParentNode): voi
 
   ownerDocument.body.appendChild(toolbar);
   ownerDocument.body.appendChild(tocPanel);
-
-  // rootElement 引用仅为了满足 TS 类型不报「未使用」——目录已在 collectToolbarHeadings 中查询 document。
-  void rootElement;
 }

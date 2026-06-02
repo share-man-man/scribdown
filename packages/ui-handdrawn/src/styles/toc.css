@@ -1,17 +1,19 @@
-/* TableOfContents：由 [TOC] 占位符生成，承接文档内标题导航。 */
-.scribdown-markdown .scribdown-toc {
+/* TableOfContents：由 [TOC] 占位符生成（inline），同时被 toolbar 抽屉复用，
+   class 名是项目独占的命名空间，故全部不再依赖 .scribdown-markdown 父容器，
+   让 inline TOC 与抽屉目录共享一套层级 / 折叠样式。 */
+.scribdown-toc {
   width: fit-content;
   max-width: 100%;
   margin: 0 0 var(--scribdown-space-4);
   padding: 8px 16px;
 }
 
-.scribdown-markdown .scribdown-toc[open] {
+.scribdown-toc[open] {
   width: 100%;
   padding-bottom: var(--scribdown-space-4);
 }
 
-.scribdown-markdown .scribdown-toc-summary {
+.scribdown-toc-summary {
   position: relative;
   display: flex;
   align-items: center;
@@ -27,17 +29,17 @@
   user-select: none;
 }
 
-.scribdown-markdown .scribdown-toc-summary:focus,
-.scribdown-markdown .scribdown-toc-summary:focus-visible {
+.scribdown-toc-summary:focus,
+.scribdown-toc-summary:focus-visible {
   outline: none;
 }
 
-.scribdown-markdown .scribdown-toc-summary::marker,
-.scribdown-markdown .scribdown-toc-summary::-webkit-details-marker {
+.scribdown-toc-summary::marker,
+.scribdown-toc-summary::-webkit-details-marker {
   display: none;
 }
 
-.scribdown-markdown .scribdown-toc-summary::before {
+.scribdown-toc-summary::before {
   content: "";
   flex: 0 0 24px;
   width: 24px;
@@ -49,21 +51,21 @@
   transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
 }
 
-.scribdown-markdown .scribdown-toc[open] .scribdown-toc-summary::before {
+.scribdown-toc[open] .scribdown-toc-summary::before {
   transform: rotate(85deg);
 }
 
-.scribdown-markdown .scribdown-toc-nav {
+.scribdown-toc-nav {
   margin-top: var(--scribdown-space-2);
 }
 
-.scribdown-markdown .scribdown-toc-list {
+.scribdown-toc-list {
   list-style: none;
   margin: 0;
   padding-left: 0;
 }
 
-.scribdown-markdown .scribdown-toc-item {
+.scribdown-toc-item {
   --scribdown-toc-toggle-offset: 24px;
 
   position: relative;
@@ -72,28 +74,28 @@
   color: var(--scribdown-color-text-secondary);
 }
 
-.scribdown-markdown .scribdown-toc-item::before {
+.scribdown-toc-item::before {
   content: none;
 }
 
-.scribdown-markdown .scribdown-toc-item > p {
+.scribdown-toc-item > p {
   margin: 0;
 }
 
-.scribdown-markdown .scribdown-toc-item.scribdown-toc-item--branch {
+.scribdown-toc-item.scribdown-toc-item--branch {
   padding-left: var(--scribdown-toc-parent-offset);
 }
 
-.scribdown-markdown .scribdown-toc-branch {
+.scribdown-toc-branch {
   background: transparent;
   border-radius: 0;
 }
 
-.scribdown-markdown .scribdown-toc-branch::after {
+.scribdown-toc-branch::after {
   content: none;
 }
 
-.scribdown-markdown .scribdown-toc-branch-summary {
+.scribdown-toc-branch-summary {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -105,22 +107,22 @@
   list-style: none;
 }
 
-.scribdown-markdown .scribdown-toc-branch-summary::marker,
-.scribdown-markdown .scribdown-toc-branch-summary::-webkit-details-marker {
+.scribdown-toc-branch-summary::marker,
+.scribdown-toc-branch-summary::-webkit-details-marker {
   display: none;
 }
 
-.scribdown-markdown .scribdown-toc-branch-summary:focus {
+.scribdown-toc-branch-summary:focus {
   outline: none;
 }
 
-.scribdown-markdown .scribdown-toc-branch-summary:focus-visible {
+.scribdown-toc-branch-summary:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--scribdown-color-warning) 68%, transparent);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
-.scribdown-markdown .scribdown-toc-branch-summary::before {
+.scribdown-toc-branch-summary::before {
   content: "";
   position: absolute;
   top: 50%;
@@ -134,11 +136,11 @@
   transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
 }
 
-.scribdown-markdown .scribdown-toc-branch[open] > .scribdown-toc-branch-summary::before {
+.scribdown-toc-branch[open] > .scribdown-toc-branch-summary::before {
   transform: translateY(-50%) rotate(88deg);
 }
 
-.scribdown-markdown .scribdown-toc-branch-link {
+.scribdown-toc-branch-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -153,58 +155,58 @@
   text-decoration: none;
 }
 
-.scribdown-markdown .scribdown-toc-branch-link:hover {
+.scribdown-toc-branch-link:hover {
   opacity: 1;
   text-decoration: none;
 }
 
-.scribdown-markdown .scribdown-toc-list--nested {
+.scribdown-toc-list--nested {
   margin: 6px 0 0 calc(0px - var(--scribdown-toc-parent-offset));
   padding-left: 0;
 }
 
-.scribdown-markdown .scribdown-toc-item--depth-1 {
+.scribdown-toc-item--depth-1 {
   --scribdown-toc-parent-offset: 24px;
 
   padding-left: 24px;
 }
 
-.scribdown-markdown .scribdown-toc-item--depth-2 {
+.scribdown-toc-item--depth-2 {
   --scribdown-toc-parent-offset: 48px;
 
   padding-left: 48px;
 }
 
-.scribdown-markdown .scribdown-toc-item--depth-3 {
+.scribdown-toc-item--depth-3 {
   --scribdown-toc-parent-offset: 72px;
 
   padding-left: 72px;
 }
 
-.scribdown-markdown .scribdown-toc-item--depth-4 {
+.scribdown-toc-item--depth-4 {
   --scribdown-toc-parent-offset: 96px;
 
   padding-left: 96px;
 }
 
-.scribdown-markdown .scribdown-toc-item--depth-5 {
+.scribdown-toc-item--depth-5 {
   --scribdown-toc-parent-offset: 120px;
 
   padding-left: 120px;
 }
 
-.scribdown-markdown .scribdown-toc-item--depth-6 {
+.scribdown-toc-item--depth-6 {
   --scribdown-toc-parent-offset: 144px;
 
   padding-left: 144px;
 }
 
-.scribdown-markdown .scribdown-toc a {
+.scribdown-toc-nav a {
   color: var(--scribdown-color-accent);
   text-decoration: none;
 }
 
-.scribdown-markdown .scribdown-toc a:hover {
+.scribdown-toc-nav a:hover {
   opacity: 0.8;
   text-decoration: none;
 }
