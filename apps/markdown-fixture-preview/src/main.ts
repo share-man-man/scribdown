@@ -4,92 +4,13 @@ import {
   renderMarkdown
 } from "@scribdown/markdown-renderer";
 import "@scribdown/markdown-renderer/styles.css";
-import { MARKDOWN_FIXTURE_PREVIEW_TITLE, PROJECT_NAME } from "@scribdown/shared";
-import fixtureMarkdown from "../../docs/ui-design/markdown-fixture.md?raw";
+import markdownSource from "../../docs/ui-design/markdown-fixture.md?raw";
 import "./styles.css";
 
-/**
- * Markdown fixture 预览挂载点集合。
- */
-interface PreviewMounts {
-  previewOutput: HTMLElement;
-  productName: HTMLElement;
-  statusText: HTMLElement;
-  titleText: HTMLElement;
-  updatedAt: HTMLTimeElement;
-}
+/** Markdown 渲染产物的挂载容器，必须带 `scribdown-markdown` 类名。 */
+const outputElement = document.getElementById("scribdown-output") as HTMLElement;
 
-/**
- * 开发预览根节点 ID。
- */
-const PREVIEW_ROOT_ID = "markdown-fixture-preview-root";
-
-/**
- * 从页面中读取必需挂载节点。
- * @param elementId 页面元素 ID。
- * @returns 已确认存在的 HTMLElement。
- */
-function getRequiredElement<TElement extends HTMLElement>(elementId: string): TElement {
-  /** 页面中查询得到的元素。 */
-  const element = document.getElementById(elementId);
-
-  if (!element) {
-    throw new Error(`Unable to find preview element: ${elementId}`);
-  }
-
-  return element as TElement;
-}
-
-/**
- * 读取预览页面的所有挂载点。
- * @returns 挂载点集合。
- */
-function getPreviewMounts(): PreviewMounts {
-  return {
-    previewOutput: getRequiredElement("fixture-preview-output"),
-    productName: getRequiredElement("fixture-preview-product"),
-    statusText: getRequiredElement("fixture-preview-status"),
-    titleText: getRequiredElement("fixture-preview-title"),
-    updatedAt: getRequiredElement("fixture-preview-updated-at")
-  };
-}
-
-/**
- * 渲染固定 Markdown fixture。
- * @param markdownText 用于开发预览的 Markdown 原文。
- * @param mounts 预览页面挂载点集合。
- */
-async function renderFixture(markdownText: string, mounts: PreviewMounts): Promise<void> {
-  mounts.productName.textContent = PROJECT_NAME;
-  mounts.titleText.textContent = MARKDOWN_FIXTURE_PREVIEW_TITLE;
-  // 关键步骤：分三步显式组合渲染流水线，与浏览器插件保持一致，
-  //          验证原子化对外接口在开发预览场景下行为正确。
-  /** 渲染产出的安全 HTML 字符串。 */
-  const renderedHtml = await renderMarkdown(markdownText);
-  mounts.previewOutput.innerHTML = renderedHtml;
-  hydrateMarkdown(mounts.previewOutput);
-  mountMarkdownToolbar(document.body);
-
-  /** 当前渲染完成时间。 */
-  const renderedAt = new Date();
-  mounts.statusText.textContent = "Ready";
-  mounts.updatedAt.dateTime = renderedAt.toISOString();
-  mounts.updatedAt.textContent = renderedAt.toLocaleTimeString();
-}
-
-/**
- * 启动 Markdown fixture 开发预览。
- * @param rootElementId 开发预览根节点 ID。
- */
-function bootstrapPreview(rootElementId: string): void {
-  /** 开发预览根节点。 */
-  const rootElement = getRequiredElement(rootElementId);
-
-  rootElement.dataset.ready = "false";
-
-  void renderFixture(fixtureMarkdown, getPreviewMounts()).then(() => {
-    rootElement.dataset.ready = "true";
-  });
-}
-
-bootstrapPreview(PREVIEW_ROOT_ID);
+// 关键步骤：第三方接入只需三步 —— 渲染 HTML、注入容器、绑定交互；工具栏按需挂载。
+outputElement.innerHTML = await renderMarkdown(markdownSource);
+hydrateMarkdown(outputElement);
+mountMarkdownToolbar(document.body);

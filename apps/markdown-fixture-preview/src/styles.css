@@ -3,92 +3,137 @@ body {
   min-width: 320px;
 }
 
-#markdown-fixture-preview-root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.fixture-preview__toolbar {
+.example-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 16px clamp(16px, 3vw, 32px);
+  padding: 24px clamp(16px, 4vw, 48px) 20px;
   border-bottom: 1px solid var(--scribdown-color-border);
   background: rgba(250, 247, 239, 0.92);
   backdrop-filter: blur(12px);
 }
 
-.fixture-preview__eyebrow {
-  margin: 0 0 4px;
+.example-header__eyebrow {
+  margin: 0 0 6px;
   color: var(--scribdown-color-text-secondary);
   font-family: var(--scribdown-font-code);
   font-size: 12px;
-  letter-spacing: 0;
 }
 
-.fixture-preview__title {
-  margin: 0;
+.example-header__title {
+  margin: 0 0 6px;
   color: var(--scribdown-color-text-primary);
   font-family: var(--scribdown-font-heading);
-  font-size: clamp(22px, 3vw, 34px);
-  letter-spacing: 0;
-  line-height: 1.12;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.15;
 }
 
-.fixture-preview__status {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
+.example-header__desc {
+  margin: 0;
+  max-width: 640px;
   color: var(--scribdown-color-text-secondary);
-  font-family: var(--scribdown-font-code);
-  font-size: 12px;
-  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
-.fixture-preview__status span {
-  display: inline-flex;
-  align-items: center;
+.example-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  gap: 32px;
+  padding: 24px clamp(16px, 4vw, 48px) 48px;
+  align-items: start;
+}
+
+.example-quickstart {
+  position: sticky;
+  top: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100vh - 156px);
+  overflow-y: auto;
+}
+
+.example-section {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.fixture-preview__status span::before {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #2f9e44;
-  content: "";
+.example-section__title {
+  margin: 0;
+  color: var(--scribdown-color-text-primary);
+  font-family: var(--scribdown-font-heading);
+  font-size: 14px;
+  letter-spacing: 0;
 }
 
-.fixture-preview__layout {
-  flex: 1;
-  min-height: 0;
+.example-section__desc {
+  margin: 0;
+  color: var(--scribdown-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
-.fixture-preview__preview {
+.example-section__desc code,
+.example-api code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.06);
+  font-family: var(--scribdown-font-code);
+  font-size: 0.92em;
+}
+
+.example-snippet {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--scribdown-color-border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.65);
+  font-family: var(--scribdown-font-code);
+  font-size: 12.5px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.example-snippet code {
+  background: transparent;
+  font: inherit;
+  padding: 0;
+}
+
+.example-api {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.example-api th,
+.example-api td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--scribdown-color-border);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.example-api th {
+  color: var(--scribdown-color-text-secondary);
+  font-weight: 600;
+}
+
+.example-preview {
   min-width: 0;
-  overflow: auto;
 }
 
-/* 关键步骤：内容宽度与水平居中由 .scribdown-markdown + --scribdown-content-width 接管，
-   .fixture-preview__paper 不再额外控制布局。 */
+@media (max-width: 960px) {
+  .example-layout {
+    grid-template-columns: 1fr;
+  }
 
-.fixture-preview__paper > :first-child {
-  margin-top: 0;
-}
-
-.fixture-preview__paper > :last-child {
-  margin-bottom: 0;
-}
-
-@media (max-width: 920px) {
-  .fixture-preview__toolbar {
-    align-items: flex-start;
-    flex-direction: column;
+  .example-quickstart {
+    position: static;
+    max-height: none;
   }
 }

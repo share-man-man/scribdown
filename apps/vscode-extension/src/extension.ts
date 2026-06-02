@@ -10,9 +10,11 @@ import {
   SOURCE_LINE_ACTIVE_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
-  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
-  VSCODE_PREVIEW_TITLE
+  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME
 } from "@scribdown/shared";
+
+/** VS Code Webview 预览面板的标题文本，用于 data-preview-title 标识。 */
+const PREVIEW_TITLE = "VS Code Preview";
 
 /**
  * Webview 预览面板 ViewType。
@@ -835,7 +837,7 @@ function createPreviewShellHtml(
       <article
         id="${PREVIEW_ROOT_ELEMENT_ID}"
         class="${SCRIBDOWN_MARKDOWN_CLASS_NAME}"
-        data-preview-title="${VSCODE_PREVIEW_TITLE}"
+        data-preview-title="${PREVIEW_TITLE}"
       ></article>
     </main>
     <script src="${previewRuntimeScriptHref}"></script>

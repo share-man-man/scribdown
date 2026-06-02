@@ -34,21 +34,6 @@ export const OPEN_PREVIEW_COMMAND = "scribdown.openPreview";
 export const MARKDOWN_LANGUAGE_ID = "markdown";
 
 /**
- * 浏览器插件预览标题。
- */
-export const BROWSER_PREVIEW_TITLE = "Browser Preview";
-
-/**
- * Markdown fixture 开发预览标题。
- */
-export const MARKDOWN_FIXTURE_PREVIEW_TITLE = "Markdown Fixture Preview";
-
-/**
- * VS Code 预览标题。
- */
-export const VSCODE_PREVIEW_TITLE = "VS Code Preview";
-
-/**
  * Scribdown 页面根容器 class。
  */
 export const SCRIBDOWN_PAGE_CLASS_NAME = "scribdown-page";

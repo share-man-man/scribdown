@@ -3,27 +3,83 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scribdown Markdown Fixture Preview</title>
+    <title>Scribdown 接入示例</title>
   </head>
   <body class="scribdown-page">
-    <div id="markdown-fixture-preview-root">
-      <header class="fixture-preview__toolbar">
-        <div>
-          <p class="fixture-preview__eyebrow" id="fixture-preview-product"></p>
-          <h1 class="fixture-preview__title" id="fixture-preview-title"></h1>
-        </div>
-        <div class="fixture-preview__status">
-          <span id="fixture-preview-status"></span>
-          <time id="fixture-preview-updated-at"></time>
-        </div>
-      </header>
+    <header class="example-header">
+      <p class="example-header__eyebrow">@scribdown/markdown-renderer</p>
+      <h1 class="example-header__title">第三方接入示例</h1>
+      <p class="example-header__desc">
+        三个 API + 一个根类，把 Markdown 渲染成右侧的样子。左侧 Quickstart 可直接复制。
+      </p>
+    </header>
 
-      <main class="fixture-preview__layout">
-        <section class="fixture-preview__preview" aria-label="Markdown 渲染预览">
-          <article class="fixture-preview__paper scribdown-markdown" id="fixture-preview-output"></article>
+    <main class="example-layout">
+      <aside class="example-quickstart" aria-label="Quickstart">
+        <section class="example-section">
+          <h2 class="example-section__title">1. 安装</h2>
+          <pre class="example-snippet"><code>pnpm add @scribdown/markdown-renderer</code></pre>
         </section>
-      </main>
-    </div>
+
+        <section class="example-section">
+          <h2 class="example-section__title">2. HTML 容器</h2>
+          <p class="example-section__desc">
+            容器必须带类名 <code>scribdown-markdown</code>，视觉 token 都挂在它上面。
+          </p>
+          <pre class="example-snippet"><code>&lt;article id="md" class="scribdown-markdown"&gt;&lt;/article&gt;</code></pre>
+        </section>
+
+        <section class="example-section">
+          <h2 class="example-section__title">3. JS 接入</h2>
+          <pre class="example-snippet"><code>import {
+  renderMarkdown,
+  hydrateMarkdown,
+  mountMarkdownToolbar
+} from "@scribdown/markdown-renderer";
+import "@scribdown/markdown-renderer/styles.css";
+
+const root = document.getElementById("md")!;
+root.innerHTML = await renderMarkdown(markdownText);
+hydrateMarkdown(root);
+mountMarkdownToolbar(document.body);</code></pre>
+        </section>
+
+        <section class="example-section">
+          <h2 class="example-section__title">API 一览</h2>
+          <table class="example-api">
+            <thead>
+              <tr>
+                <th>API</th>
+                <th>必需</th>
+                <th>作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>renderMarkdown(md)</code></td>
+                <td>✅</td>
+                <td>Markdown → 已 sanitize 的 HTML 字符串</td>
+              </tr>
+              <tr>
+                <td><code>hydrateMarkdown(root)</code></td>
+                <td>推荐</td>
+                <td>图片放大、代码复制、Mermaid 等运行时交互</td>
+              </tr>
+              <tr>
+                <td><code>mountMarkdownToolbar(c)</code></td>
+                <td>可选</td>
+                <td>浮动工具栏：回到顶部 / 目录 / 内容宽度</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </aside>
+
+      <section class="example-preview" aria-label="渲染结果">
+        <article class="scribdown-markdown" id="scribdown-output"></article>
+      </section>
+    </main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
