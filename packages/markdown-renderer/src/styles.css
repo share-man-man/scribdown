@@ -1,0 +1,11 @@
+/**
+ * @scribdown/markdown-renderer 的样式入口。
+ *
+ * 用法：
+ *   import "@scribdown/markdown-renderer/styles.css";
+ *
+ * 物理样式文件目前由 @scribdown/ui-handdrawn 维护，
+ * 本文件通过 @import 转发，使外部用户只需依赖 markdown-renderer 单个包即可获得完整样式。
+ */
+
+@import "@scribdown/ui-handdrawn/styles.css";

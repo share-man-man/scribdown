@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { renderMarkdownPreview } from "./index";
+import { renderMarkdown } from "./index";
 
-describe("renderMarkdownPreview", () => {
+describe("renderMarkdown", () => {
   it("replaces standalone TOC marker with heading links", async () => {
     // 输入 Markdown 覆盖目录占位符和两级标题。
     const markdownText = ["# 文档标题", "", "[TOC]", "", "## 目录说明", "", "### 子章节"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain(
       '<h1 id="文档标题" data-source-line="1"><span class="scribdown-heading-mark">文档标题</span></h1>'
@@ -33,7 +33,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖多层标题和同级标题。
     const markdownText = ["[TOC]", "", "## 父级", "", "### 子级", "", "#### 孙级", "", "## 同级"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
+    const renderedHtml = await renderMarkdown(markdownText);
     // 可折叠分支数量。
     const tocBranchMatches = renderedHtml.match(/class="scribdown-toc-branch"/gu) ?? [];
 
@@ -52,7 +52,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖重复标题。
     const markdownText = ["[TOC]", "", "## 重复标题", "", "## 重复标题"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain(
       '<h2 id="重复标题" data-source-line="3"><span class="scribdown-heading-mark">重复标题</span></h2>'
@@ -70,7 +70,7 @@ describe("renderMarkdownPreview", () => {
       "\n"
     );
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText, { sanitizeHtml: false });
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain(
       '<dl data-source-line="1"><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>'
@@ -85,7 +85,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖清洗模式下的目录和标题锚点。
     const markdownText = ["[TOC]", "", "## Safe Heading", "", "### Nested Heading"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain(
       '<details class="scribdown-toc" data-source-line="1"><summary class="scribdown-toc-summary">目录</summary>'
@@ -111,7 +111,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖清洗模式下的定义列表扩展语法。
     const markdownText = ["Markdown", ": 一种轻量级标记语言。"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain(
       '<dl data-source-line="1"><dt>Markdown</dt><dd>一种轻量级标记语言。</dd></dl>'
@@ -122,7 +122,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖顶层围栏代码块。
     const markdownText = ["```ts", "const value = 1;", "```"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     // 代码块保留 remarkSourceLine 注入的源码行锚点。
     expect(renderedHtml).toContain('data-source-line="1"');
@@ -134,7 +134,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖含嵌套子列表的无序列表。
     const markdownText = ["- 第一项", "- 第二项", "  - 嵌套项"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     // 顶层列表项各自保留源码行锚点。
     expect(renderedHtml).toContain('<li data-source-line="1">');
@@ -156,7 +156,7 @@ describe("renderMarkdownPreview", () => {
       "> > 内层引用"
     ].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     // 列表项内的代码块保留源码行锚点。
     expect(renderedHtml).toContain('data-source-line="2"');
@@ -168,7 +168,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖独占图片段落、title caption 与失败态占位内容。
     const markdownText = '![湖边雪山](/mountain.jpg "图片标题")';
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain('<figure class="scribdown-image-figure" data-source-line="1">');
     expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/mountain.jpg" alt="湖边雪山"');
@@ -183,7 +183,7 @@ describe("renderMarkdownPreview", () => {
     // 输入 Markdown 覆盖引用式图片定义。
     const markdownText = ["![手绘风格预览][preview]", "", "[preview]: /preview.jpg"].join("\n");
     // 渲染结果。
-    const renderedHtml = await renderMarkdownPreview(markdownText);
+    const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain('<figure class="scribdown-image-figure" data-source-line="1">');
     expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/preview.jpg" alt="手绘风格预览"');

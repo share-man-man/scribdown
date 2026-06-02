@@ -148,6 +148,9 @@ importers:
       '@scribdown/shared':
         specifier: workspace:*
         version: link:../shared
+      '@scribdown/ui-handdrawn':
+        specifier: workspace:*
+        version: link:../ui-handdrawn
       '@shikijs/langs':
         specifier: ^3.5.0
         version: 3.23.0

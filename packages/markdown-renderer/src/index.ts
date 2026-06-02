@@ -34,23 +34,6 @@ const SOURCE_LINE_HAST_PROPERTY = SOURCE_LINE_DATA_ATTRIBUTE.replace(
 );
 
 /**
- * Markdown 渲染参数。
- */
-interface RenderMarkdownOptions {
-  enableCodeHighlight?: boolean;
-  sanitizeHtml?: boolean;
-  sanitize?: (unsafeHtml: string) => string;
-}
-
-/**
- * Markdown 预览渲染参数。
- */
-export interface RenderMarkdownPreviewOptions {
-  enableCodeHighlight?: boolean;
-  sanitizeHtml?: boolean;
-}
-
-/**
  * Markdown AST 节点的最小结构。
  */
 interface MarkdownNode {
@@ -637,17 +620,16 @@ const CODE_BLOCK_HIGHLIGHT_PATTERN =
 const SHIKI_CODE_INNER_PATTERN = /<code[^>]*>([\s\S]*?)<\/code>/u;
 
 /**
- * 将 Markdown 文本转换为 HTML。
+ * 将 Markdown 文本渲染为安全 HTML。
+ * 渲染链路固定开启代码高亮与 HTML sanitize（rehype 结构清洗 + DOMPurify），
+ * 库不再对外暴露这些细节开关，保证所有宿主拿到一致的预览输出。
  * @param markdownText 输入的 Markdown 文本。
- * @param options 渲染控制参数。
- * @returns 渲染后的 HTML 文本。
+ * @returns 可挂载到 DOM 容器的 HTML 字符串。
  */
-async function renderMarkdown(
-  markdownText: string,
-  options: RenderMarkdownOptions = {}
-): Promise<string> {
+export async function renderMarkdown(markdownText: string): Promise<string> {
   // 渲染流水线：先解析 Markdown 与 GFM 行内标记，再转换为 HTML AST。
   // allowDangerousHtml + rehypeRaw 让 fixture 中的 <u> / <sub> / <sup> / <kbd> 等行内 HTML 保留下来。
+  // 关键步骤：rehypeSanitize 在 stringify 前对结构做白名单清洗。
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
@@ -658,66 +640,18 @@ async function renderMarkdown(
     .use(remarkSourceLine)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
-    .use(rehypeVideoFigures);
+    .use(rehypeVideoFigures)
+    .use(rehypeSanitize, createScribdownSanitizeSchema())
+    .use(rehypeStringify);
 
-  if (options.sanitizeHtml) {
-    // 关键步骤：在输出前执行 rehype 结构清洗。
-    processor.use(rehypeSanitize, createScribdownSanitizeSchema());
-  }
-
-  processor.use(rehypeStringify);
-
-  // 渲染输出 HTML 文本。
+  /** unified 渲染输出的 HTML 文本（已经过 rehype 结构清洗）。 */
   const renderedHtml = String(await processor.process(markdownText));
 
-  // 关键步骤：sanitize 之后再做 Shiki 高亮，把 token 的 span/style 添加到信任过滤后的代码体内。
-  const sanitizedHtml = await applyMarkdownSanitize(renderedHtml, options);
-  if (options.enableCodeHighlight === false) {
-    return sanitizedHtml;
-  }
+  // 关键步骤：rehype 清洗后再用 DOMPurify 做一次字符串级 sanitize，双重保险。
+  const sanitizedHtml = sanitizeHtmlWithDomPurify(renderedHtml);
 
-  const highlightedHtml = await highlightMarkdownCodeBlocks(sanitizedHtml);
-  return highlightedHtml;
-}
-
-/**
- * 执行统一的 Markdown 预览渲染链路。
- * @param markdownText 输入的 Markdown 文本。
- * @param options 预览渲染控制参数。
- * @returns 可直接挂载到预览容器的 HTML 文本。
- */
-export async function renderMarkdownPreview(
-  markdownText: string,
-  options: RenderMarkdownPreviewOptions = {}
-): Promise<string> {
-  // 预览模式默认开启 HTML 清洗。
-  /** 是否启用代码高亮（默认启用）。 */
-  const enableCodeHighlight = options.enableCodeHighlight ?? true;
-  // 预览模式默认开启 HTML 清洗。
-  const sanitizeHtml = options.sanitizeHtml ?? true;
-
-  return renderMarkdown(markdownText, { sanitizeHtml, enableCodeHighlight });
-}
-
-/**
- * 根据渲染选项执行最终 sanitize 步骤。
- * @param renderedHtml unified 渲染后的 HTML。
- * @param options 渲染控制参数。
- * @returns 经过 sanitize 处理（或原样返回）的 HTML。
- */
-async function applyMarkdownSanitize(
-  renderedHtml: string,
-  options: RenderMarkdownOptions
-): Promise<string> {
-  if (!options.sanitizeHtml) {
-    return renderedHtml;
-  }
-
-  if (options.sanitize) {
-    return options.sanitize(renderedHtml);
-  }
-
-  return sanitizeHtmlWithDomPurify(renderedHtml);
+  // 关键步骤：sanitize 之后再做 Shiki 高亮，把 token span 添加到信任过滤后的代码体内。
+  return highlightMarkdownCodeBlocks(sanitizedHtml);
 }
 
 /**
@@ -2006,24 +1940,41 @@ function updateMarkdownMermaidViewerCanvasSize(viewerState: MarkdownMermaidViewe
 }
 
 /**
- * 执行统一的 Markdown 预览 hydration 链路。
+ * 对已渲染到 DOM 的 Markdown 内容执行交互 hydration。
+ * 处理图片放大查看、视频占位、Mermaid、代码块复制等运行时行为。
+ * 不挂载浮动工具栏；如需工具栏请额外调用 {@link mountMarkdownToolbar}。
  * @param rootElement 包含 Markdown 渲染结果的根节点。
  */
-export function hydrateMarkdownPreview(rootElement: ParentNode): void {
+export function hydrateMarkdown(rootElement: ParentNode): void {
   hydrateMarkdownImages(rootElement);
   hydrateMarkdownVideos(rootElement);
   // 关键步骤：mermaid 必须先于代码块 hydrate，避免被通用 code chrome 包装。
   hydrateMermaidBlocks(rootElement);
   hydrateCodeBlocks(rootElement);
-  // 关键步骤：挂载浮动工具栏（回到顶部 / 目录 / 页面宽度），仅在浏览器环境生效。
-  const ownerDocument =
-    rootElement.nodeType === Node.DOCUMENT_NODE
-      ? (rootElement as Document)
-      : (rootElement as Element).ownerDocument;
-  if (ownerDocument) {
-    applyContentWidth(ownerDocument, loadContentWidth());
-    mountPageToolbar(ownerDocument, rootElement);
+}
+
+/**
+ * 在指定 DOM 容器上挂载 Scribdown 浮动工具栏（回到顶部 / 目录 / 页面宽度切换）。
+ * 工具栏 DOM 会直接 append 到 `container` 内，便于宿主控制生命周期：
+ * 移除 / 替换 container 即可一并卸载工具栏，不会污染 `<body>`。
+ * 视觉上工具栏使用 `position: fixed`，位置始终相对视口，与挂载点的 CSS 上下文无关。
+ *
+ * 仅在浏览器环境生效；非浏览器环境（如 Node.js 单测）或 SSR 阶段直接跳过。
+ * 重复调用会先清理 container 内的旧实例，可在每次 {@link hydrateMarkdown} 后安全重新挂载。
+ * @param container 目标挂载容器；同时作为目录采集与点击外部关闭的作用域。
+ */
+export function mountMarkdownToolbar(container: Element): void {
+  /** 容器所属的 document。 */
+  const ownerDocument = container.ownerDocument;
+  if (!ownerDocument) {
+    return;
   }
+  if (typeof ownerDocument.defaultView?.scrollTo !== "function") {
+    return;
+  }
+  // 关键步骤：恢复上次保存的内容宽度，再挂载工具栏。
+  applyContentWidth(ownerDocument, loadContentWidth());
+  mountPageToolbar(ownerDocument, container);
 }
 
 /**
@@ -4969,21 +4920,16 @@ function createPageToolbarBtn(
 }
 
 /**
- * 在页面右上角挂载浮动工具栏，包含：回到顶部、目录、页面宽度切换。
- * 重复调用时先移除旧实例，保证每次 hydrate 只有一个工具栏。
- * 非浏览器环境（无 window）下不执行。
+ * 在指定容器内构造并挂载浮动工具栏，包含：回到顶部、目录、页面宽度切换。
+ * 重复调用时先清理 container 内的旧实例，保证每次 hydrate 只有一个工具栏。
+ * 浏览器环境检查由对外的 {@link mountToolbar} 完成。
  * @param ownerDocument 目标 document。
- * @param rootElement 预览根节点，用于刷新目录。
+ * @param container 工具栏与目录抽屉的物理挂载点，同时作为目录采集作用域。
  */
-function mountPageToolbar(ownerDocument: Document, rootElement: ParentNode): void {
-  if (typeof ownerDocument.defaultView?.scrollTo !== "function") {
-    // 非浏览器环境（如 Node.js 单测）跳过。
-    return;
-  }
-
-  // 移除旧实例，避免重渲染后重复挂载。
-  ownerDocument.querySelector(`.${SCRIBDOWN_TOOLBAR_CLASS_NAME}`)?.remove();
-  ownerDocument.querySelector(`.${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME}`)?.remove();
+function mountPageToolbar(ownerDocument: Document, container: Element): void {
+  // 移除 container 作用域内的旧实例，避免重渲染后重复挂载。
+  container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_CLASS_NAME}`)?.remove();
+  container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME}`)?.remove();
 
   const ownerWindow = ownerDocument.defaultView;
 
@@ -5059,7 +5005,7 @@ function mountPageToolbar(ownerDocument: Document, rootElement: ParentNode): voi
   tocPanel.appendChild(tocTitle);
 
   // 关键步骤：与 inline [TOC] 共用层级数据 + DOM 结构，确保两处目录的层级渲染逻辑一致。
-  const tocHeadings = collectTocHeadingsFromDom(rootElement);
+  const tocHeadings = collectTocHeadingsFromDom(container);
   if (tocHeadings.length === 0) {
     const emptyElement = ownerDocument.createElement("p");
     emptyElement.className = "scribdown-toolbar-toc-panel-empty";
@@ -5119,6 +5065,7 @@ function mountPageToolbar(ownerDocument: Document, rootElement: ParentNode): voi
   toolbar.appendChild(tocBtn);
   toolbar.appendChild(widthBtn);
 
-  ownerDocument.body.appendChild(toolbar);
-  ownerDocument.body.appendChild(tocPanel);
+  // 关键步骤：工具栏与目录抽屉挂载到调用方指定的 container，便于跟随 container 一起卸载。
+  container.appendChild(toolbar);
+  container.appendChild(tocPanel);
 }
