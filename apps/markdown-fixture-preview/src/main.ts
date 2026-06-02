@@ -1,9 +1,10 @@
 import {
-  hydrateMarkdownPreview,
-  renderMarkdownPreview
+  hydrateMarkdown,
+  mountMarkdownToolbar,
+  renderMarkdown
 } from "@scribdown/markdown-renderer";
+import "@scribdown/markdown-renderer/styles.css";
 import { MARKDOWN_FIXTURE_PREVIEW_TITLE, PROJECT_NAME } from "@scribdown/shared";
-import "@scribdown/ui-handdrawn/styles.css";
 import fixtureMarkdown from "../../docs/ui-design/markdown-fixture.md?raw";
 import "./styles.css";
 
@@ -59,18 +60,18 @@ function getPreviewMounts(): PreviewMounts {
  * @param mounts 预览页面挂载点集合。
  */
 async function renderFixture(markdownText: string, mounts: PreviewMounts): Promise<void> {
-  // 使用真实渲染链路，避免设计预览与宿主预览出现实现偏差。
-  /** Markdown 转换后的安全 HTML。 */
-  const renderedHtml = await renderMarkdownPreview(markdownText);
+  mounts.productName.textContent = PROJECT_NAME;
+  mounts.titleText.textContent = MARKDOWN_FIXTURE_PREVIEW_TITLE;
+  // 关键步骤：分三步显式组合渲染流水线，与浏览器插件保持一致，
+  //          验证原子化对外接口在开发预览场景下行为正确。
+  /** 渲染产出的安全 HTML 字符串。 */
+  const renderedHtml = await renderMarkdown(markdownText);
+  mounts.previewOutput.innerHTML = renderedHtml;
+  hydrateMarkdown(mounts.previewOutput);
+  mountMarkdownToolbar(document.body);
 
   /** 当前渲染完成时间。 */
   const renderedAt = new Date();
-
-  mounts.productName.textContent = PROJECT_NAME;
-  mounts.titleText.textContent = MARKDOWN_FIXTURE_PREVIEW_TITLE;
-  mounts.previewOutput.innerHTML = renderedHtml;
-  // 关键步骤：统一执行图片与代码块的 hydration，保持多端行为一致。
-  hydrateMarkdownPreview(mounts.previewOutput);
   mounts.statusText.textContent = "Ready";
   mounts.updatedAt.dateTime = renderedAt.toISOString();
   mounts.updatedAt.textContent = renderedAt.toLocaleTimeString();

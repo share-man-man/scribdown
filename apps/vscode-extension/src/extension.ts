@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { renderMarkdownPreview } from "@scribdown/markdown-renderer";
+import { renderMarkdown } from "@scribdown/markdown-renderer";
 import {
   MARKDOWN_LANGUAGE_ID,
   OPEN_PREVIEW_COMMAND,
@@ -392,7 +392,7 @@ class ScribdownPreviewController implements vscode.Disposable {
       // Markdown 原始文本。
       const markdownSource = document.getText();
       // 统一使用共享渲染核心执行 Markdown -> HTML。
-      const renderedHtml = await renderMarkdownPreview(markdownSource);
+      const renderedHtml = await renderMarkdown(markdownSource);
       // 当前文档目录在 Webview 中的 base URI。
       const baseUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(document.uri, ".."));
 

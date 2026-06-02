@@ -1,5 +1,5 @@
 import morphdom from "morphdom";
-import { hydrateMarkdownPreview } from "@scribdown/markdown-renderer";
+import { hydrateMarkdown, mountMarkdownToolbar } from "@scribdown/markdown-renderer";
 import {
   SOURCE_LINE_ACTIVE_CLASS_NAME,
   SOURCE_LINE_DATA_ATTRIBUTE,
@@ -87,11 +87,16 @@ function createSourceLineAnchorIndex(
 }
 
 /**
- * 执行 Scribdown 统一预览 hydration。
+ * 对预览根节点执行 hydrate + 工具栏挂载。
+ * 在 detached 节点（morphdom 合并前）与 live DOM（合并后）两个阶段均会调用：
+ * 前者让代码块等结构提前对齐，后者负责把交互绑回真正渲染的节点上。
+ * 工具栏统一挂到根节点自身，避免污染 VS Code Webview 的 document.body。
  * @param rootElement 预览根节点。
  */
-export function hydrateScribdownPreview(rootElement: ParentNode): void {
-  hydrateMarkdownPreview(rootElement);
+function hydratePreviewRoot(rootElement: Element): void {
+  hydrateMarkdown(rootElement);
+  // 关键步骤：VS Code Webview 同样挂载浮动工具栏，保持与浏览器宿主一致的目录与宽度切换体验。
+  mountMarkdownToolbar(rootElement);
 }
 
 // /**
@@ -410,11 +415,12 @@ function applyRenderedContent(
 
   // 关键步骤：在游离节点上构建并 hydrate 新内容，使代码块等结构与现有 DOM 对齐，
   // morphdom 才能逐节点比对而非按标签差异整块销毁重建。
+  /** 用于构建下一次预览快照的游离节点；标签与 previewRootElement 保持一致。 */
   const incomingRoot = previewRootElement.ownerDocument.createElement(
     previewRootElement.tagName
   );
   incomingRoot.innerHTML = nextRenderedHtml;
-  hydrateScribdownPreview(incomingRoot);
+  hydratePreviewRoot(incomingRoot);
 
   // 关键步骤：增量更新预览 DOM，仅替换真正变化的节点，
   // 未变节点原地保留，避免整体替换 innerHTML 造成的闪烁、图片重载与滚动抖动。
@@ -423,7 +429,7 @@ function applyRenderedContent(
   // 关键步骤：morphdom 同步属性会抹掉 hydration 运行时写入的图片加载状态类，
   // 重新 hydrate 由 updateMarkdownImageState 依据真实加载结果纠正；
   // 代码块 hydrate 带幂等守卫，已包裹的块会被跳过。
-  hydrateScribdownPreview(previewRootElement);
+  hydratePreviewRoot(previewRootElement);
 }
 
 /**
