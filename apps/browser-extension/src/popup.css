@@ -283,7 +283,7 @@ body {
 }
 
 .scribdown-popup__action:hover {
-  background: color-mix(in srgb, var(--scribdown-color-accent) 85%, #000);
+  background: color-mix(in srgb, var(--scribdown-color-accent) 85%, var(--scribdown-color-text-primary));
 }
 
 .scribdown-popup__action:focus-visible {
@@ -299,8 +299,8 @@ body {
   gap: var(--scribdown-space-3);
   padding: var(--scribdown-space-3);
   border-radius: var(--scribdown-radius-sm);
-  border: 1px solid #c0392b;
-  background: color-mix(in srgb, #c0392b 10%, var(--scribdown-color-surface));
+  border: 1px solid var(--scribdown-color-danger);
+  background: color-mix(in srgb, var(--scribdown-color-danger) 10%, var(--scribdown-color-surface));
 }
 
 .scribdown-popup__banner-meta {
@@ -313,7 +313,7 @@ body {
 .scribdown-popup__banner-title {
   font-size: 13px;
   font-weight: 700;
-  color: #c0392b;
+  color: var(--scribdown-color-danger);
 }
 
 .scribdown-popup__banner-text {

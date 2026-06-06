@@ -9,7 +9,7 @@ body {
   z-index: 10;
   padding: 24px clamp(16px, 4vw, 48px) 20px;
   border-bottom: 1px solid var(--scribdown-color-border);
-  background: rgba(250, 247, 239, 0.92);
+  background: color-mix(in srgb, var(--scribdown-color-bg) 92%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -79,7 +79,7 @@ body {
 .example-api code {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(15, 23, 42, 0.06);
+  background: color-mix(in srgb, var(--scribdown-color-text-primary) 6%, transparent);
   font-family: var(--scribdown-font-code);
   font-size: 0.92em;
 }
@@ -89,7 +89,7 @@ body {
   padding: 12px 14px;
   border: 1px solid var(--scribdown-color-border);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.65);
+  background: color-mix(in srgb, var(--scribdown-color-surface) 65%, transparent);
   font-family: var(--scribdown-font-code);
   font-size: 12.5px;
   line-height: 1.6;

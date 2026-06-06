@@ -1,17 +1,32 @@
 /* ─── Token 定义 ───────────────────────────────────────────────────── */
-/* 浅色主题，与 tokens.md 保持一致。 */
+/* 浅色主题：参考素描本米白纸张与水彩颜料色相。
+   长时间阅读偏好：暖色偏移降低蓝光眩光、文字采用深沉柏木色而非纯黑、
+   重点色保持低饱和的"褪色颜料"质感、纸面与卡面亮度差拉开以便内容浮起。 */
 :root {
-  --scribdown-color-bg: #f6f1e8;
-  --scribdown-color-surface: #fffdf8;
-  --scribdown-color-text-primary: #2d241f;
-  --scribdown-color-text-secondary: #6a5b53;
-  --scribdown-color-accent: #2f6a5f;
-  --scribdown-color-link: #2b63c6;
-  --scribdown-color-link-visited: #234fa1;
-  --scribdown-color-mark: #d7a339;
-  --scribdown-color-border: #cdbeae;
-  --scribdown-color-danger: #a94a3f;
-  --scribdown-color-warning: #8b6b2e;
+  /* 暖米纸：略冷于旧版的牛皮黄，减轻长时间阅读的"陈旧报纸"感。 */
+  --scribdown-color-bg: #ebe1c8;
+  /* 内容纸面：进一步提亮但保持暖调，与底色形成清晰层次。 */
+  --scribdown-color-surface: #f8f0db;
+  /* 主文字：深胡桃色沉淀墨，对比 surface ≈12:1，足够锐利又不刺眼。 */
+  --scribdown-color-text-primary: #2f2620;
+  /* 次文字：泛黄旧墨色。 */
+  --scribdown-color-text-secondary: #786758;
+  /* 主题色：松林青苔——明度居中、与文字蓝相区分。 */
+  --scribdown-color-accent: #436b5b;
+  /* 链接色：靛青水墨蓝，去掉过往略带紫感的偏色。 */
+  --scribdown-color-link: #355a7d;
+  /* 已访问链接：晾干后的紫罗兰，色相比未访问偏暖。 */
+  --scribdown-color-link-visited: #6a527b;
+  /* 高亮笔色：姜黄荧光，保留涂抹的颜料质地。 */
+  --scribdown-color-mark: #d7ab48;
+  /* 边线：铅笔石墨与纸张混合后的暖灰。 */
+  --scribdown-color-border: #c5ad8a;
+  /* 危险色：陶土红，去除生硬的猩红，落在书法朱砂。 */
+  --scribdown-color-danger: #a8504a;
+  /* 警告色：烧赭石。 */
+  --scribdown-color-warning: #8d6432;
+  /* 代码块墨色：板岩紫，与正文棕色明显区分但不抢眼。 */
+  --scribdown-color-code-ink: #5e5483;
   --scribdown-color-blockquote-bg: color-mix(
     in srgb,
     var(--scribdown-color-border) 18%,
@@ -32,10 +47,13 @@
     var(--scribdown-color-link-visited) 86%,
     var(--scribdown-color-text-primary)
   );
-  --scribdown-paper-grain: rgba(139, 107, 46, 0.08);
-  --scribdown-paper-fiber: rgba(47, 106, 95, 0.05);
-  --scribdown-shadow-sm: 2px 3px 0 rgba(45, 36, 31, 0.12);
-  --scribdown-shadow-md: 4px 6px 0 rgba(45, 36, 31, 0.16);
+  /* 纸面颗粒：低饱和的褐色噪点，呼应"米黄毛边纸"。 */
+  --scribdown-paper-grain: rgba(132, 96, 44, 0.10);
+  /* 纸面纤维：浅青苔色丝纹，与 accent 同源。 */
+  --scribdown-paper-fiber: rgba(67, 107, 91, 0.06);
+  /* 偏移阴影：保留手绘的"墨晕"感，避免过黑。 */
+  --scribdown-shadow-sm: 2px 3px 0 rgba(47, 38, 32, 0.13);
+  --scribdown-shadow-md: 4px 6px 0 rgba(47, 38, 32, 0.18);
 
   --scribdown-font-body: "Source Serif 4", "Noto Serif SC", serif;
   --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
@@ -62,20 +80,35 @@
   --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
 }
 
-/* 暗色主题 token 覆盖 */
+/* 暗色主题："夜读台灯下的旧纸册"：
+   纸面为接近黑的暖褐底，墨色反相为米白；颜料色以"粉笔/水彩"的提亮版本出现，
+   保持与浅色主题一致的色相与语义。 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --scribdown-color-bg: #1e1a16;
-    --scribdown-color-surface: #2a2420;
-    --scribdown-color-text-primary: #e8ddd4;
-    --scribdown-color-text-secondary: #9b8c82;
-    --scribdown-color-accent: #5fbfad;
-    --scribdown-color-link: #7ea7ff;
-    --scribdown-color-link-visited: #5f86dd;
-    --scribdown-color-mark: #c49a4a;
-    --scribdown-color-border: #3d3028;
-    --scribdown-color-danger: #d4706a;
-    --scribdown-color-warning: #c49a4a;
+    /* 夜间纸面底：暖褐近黑，避免冷调灰带来的"屏幕感"。 */
+    --scribdown-color-bg: #1e1915;
+    /* 卡面：底色之上 +6% 明度，让代码块/引用清晰浮起。 */
+    --scribdown-color-surface: #2a241f;
+    /* 主文字：温润米白粉笔。 */
+    --scribdown-color-text-primary: #ebdfcc;
+    /* 次文字：旧字迹褪色。 */
+    --scribdown-color-text-secondary: #ae9b85;
+    /* 主题色：粉笔薄荷青，亮度提到暗底易读区间。 */
+    --scribdown-color-accent: #7ebbab;
+    /* 链接色：粉笔水蓝。 */
+    --scribdown-color-link: #94b8de;
+    /* 已访问链接：粉笔薰衣草。 */
+    --scribdown-color-link-visited: #b39bcd;
+    /* 高亮色：暖琥珀粉笔。 */
+    --scribdown-color-mark: #d3aa57;
+    /* 边线：暗青铜，与底色同色相一脉。 */
+    --scribdown-color-border: #5a4a39;
+    /* 危险色：暗红粉笔。 */
+    --scribdown-color-danger: #db847a;
+    /* 警告色：黄铜粉笔。 */
+    --scribdown-color-warning: #d3a45f;
+    /* 代码块墨色：紫罗兰粉笔。 */
+    --scribdown-color-code-ink: #beacdc;
     --scribdown-color-blockquote-bg: color-mix(
       in srgb,
       var(--scribdown-color-border) 28%,
@@ -96,9 +129,12 @@
       var(--scribdown-color-link-visited) 88%,
       var(--scribdown-color-text-primary)
     );
-    --scribdown-paper-grain: rgba(196, 154, 74, 0.09);
-    --scribdown-paper-fiber: rgba(95, 191, 173, 0.07);
-    --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.3);
-    --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.4);
+    /* 夜间纸面颗粒：暖琥珀微噪。 */
+    --scribdown-paper-grain: rgba(211, 170, 87, 0.10);
+    /* 夜间纸面纤维：薄荷青丝纹。 */
+    --scribdown-paper-fiber: rgba(126, 187, 171, 0.07);
+    /* 阴影更深以拉开层次。 */
+    --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.36);
+    --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.48);
   }
 }

@@ -19,9 +19,9 @@
 /* CodeBlock：简单描边 + 顶部 chrome（语言标签 / 复制按钮） + 正文 + 行号。 */
 .scribdown-markdown .scribdown-code-block {
   /* 主紫色：用于代码块边框、标签与按钮描边。 */
-  --scribdown-code-ink: #5c4b95;
-  /* 代码正文文字色，浅色主题下偏深紫黑。 */
-  --scribdown-code-text: #2d241f;
+  --scribdown-code-ink: var(--scribdown-color-code-ink);
+  /* 代码正文文字色跟随当前主题正文颜色。 */
+  --scribdown-code-text: var(--scribdown-color-text-primary);
   /* 语言标签边框色 token。 */
   --scribdown-code-block-lang-border-token: var(--scribdown-code-ink);
   /* 语言标签边框填充色。 */
@@ -84,13 +84,6 @@
     var(--scribdown-frame-edge-tile-horizontal),
     var(--scribdown-frame-edge-tile-vertical),
     var(--scribdown-frame-edge-tile-vertical);
-}
-
-@media (prefers-color-scheme: dark) {
-  .scribdown-markdown .scribdown-code-block {
-    --scribdown-code-ink: #b6a6e0;
-    --scribdown-code-text: #e8ddd4;
-  }
 }
 
 /* 顶部 chrome：使用相对定位并处于文档流内，避免依赖外层预留 padding。 */
