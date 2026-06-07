@@ -157,6 +157,12 @@ const TOC_CLASS_NAME = "scribdown-toc";
 // 目录分支容器类名。
 const TOC_BRANCH_CLASS_NAME = "scribdown-toc-branch";
 
+// 手绘卡片边框类名：可复用的「边框」基底，由内容折叠块、目录根等显式 opt-in 引入。
+const FRAME_CLASS_NAME = "scribdown-frame";
+
+// 内容折叠块类名：用户手写的原生 <details>（区别于目录用 <details>）在渲染时打上此标。
+const DETAILS_CLASS_NAME = "scribdown-details";
+
 // 目录分支摘要类名。
 const TOC_BRANCH_SUMMARY_CLASS_NAME = "scribdown-toc-branch-summary";
 
@@ -640,6 +646,7 @@ export async function renderMarkdown(markdownText: string): Promise<string> {
     .use(remarkSourceLine)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeFrameClass)
     .use(rehypeVideoFigures)
     .use(rehypeSanitize, createScribdownSanitizeSchema())
     .use(rehypeStringify);
@@ -3361,7 +3368,12 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
   // details 元素的属性白名单。
   const detailsAttributes = [
     "open",
-    ["className", /^scribdown-toc(?:-branch)?$/u] as [string, RegExp]
+    ["className", DETAILS_CLASS_NAME, FRAME_CLASS_NAME, /^scribdown-toc(?:-branch)?$/u] as [
+      string,
+      string,
+      string,
+      RegExp
+    ]
   ];
   // summary 元素的属性白名单。
   const summaryAttributes = [
@@ -4107,7 +4119,8 @@ function createTocNode(tocHeadings: TocHeading[], markerNode: MarkdownNode): Mar
     data: {
       hName: "details",
       hProperties: {
-        className: [TOC_CLASS_NAME]
+        // 关键步骤：目录根 opt-in 手绘边框，再由 toc.css 叠加目录自身样式。
+        className: [TOC_CLASS_NAME, FRAME_CLASS_NAME]
       }
     },
     children: [
@@ -4627,6 +4640,73 @@ interface HastNode {
   properties?: Record<string, unknown>;
   value?: string;
   children?: HastNode[];
+}
+
+/**
+ * rehype 插件：为内容折叠块注入手绘边框 class，实现样式层的 opt-in。
+ * 用户手写的原生 <details>（非目录用）打上 scribdown-details + scribdown-frame；
+ * 目录根的 scribdown-frame 已在 mdast 阶段注入，目录根 / 目录分支在此跳过。
+ * 该插件运行在 rehype-raw 之后、rehype-sanitize 之前，注入的 class 由 sanitize 白名单放行。
+ * @returns hast 转换器。
+ */
+function rehypeFrameClass(): (tree: HastNode) => void {
+  return (tree: HastNode) => {
+    tagContentDetails(tree);
+  };
+}
+
+/**
+ * 深度优先遍历 hast 树，为内容折叠块注入边框 class。
+ * @param node 当前 hast 节点。
+ */
+function tagContentDetails(node: HastNode): void {
+  if (node.type === "element" && node.tagName === "details") {
+    // 当前 details 已有的 class 列表。
+    const classNames = normalizeClassNames(node.properties?.className);
+    // 目录根 / 目录分支使用各自命名空间，不当作内容折叠块处理。
+    const isTocDetails =
+      classNames.includes(TOC_CLASS_NAME) || classNames.includes(TOC_BRANCH_CLASS_NAME);
+    if (!isTocDetails) {
+      addClassNames(node, [DETAILS_CLASS_NAME, FRAME_CLASS_NAME]);
+    }
+  }
+
+  if (Array.isArray(node.children)) {
+    for (const childNode of node.children) {
+      tagContentDetails(childNode);
+    }
+  }
+}
+
+/**
+ * 将 hast 节点的 className 属性标准化为字符串数组。
+ * @param className hast 节点上的 className 属性原值。
+ * @returns 标准化后的 class 名数组。
+ */
+function normalizeClassNames(className: unknown): string[] {
+  if (Array.isArray(className)) {
+    return className.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof className === "string") {
+    return className.split(/\s+/u).filter(Boolean);
+  }
+  return [];
+}
+
+/**
+ * 向 hast 元素追加 class 名（去重）。
+ * @param node 目标 hast 元素。
+ * @param classNamesToAdd 待追加的 class 名列表。
+ */
+function addClassNames(node: HastNode, classNamesToAdd: string[]): void {
+  // 合并去重后的 class 列表。
+  const mergedClassNames = normalizeClassNames(node.properties?.className);
+  for (const classNameToAdd of classNamesToAdd) {
+    if (!mergedClassNames.includes(classNameToAdd)) {
+      mergedClassNames.push(classNameToAdd);
+    }
+  }
+  node.properties = { ...node.properties, className: mergedClassNames };
 }
 
 /**

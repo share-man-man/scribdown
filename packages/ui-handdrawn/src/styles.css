@@ -19,6 +19,9 @@
 /* 4. Markdown 正文：容器、标题、段落、强调、分隔线 */
 @import "./styles/markdown.css";
 
+/* 4.1 手绘卡片边框基底（.scribdown-frame，供 details / 目录根 / blockquote 复用） */
+@import "./styles/frame.css";
+
 /* 5. 列表与任务列表 */
 @import "./styles/lists.css";
 

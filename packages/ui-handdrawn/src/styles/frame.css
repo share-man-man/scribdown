@@ -1,0 +1,71 @@
+/* 手绘卡片边框：横边撑满容器宽度，竖边按固定笔触平铺。
+   以 .scribdown-frame 作为可复用的「边框」基底，由内容折叠块（.scribdown-details）、
+   目录根（.scribdown-toc）等元素显式 opt-in 引入；blockquote 形态单一、无歧义，
+   直接以元素选择器复用同一圈边，避免重复声明这段 ::after。
+   底色不在此处声明，交由各消费方自行决定（卡片用 surface，引用块用 blockquote-bg）。 */
+.scribdown-markdown .scribdown-frame {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.scribdown-markdown .scribdown-frame::after,
+.scribdown-markdown blockquote::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image:
+    var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+    var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+  background-position:
+    left top,
+    20% bottom,
+    left 40%,
+    right top;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size:
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical),
+    var(--scribdown-frame-edge-tile-vertical);
+}
+
+@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+  .scribdown-markdown .scribdown-frame::after,
+  .scribdown-markdown blockquote::after {
+    /* 关键步骤：用 mask 保留 SVG 形状，描边色交给 background-color，便于主题化。 */
+    background-color: var(--scribdown-frame-edge-color);
+    background-image: none;
+    -webkit-mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    -webkit-mask-position:
+      left top,
+      20% bottom,
+      left 40%,
+      right top;
+    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    -webkit-mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    -webkit-mask-mode: alpha, alpha, alpha, alpha;
+    mask-image:
+      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
+      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
+    mask-position:
+      left top,
+      20% bottom,
+      left 40%,
+      right top;
+    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    mask-size:
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical),
+      var(--scribdown-frame-edge-tile-vertical);
+    mask-mode: alpha, alpha, alpha, alpha;
+  }
+}

@@ -13,7 +13,7 @@ describe("renderMarkdown", () => {
       '<h1 id="文档标题" data-source-line="1"><span class="scribdown-heading-mark">文档标题</span></h1>'
     );
     expect(renderedHtml).toContain(
-      '<details class="scribdown-toc" data-source-line="3"><summary class="scribdown-toc-summary">目录</summary>'
+      '<details class="scribdown-toc scribdown-frame" data-source-line="3"><summary class="scribdown-toc-summary">目录</summary>'
     );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain(
@@ -88,7 +88,7 @@ describe("renderMarkdown", () => {
     const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain(
-      '<details class="scribdown-toc" data-source-line="1"><summary class="scribdown-toc-summary">目录</summary>'
+      '<details class="scribdown-toc scribdown-frame" data-source-line="1"><summary class="scribdown-toc-summary">目录</summary>'
     );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain('<ol class="scribdown-toc-list">');
@@ -105,6 +105,20 @@ describe("renderMarkdown", () => {
     expect(renderedHtml).toContain(
       '<h3 id="nested-heading" data-source-line="5"><span class="scribdown-heading-mark">Nested Heading</span></h3>'
     );
+  });
+
+  it("tags user-authored <details> with frame classes and keeps them through sanitize", async () => {
+    // 用户在 Markdown 中手写的原生折叠块（区别于目录用 <details>）。
+    const markdownText = ["<details>", "<summary>更多</summary>", "", "正文内容", "", "</details>"].join(
+      "\n"
+    );
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText);
+
+    // 关键断言：内容折叠块被打上 .scribdown-details + .scribdown-frame，且通过白名单清洗。
+    expect(renderedHtml).toContain('<details class="scribdown-details scribdown-frame">');
+    // 反向断言：目录专用 class 不会落到内容折叠块上。
+    expect(renderedHtml).not.toContain("scribdown-toc");
   });
 
   it("keeps definition list markup when sanitizeHtml is enabled", async () => {

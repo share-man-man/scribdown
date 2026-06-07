@@ -1,84 +1,18 @@
-/* DetailsFrame：横边撑满容器宽度，竖边按固定笔触平铺。 */
-.scribdown-markdown details {
-  position: relative;
-  box-sizing: border-box;
-  background: var(--scribdown-color-surface);
-}
-
-.scribdown-markdown details:not(.scribdown-toc-branch)::after,
-.scribdown-markdown blockquote::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background-image:
-    var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
-    var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
-  background-position:
-    left top,
-    20% bottom,
-    left 40%,
-    right top;
-  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size:
-    var(--scribdown-frame-edge-tile-horizontal),
-    var(--scribdown-frame-edge-tile-horizontal),
-    var(--scribdown-frame-edge-tile-vertical),
-    var(--scribdown-frame-edge-tile-vertical);
-}
-
-@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
-  .scribdown-markdown details:not(.scribdown-toc-branch)::after,
-  .scribdown-markdown blockquote::after {
-    /* 关键步骤：用 mask 保留 SVG 形状，描边色交给 background-color，便于主题化。 */
-    background-color: var(--scribdown-frame-edge-color);
-    background-image: none;
-    -webkit-mask-image:
-      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
-      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
-    -webkit-mask-position:
-      left top,
-      20% bottom,
-      left 40%,
-      right top;
-    -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-    -webkit-mask-size:
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-vertical),
-      var(--scribdown-frame-edge-tile-vertical);
-    -webkit-mask-mode: alpha, alpha, alpha, alpha;
-    mask-image:
-      var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
-      var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
-    mask-position:
-      left top,
-      20% bottom,
-      left 40%,
-      right top;
-    mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-    mask-size:
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-vertical),
-      var(--scribdown-frame-edge-tile-vertical);
-    mask-mode: alpha, alpha, alpha, alpha;
-  }
-}
-
-.scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) {
+/* 内容折叠块：用户在 Markdown 中手写的原生 <details>，渲染时打标为 .scribdown-details。
+   手绘边框统一由 .scribdown-frame 提供（见 frame.css），此处只负责折叠块自身的盒模型与排版。 */
+.scribdown-markdown .scribdown-details {
   width: fit-content;
   max-width: 100%;
   margin: 0 0 var(--scribdown-space-3);
   padding: 10px 16px;
+  background: var(--scribdown-color-surface);
 }
 
-.scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch)[open] {
+.scribdown-markdown .scribdown-details[open] {
   padding-bottom: var(--scribdown-space-4);
 }
 
-.scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) > summary {
+.scribdown-markdown .scribdown-details > summary {
   cursor: pointer;
   font-family: var(--scribdown-font-heading);
   font-size: 22px;
@@ -86,10 +20,10 @@
   line-height: 1.3;
 }
 
-.scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) > summary + * {
+.scribdown-markdown .scribdown-details > summary + * {
   margin-top: var(--scribdown-space-3);
 }
 
-.scribdown-markdown details:not(.scribdown-toc):not(.scribdown-toc-branch) > :last-child {
+.scribdown-markdown .scribdown-details > :last-child {
   margin-bottom: 0;
 }
