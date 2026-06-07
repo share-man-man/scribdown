@@ -92,6 +92,11 @@ export const SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME =
   "scribdown-toolbar-toc-panel";
 
 /**
+ * 工具栏「当前章节指示器」class：位于目录按钮左侧，随滚动展示当前可视区所属标题。
+ */
+export const SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME = "scribdown-toolbar-current";
+
+/**
  * 工具栏挂载时附加到 container 上的 class，把 container 标记为 TOC + 正文的 flex 容器。
  */
 export const SCRIBDOWN_TOC_HOST_CLASS_NAME = "scribdown-toc-host";

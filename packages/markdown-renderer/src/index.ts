@@ -8,6 +8,7 @@ import {
   SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME,
   SCRIBDOWN_TOC_HOST_CLASS_NAME,
   SCRIBDOWN_CONTENT_AREA_CLASS_NAME,
   SOURCE_LINE_DATA_ATTRIBUTE
@@ -5063,6 +5064,12 @@ const TOOLBAR_WIDTH_ICON_SVG =
   "</svg>";
 
 /**
+ * 每个 container 上当前「当前章节指示器」scrollspy 的清理函数。
+ * 重复挂载工具栏前先调用，断开旧的 scroll/resize 监听，避免监听堆积与对已卸载 DOM 的写入。
+ */
+const pageToolbarScrollspyTeardowns = new WeakMap<Element, () => void>();
+
+/**
  * 在指定容器内构造并挂载浮动工具栏：横向「目录」+「更多」两个入口。
  * 「更多」下拉菜单承载回到顶部、切换页面宽度等次要功能。
  * 重复调用时先清理 container 内的旧实例，保证每次 hydrate 只有一个工具栏。
@@ -5071,6 +5078,10 @@ const TOOLBAR_WIDTH_ICON_SVG =
  * @param container 工具栏与目录抽屉的物理挂载点，同时作为目录采集作用域。
  */
 function mountPageToolbar(ownerDocument: Document, container: Element): void {
+  // 关键步骤：重挂载前先断开上一轮 scrollspy 的窗口监听，避免重复绑定。
+  pageToolbarScrollspyTeardowns.get(container)?.();
+  pageToolbarScrollspyTeardowns.delete(container);
+
   // 移除 container 作用域内的旧实例，避免重渲染后重复挂载。
   container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_CLASS_NAME}`)?.remove();
   container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME}`)?.remove();
@@ -5305,6 +5316,115 @@ function mountPageToolbar(ownerDocument: Document, container: Element): void {
       closeMoreMenu();
     }
   });
+
+  // ── 当前章节指示器（工具栏最左侧）──
+  // 关键步骤：收集正文标题做 scrollspy，随滚动展示「当前可视区」所属标题；
+  // 窄条最宽 30px、超出省略号，hover 时由 ::after 读取 aria-label 显示全文。
+  /** 正文 Markdown 容器，作为标题采集作用域。 */
+  const markdownContainer = container.matches(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`)
+    ? (container as HTMLElement)
+    : container.querySelector<HTMLElement>(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`);
+  /** 正文内全部带 id 的标题元素，按文档顺序排列，用于判定当前章节。 */
+  const headingElements = markdownContainer
+    ? Array.from(
+        markdownContainer.querySelectorAll<HTMLHeadingElement>(
+          "h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]"
+        )
+      )
+    : [];
+
+  if (headingElements.length > 0) {
+    /** 判定线：标题 top 越过工具栏下沿（距视口顶 48px）即视为已进入当前章节。 */
+    const ACTIVE_HEADING_OFFSET = 48;
+
+    /** 指示器容器（position:relative 承载 hover tip），点击跳转到当前章节标题。 */
+    const currentHeading = ownerDocument.createElement("div");
+    currentHeading.className = SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME;
+    // 关键步骤：作为可点击元素暴露给辅助技术，并支持键盘聚焦 / 触发。
+    currentHeading.setAttribute("role", "button");
+    currentHeading.tabIndex = 0;
+
+    /** 指示器可见文本节点（max-width 30px，超出省略号）。 */
+    const currentHeadingText = ownerDocument.createElement("span");
+    currentHeadingText.className = "scribdown-toolbar-current-text";
+    currentHeading.appendChild(currentHeadingText);
+
+    /** 上一次写入的标题文本，相同则跳过 DOM 写入。 */
+    let lastHeadingText = "";
+    /** 当前命中的标题元素，供点击跳转使用。 */
+    let activeHeadingElement: HTMLHeadingElement = headingElements[0];
+
+    /**
+     * 计算当前可视区所属标题并刷新指示器文本 + tip。
+     * 取文档顺序中最后一个 top ≤ 判定线的标题；都未越线时回退到首个标题。
+     */
+    const updateCurrentHeading = (): void => {
+      /** 命中的当前标题元素，默认首个标题。 */
+      let activeElement: HTMLHeadingElement = headingElements[0];
+      for (const headingElement of headingElements) {
+        if (headingElement.getBoundingClientRect().top <= ACTIVE_HEADING_OFFSET) {
+          activeElement = headingElement;
+        } else {
+          break;
+        }
+      }
+      // 关键步骤：始终同步当前标题引用（即便文本未变），保证点击跳转目标准确。
+      activeHeadingElement = activeElement;
+      /** 当前标题可见文本。 */
+      const headingText = activeElement.textContent?.trim() ?? "";
+      if (headingText === lastHeadingText) {
+        return;
+      }
+      lastHeadingText = headingText;
+      currentHeadingText.textContent = headingText;
+      // 关键步骤：全文写入 aria-label，hover 时由 ::after 读取展示完整标题。
+      currentHeading.setAttribute("aria-label", headingText);
+    };
+
+    /** 点击 / 回车：平滑滚动到当前章节标题，与「回到顶部」一致采用 smooth 行为。 */
+    const jumpToActiveHeading = (): void => {
+      activeHeadingElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    currentHeading.addEventListener("click", jumpToActiveHeading);
+    currentHeading.addEventListener("keydown", (event) => {
+      // 关键步骤：role=button 需自行处理 Enter / Space 触发。
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        jumpToActiveHeading();
+      }
+    });
+
+    /** rAF 节流句柄，避免滚动时每个事件都同步读取 rect。 */
+    let scrollRafId = 0;
+    /** 滚动/缩放回调：在一帧内合并一次计算。 */
+    const onScrollOrResize = (): void => {
+      if (scrollRafId) {
+        return;
+      }
+      scrollRafId =
+        ownerWindow?.requestAnimationFrame(() => {
+          scrollRafId = 0;
+          updateCurrentHeading();
+        }) ?? 0;
+    };
+
+    ownerWindow?.addEventListener("scroll", onScrollOrResize, { passive: true });
+    ownerWindow?.addEventListener("resize", onScrollOrResize, { passive: true });
+    // 首次同步一次当前章节。
+    updateCurrentHeading();
+
+    // 关键步骤：登记清理函数，下次重挂载工具栏前断开窗口监听。
+    pageToolbarScrollspyTeardowns.set(container, () => {
+      if (scrollRafId) {
+        ownerWindow?.cancelAnimationFrame(scrollRafId);
+      }
+      ownerWindow?.removeEventListener("scroll", onScrollOrResize);
+      ownerWindow?.removeEventListener("resize", onScrollOrResize);
+    });
+
+    // 指示器置于工具栏最左侧（目录按钮之前）。
+    toolbar.appendChild(currentHeading);
+  }
 
   toolbar.appendChild(tocBtn);
   toolbar.appendChild(moreBtn);
