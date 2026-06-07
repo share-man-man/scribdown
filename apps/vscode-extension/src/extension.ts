@@ -794,7 +794,7 @@ function createPreviewShellHtml(
         position: fixed;
         left: 0;
         right: 0;
-        height: 28px;
+        height: 48px;
         z-index: 2147483646;
         pointer-events: none;
         opacity: 0;
@@ -807,7 +807,7 @@ function createPreviewShellHtml(
           rgba(255, 184, 0, 0.55),
           transparent 72%
         );
-        animation: ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash 0.8s ease-out forwards;
+        animation: ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash 1.4s ease-out forwards;
       }
       /* 高亮块在视口下方：底部弧形辉光闪一下，提示向下 */
       .${SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME} {
@@ -817,7 +817,7 @@ function createPreviewShellHtml(
           rgba(255, 184, 0, 0.55),
           transparent 72%
         );
-        animation: ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash 0.8s ease-out forwards;
+        animation: ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash 1.4s ease-out forwards;
       }
       @keyframes ${SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME}-flash {
         0% {
