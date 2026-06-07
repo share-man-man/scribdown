@@ -1,18 +1,23 @@
 /* ─── Floating Toolbar ──────────────────────────────────────────────── */
-/* 固定在右上角，横向排列「目录」+「更多」两个入口，卡片手绘风。 */
+/* 完全贴右上角，横向排列「目录」+「更多」两个入口，卡片手绘风。 */
 .scribdown-toolbar {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 0;
+  right: 0;
   z-index: 9000;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
+  gap: 2px;
+  padding: 2px;
   background: var(--scribdown-color-surface);
   border: 1.5px solid var(--scribdown-color-border);
+  /* 关键步骤：顶/右两边贴屏，仅左下角需要圆角收口。
+     radius token 是四值手绘简写，无法塞进单角，故先整体套用再把贴屏的三角抹平。 */
   border-radius: var(--scribdown-radius-md);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   box-shadow: var(--scribdown-shadow-md);
 }
 
@@ -21,8 +26,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   background: transparent;
   border: 0;

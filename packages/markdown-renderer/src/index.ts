@@ -5028,7 +5028,7 @@ function createPageToolbarBtn(
  * 工具栏目录按钮的内嵌 SVG 字符串。
  */
 const TOOLBAR_TOC_ICON_SVG =
-  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
   '<line x1="3" y1="5" x2="15" y2="5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
   '<line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
   '<line x1="3" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
@@ -5038,7 +5038,7 @@ const TOOLBAR_TOC_ICON_SVG =
  * 工具栏「更多」按钮的内嵌 SVG 字符串（三个横向点）。
  */
 const TOOLBAR_MORE_ICON_SVG =
-  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
   '<circle cx="4" cy="9" r="1.4" fill="currentColor"/>' +
   '<circle cx="9" cy="9" r="1.4" fill="currentColor"/>' +
   '<circle cx="14" cy="9" r="1.4" fill="currentColor"/>' +
