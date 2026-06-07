@@ -92,11 +92,39 @@ export const SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME =
   "scribdown-toolbar-toc-panel";
 
 /**
+ * 工具栏挂载时附加到 container 上的 class，把 container 标记为 TOC + 正文的 flex 容器。
+ */
+export const SCRIBDOWN_TOC_HOST_CLASS_NAME = "scribdown-toc-host";
+
+/**
+ * 工具栏挂载时用于包裹 container 已有内容的 wrapper class，作为 flex 流中的正文 item，与 TOC 横向并列。
+ */
+export const SCRIBDOWN_CONTENT_AREA_CLASS_NAME = "scribdown-content-area";
+
+/**
+ * 工具栏「更多」下拉菜单容器 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_CLASS_NAME = "scribdown-toolbar-menu";
+
+/**
+ * 工具栏「更多」下拉菜单单个菜单项 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME =
+  "scribdown-toolbar-menu-item";
+
+/**
+ * 工具栏「更多」下拉菜单内子项分组容器 class（例：宽度选择下拉）。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_GROUP_CLASS_NAME =
+  "scribdown-toolbar-menu-group";
+
+/**
+ * 工具栏「更多」下拉菜单内子项 class（例：宽度具体档位）。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_CLASS_NAME =
+  "scribdown-toolbar-menu-sub-item";
+
+/**
  * localStorage 中保存页面内容宽度的 key。
  */
 export const CONTENT_WIDTH_STORAGE_KEY = "scribdown-content-width";
-
-/**
- * localStorage 中保存工具栏折叠状态的 key。
- */
-export const TOOLBAR_COLLAPSED_STORAGE_KEY = "scribdown-toolbar-collapsed";
