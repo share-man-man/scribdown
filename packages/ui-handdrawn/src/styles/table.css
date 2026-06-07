@@ -63,8 +63,8 @@
   pointer-events: none;
   border-radius: inherit;
   background-image:
-    var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
-    var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+    var(--scribdown-rough-line-shadow-horizontal), var(--scribdown-rough-line-shadow-horizontal),
+    var(--scribdown-rough-line-shadow-vertical), var(--scribdown-rough-line-shadow-vertical);
   background-position:
     left 2px top -4px,
     left 0px bottom -1px,
@@ -219,8 +219,8 @@
     background-color: var(--scribdown-table-border-fill);
     background-image: none;
     -webkit-mask-image:
-      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
-      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+      var(--scribdown-rough-line-shadow-horizontal), var(--scribdown-rough-line-shadow-horizontal),
+      var(--scribdown-rough-line-shadow-vertical), var(--scribdown-rough-line-shadow-vertical);
     -webkit-mask-position:
       left top,
       left bottom,
@@ -234,8 +234,8 @@
       var(--scribdown-table-border-tile-vertical);
     -webkit-mask-mode: alpha, alpha, alpha, alpha;
     mask-image:
-      var(--scribdown-code-block-edge-horizontal), var(--scribdown-code-block-edge-horizontal),
-      var(--scribdown-code-block-edge-vertical), var(--scribdown-code-block-edge-vertical);
+      var(--scribdown-rough-line-shadow-horizontal), var(--scribdown-rough-line-shadow-horizontal),
+      var(--scribdown-rough-line-shadow-vertical), var(--scribdown-rough-line-shadow-vertical);
     mask-position:
       left 2px top -4px,
       left 0px bottom -1px,

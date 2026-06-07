@@ -235,7 +235,7 @@
   user-select: none;
 }
 
-/* 关键步骤：语言标签背景分层，body 可重复，左右边界固定在两侧。 */
+/* 关键步骤：语言标签背景分层，body 可重复，左右边界固定在两侧；边框层与排线层拆开着色以独立配置颜色。 */
 .scribdown-markdown .scribdown-code-block__lang::before {
   content: "";
   position: absolute;
@@ -249,142 +249,115 @@
   pointer-events: none;
   background-color: transparent;
   background-image:
-    var(--scribdown-code-block-lang-tag-left-line),
-    var(--scribdown-code-block-lang-tag-right),
-    var(--scribdown-code-block-lang-tag-body);
-  background-repeat: no-repeat, no-repeat, repeat-x;
+    linear-gradient(
+      var(--scribdown-code-block-lang-border-fill),
+      var(--scribdown-code-block-lang-border-fill)
+    ),
+    linear-gradient(
+      var(--scribdown-code-block-lang-border-fill),
+      var(--scribdown-code-block-lang-border-fill)
+    ),
+    linear-gradient(
+      var(--scribdown-code-block-lang-border-fill),
+      var(--scribdown-code-block-lang-border-fill)
+    ),
+    linear-gradient(
+      var(--scribdown-code-block-lang-hatch-fill),
+      var(--scribdown-code-block-lang-hatch-fill)
+    ),
+    linear-gradient(
+      var(--scribdown-code-block-lang-hatch-fill),
+      var(--scribdown-code-block-lang-hatch-fill)
+    );
+  background-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
   background-position:
+    left center,
+    right center,
     left center,
     right center,
     left center;
   background-size:
     auto 100%,
     auto 100%,
+    auto 100%,
+    auto 100%,
     auto 100%;
   background-origin:
     border-box,
+    border-box,
+    content-box,
     border-box,
     content-box;
   background-clip:
     border-box,
     border-box,
+    content-box,
+    border-box,
     content-box;
-}
-
-@supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
-  .scribdown-markdown .scribdown-code-block__lang::before {
-    /* 关键步骤：边框层与排线层拆开着色，确保两者颜色可独立配置。 */
-    background-image:
-      linear-gradient(
-        var(--scribdown-code-block-lang-border-fill),
-        var(--scribdown-code-block-lang-border-fill)
-      ),
-      linear-gradient(
-        var(--scribdown-code-block-lang-border-fill),
-        var(--scribdown-code-block-lang-border-fill)
-      ),
-      linear-gradient(
-        var(--scribdown-code-block-lang-border-fill),
-        var(--scribdown-code-block-lang-border-fill)
-      ),
-      linear-gradient(
-        var(--scribdown-code-block-lang-hatch-fill),
-        var(--scribdown-code-block-lang-hatch-fill)
-      ),
-      linear-gradient(
-        var(--scribdown-code-block-lang-hatch-fill),
-        var(--scribdown-code-block-lang-hatch-fill)
-      );
-    background-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
-    background-position:
-      left center,
-      right center,
-      left center,
-      right center,
-      left center;
-    background-size:
-      auto 100%,
-      auto 100%,
-      auto 100%,
-      auto 100%,
-      auto 100%;
-    background-origin:
-      border-box,
-      border-box,
-      content-box,
-      border-box,
-      content-box;
-    background-clip:
-      border-box,
-      border-box,
-      content-box,
-      border-box,
-      content-box;
-    -webkit-mask-image:
-      var(--scribdown-code-block-lang-tag-left-line),
-      var(--scribdown-code-block-lang-tag-right-outline),
-      var(--scribdown-code-block-lang-tag-body-outline),
-      var(--scribdown-code-block-lang-tag-right-hatch),
-      var(--scribdown-code-block-lang-tag-body-hatch);
-    -webkit-mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
-    -webkit-mask-position:
-      left center,
-      right center,
-      left center,
-      right center,
-      left center;
-    -webkit-mask-size:
-      auto 100%,
-      auto 100%,
-      auto 100%,
-      auto 100%,
-      auto 100%;
-    -webkit-mask-origin:
-      border-box,
-      border-box,
-      content-box,
-      border-box,
-      content-box;
-    -webkit-mask-clip:
-      border-box,
-      border-box,
-      content-box,
-      border-box,
-      content-box;
-    -webkit-mask-mode: alpha, alpha, alpha, alpha, alpha;
-    mask-image:
-      var(--scribdown-code-block-lang-tag-left-line),
-      var(--scribdown-code-block-lang-tag-right-outline),
-      var(--scribdown-code-block-lang-tag-body-outline),
-      var(--scribdown-code-block-lang-tag-right-hatch),
-      var(--scribdown-code-block-lang-tag-body-hatch);
-    mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
-    mask-position:
-      left center,
-      right center,
-      left center,
-      right center,
-      left center;
-    mask-size:
-      auto 100%,
-      auto 100%,
-      auto 100%,
-      auto 100%,
-      auto 100%;
-    mask-origin:
-      border-box,
-      border-box,
-      content-box,
-      border-box,
-      content-box;
-    mask-clip:
-      border-box,
-      border-box,
-      content-box,
-      border-box,
-      content-box;
-    mask-mode: alpha, alpha, alpha, alpha, alpha;
-  }
+  -webkit-mask-image:
+    var(--scribdown-code-block-lang-tag-left-line),
+    var(--scribdown-code-block-lang-tag-right-outline),
+    var(--scribdown-code-block-lang-tag-body-outline),
+    var(--scribdown-code-block-lang-tag-right-hatch),
+    var(--scribdown-code-block-lang-tag-body-hatch);
+  -webkit-mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+  -webkit-mask-position:
+    left center,
+    right center,
+    left center,
+    right center,
+    left center;
+  -webkit-mask-size:
+    auto 100%,
+    auto 100%,
+    auto 100%,
+    auto 100%,
+    auto 100%;
+  -webkit-mask-origin:
+    border-box,
+    border-box,
+    content-box,
+    border-box,
+    content-box;
+  -webkit-mask-clip:
+    border-box,
+    border-box,
+    content-box,
+    border-box,
+    content-box;
+  -webkit-mask-mode: alpha, alpha, alpha, alpha, alpha;
+  mask-image:
+    var(--scribdown-code-block-lang-tag-left-line),
+    var(--scribdown-code-block-lang-tag-right-outline),
+    var(--scribdown-code-block-lang-tag-body-outline),
+    var(--scribdown-code-block-lang-tag-right-hatch),
+    var(--scribdown-code-block-lang-tag-body-hatch);
+  mask-repeat: no-repeat, no-repeat, repeat-x, no-repeat, repeat-x;
+  mask-position:
+    left center,
+    right center,
+    left center,
+    right center,
+    left center;
+  mask-size:
+    auto 100%,
+    auto 100%,
+    auto 100%,
+    auto 100%,
+    auto 100%;
+  mask-origin:
+    border-box,
+    border-box,
+    content-box,
+    border-box,
+    content-box;
+  mask-clip:
+    border-box,
+    border-box,
+    content-box,
+    border-box,
+    content-box;
+  mask-mode: alpha, alpha, alpha, alpha, alpha;
 }
 
 /* 右上角复制按钮：透明背景，SVG 图标，hover/激活态轻染色。 */
@@ -526,9 +499,9 @@
   bottom: 0;
   width: 6px;
   pointer-events: none;
-  background-image: var(--scribdown-code-block-edge-vertical);
+  background-image: var(--scribdown-rough-line-shadow-vertical);
   background-repeat: repeat-y;
-  background-size: var(--scribdown-code-block-edge-tile-vertical);
+  background-size: var(--scribdown-rough-line-shadow-tile-vertical);
   background-position: right top;
   opacity: 0.3;
 }
@@ -537,14 +510,14 @@
   .scribdown-markdown .scribdown-code-block__gutter::after {
     background-color: var(--scribdown-code-ink);
     background-image: none;
-    -webkit-mask-image: var(--scribdown-code-block-edge-vertical);
+    -webkit-mask-image: var(--scribdown-rough-line-shadow-vertical);
     -webkit-mask-repeat: repeat-y;
-    -webkit-mask-size: var(--scribdown-code-block-edge-tile-vertical);
+    -webkit-mask-size: var(--scribdown-rough-line-shadow-tile-vertical);
     -webkit-mask-position: right top;
     -webkit-mask-mode: alpha;
-    mask-image: var(--scribdown-code-block-edge-vertical);
+    mask-image: var(--scribdown-rough-line-shadow-vertical);
     mask-repeat: repeat-y;
-    mask-size: var(--scribdown-code-block-edge-tile-vertical);
+    mask-size: var(--scribdown-rough-line-shadow-tile-vertical);
     mask-position: right top;
     mask-mode: alpha;
   }

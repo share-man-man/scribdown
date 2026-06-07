@@ -145,9 +145,9 @@
 
 .scribdown-markdown .scribdown-image-frame--failed::after {
   background-image:
-    var(--scribdown-image-fallback-edge-horizontal),
-    var(--scribdown-image-fallback-edge-horizontal), var(--scribdown-image-fallback-edge-vertical),
-    var(--scribdown-image-fallback-edge-vertical);
+    var(--scribdown-rough-line-dash-horizontal),
+    var(--scribdown-rough-line-dash-horizontal), var(--scribdown-rough-line-dash-vertical),
+    var(--scribdown-rough-line-dash-vertical);
   background-size:
     64px 8px,
     64px 8px,

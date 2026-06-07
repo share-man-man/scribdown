@@ -17,24 +17,22 @@
      用于 background-size / mask-size，避免在各 CSS 文件里重复硬编码。 */
   --scribdown-frame-edge-tile-horizontal: 200px 6px;
   --scribdown-frame-edge-tile-vertical: 6px 200px;
-  /* 代码块行号分隔线（code-block-edge-vertical.svg）的平铺尺寸，花纹周期短于通用边框。 */
-  --scribdown-code-block-edge-tile-vertical: 6px 144px;
-  /* 表格外框（共用 code-block-edge svg）的平铺尺寸：横向 192×12，纵向 12×144，描边比通用边框略粗。 */
+  /* 代码块行号分隔线（rough-line-shadow-vertical.svg）的平铺尺寸，花纹周期短于通用边框。 */
+  --scribdown-rough-line-shadow-tile-vertical: 6px 144px;
+  /* 表格外框（共用 rough-line-shadow svg）的平铺尺寸：横向 192×12，纵向 12×144，描边比通用边框略粗。 */
   --scribdown-table-border-tile-horizontal: 192px 12px;
   --scribdown-table-border-tile-vertical: 12px 144px;
   --scribdown-blockquote-bar: url("../assets/blockquote-bar.svg");
   --scribdown-underline-stroke: url("../assets/underline-stroke.svg");
   --scribdown-heading-mark: url("../assets/heading-mark.svg");
-  --scribdown-image-fallback-edge-horizontal: url("../assets/image-fallback-edge-horizontal.svg");
-  --scribdown-image-fallback-edge-vertical: url("../assets/image-fallback-edge-vertical.svg");
-  --scribdown-code-block-edge-horizontal: url("../assets/code-block-edge-horizontal.svg");
-  --scribdown-code-block-edge-vertical: url("../assets/code-block-edge-vertical.svg");
+  --scribdown-rough-line-dash-horizontal: url("../assets/rough-line-dash-horizontal.svg");
+  --scribdown-rough-line-dash-vertical: url("../assets/rough-line-dash-vertical.svg");
+  --scribdown-rough-line-shadow-horizontal: url("../assets/rough-line-shadow-horizontal.svg");
+  --scribdown-rough-line-shadow-vertical: url("../assets/rough-line-shadow-vertical.svg");
   --scribdown-code-block-rect-shadow: url("../assets/rect-shadow.svg");
-  --scribdown-code-block-lang-tag-body: url("../assets/tag-body.svg");
   --scribdown-code-block-lang-tag-body-outline: url("../assets/tag-body-outline.svg");
   --scribdown-code-block-lang-tag-body-hatch: url("../assets/tag-body-hatch.svg");
   --scribdown-code-block-lang-tag-left-line: url("../assets/tag-left-line.svg");
-  --scribdown-code-block-lang-tag-right: url("../assets/tag-right.svg");
   --scribdown-code-block-lang-tag-right-outline: url("../assets/tag-right-outline.svg");
   --scribdown-code-block-lang-tag-right-hatch: url("../assets/tag-right-hatch.svg");
   --scribdown-code-block-lang-tag-right-safe-width: 18px;
