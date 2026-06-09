@@ -9,6 +9,58 @@ import {
 } from "@scribdown/shared";
 
 /**
+ * 目录标题链接 class，与 @scribdown/markdown-renderer 的 TOC_LINK_CLASS_NAME 对应。
+ * 这些链接的跳转由渲染器在冒泡阶段处理，捕获阶段的宿主锚点拦截器需放行（详见拦截逻辑注释）。
+ */
+const TOC_LINK_CLASS_NAME = "scribdown-toc-link";
+
+/**
+ * 目录跳转的手动平滑滚动动画时长（毫秒）。
+ */
+const TOC_SCROLL_DURATION_MS = 320;
+
+/**
+ * 以 requestAnimationFrame 手动平滑滚动到目标标题顶部，注入给渲染器的目录跳转使用。
+ * 关键步骤：VS Code webview 内容 frame 不动画化原生 scrollIntoView({behavior:"smooth"})
+ * （对真实锚点点击会瞬时，且与 reduced-motion 无关），故宿主自行用逐帧 scrollTo 实现平滑。
+ * 平台差异在此落地，渲染器保持跨端一致（只调用注入的实现）。
+ * @param targetElement 目标标题元素。
+ */
+function scrollHeadingIntoViewSmoothly(targetElement: HTMLElement): void {
+  // 文档滚动根。
+  const scroller = document.scrollingElement ?? document.documentElement;
+  // 动画起始纵向滚动量。
+  const startY = scroller.scrollTop;
+  // 目标纵向滚动量：元素相对视口顶 + 当前滚动量。
+  const targetY = targetElement.getBoundingClientRect().top + startY;
+  // 本次滚动位移。
+  const distance = targetY - startY;
+  if (distance === 0) {
+    return;
+  }
+  // 动画起始时间戳，首帧赋值。
+  let startTimestamp: number | undefined;
+
+  /**
+   * 推进单帧滚动。
+   * @param timestamp 当前帧时间戳。
+   */
+  const stepScroll = (timestamp: number): void => {
+    startTimestamp ??= timestamp;
+    // 动画进度 0..1。
+    const progress = Math.min(1, (timestamp - startTimestamp) / TOC_SCROLL_DURATION_MS);
+    // easeInOutCubic 缓动。
+    const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
+    window.scrollTo(0, startY + distance * eased);
+    if (progress < 1) {
+      window.requestAnimationFrame(stepScroll);
+    }
+  };
+
+  window.requestAnimationFrame(stepScroll);
+}
+
+/**
  * VS Code Webview API 的最小能力声明。
  */
 interface VscodeWebviewApi {
@@ -21,6 +73,7 @@ interface VscodeWebviewApi {
 export interface VscodePreviewRuntimeBootstrapOptions {
   previewRootElementId: string;
   previewBaseElementId: string;
+  previewShellElementId: string;
   renderContentMessageType: string;
   setPreviewScrollMessageType: string;
   setPreviewCursorMessageType: string;
@@ -87,16 +140,16 @@ function createSourceLineAnchorIndex(
 }
 
 /**
- * 对预览根节点执行 hydrate + 工具栏挂载。
+ * 对预览根节点执行内容 hydrate（图片加载态、代码块包裹等）。
  * 在 detached 节点（morphdom 合并前）与 live DOM（合并后）两个阶段均会调用：
  * 前者让代码块等结构提前对齐，后者负责把交互绑回真正渲染的节点上。
- * 工具栏统一挂到根节点自身，避免污染 VS Code Webview 的 document.body。
+ * 关键步骤：浮动工具栏不在此挂载 —— 它需挂在满宽外壳（shell）而非带边框/居中的 .scribdown-markdown 根节点上，
+ * 否则目录折叠时侧栏会贴着根节点内容左缘漏出一截；工具栏由 {@link applyRenderedContent} 在 morphdom 后统一挂载。
  * @param rootElement 预览根节点。
  */
 function hydratePreviewRoot(rootElement: Element): void {
-  hydrateMarkdown(rootElement);
-  // 关键步骤：VS Code Webview 同样挂载浮动工具栏，保持与浏览器宿主一致的目录与宽度切换体验。
-  mountMarkdownToolbar(rootElement);
+  // 关键步骤：注入宿主自己的平滑滚动实现（手动 rAF），适配 webview 原生平滑被降级的问题。
+  hydrateMarkdown(rootElement, { scrollToHeading: scrollHeadingIntoViewSmoothly });
 }
 
 // /**
@@ -137,10 +190,57 @@ export function bootstrapVscodePreviewRuntime(
   const previewBaseElement = document.getElementById(
     options.previewBaseElementId
   ) as HTMLBaseElement | null;
+  // 预览满宽外壳节点，浮动工具栏与目录侧栏的挂载点。
+  const previewShellElement = document.getElementById(options.previewShellElementId);
 
-  if (!previewRootElement || !previewBaseElement) {
+  if (!previewRootElement || !previewBaseElement || !previewShellElement) {
     return;
   }
+
+  // 关键步骤：VS Code Webview 文档承载于 iframe 且设置了 <base href="…vscode-resource…">，
+  // 原生点击 <a href="#id">（目录、行内 [TOC]、脚注等同文档锚点）会把 hash 解析到 base 上、
+  // 触发 iframe 导航，被 CSP "frame-src 'self'" 拦截而报错。
+  // 这里在「捕获阶段」统一拦截同文档锚点点击——捕获先于元素自身的冒泡监听执行，
+  // 不受目录分支链接 stopPropagation 影响——改为 JS 平滑滚动到目标，规避导航。
+  previewShellElement.addEventListener(
+    "click",
+    (event) => {
+      // 命中的锚点元素（点击可能落在其内部子节点上，向上就近匹配）。
+      const anchorElement =
+        event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(anchorElement instanceof HTMLAnchorElement)) {
+        return;
+      }
+      // 原始 href 文本：仅处理形如 "#id" 的同文档锚点，放过空 hash 与外链。
+      const rawHref = anchorElement.getAttribute("href");
+      if (!rawHref || rawHref.length < 2 || rawHref.charAt(0) !== "#") {
+        return;
+      }
+      // 关键步骤：目录标题链接（class 对应 markdown-renderer 的 TOC_LINK_CLASS_NAME）由渲染器
+      // 在「冒泡阶段」自行 scrollIntoView 平滑滚动；本拦截器处于「捕获阶段」，实测在此调用
+      // scrollIntoView 会被 webview 降级为瞬时滚动，故对目录链接放行，避免抢先做瞬时滚动。
+      if (anchorElement.classList.contains(TOC_LINK_CLASS_NAME)) {
+        return;
+      }
+      // 锚点 id（去掉前导 #）：优先按原文匹配，失败再尝试解码兜底（兼容被编码的中文 id）。
+      const rawTargetId = rawHref.slice(1);
+      let targetElement = document.getElementById(rawTargetId);
+      if (!targetElement) {
+        try {
+          targetElement = document.getElementById(decodeURIComponent(rawTargetId));
+        } catch {
+          targetElement = null;
+        }
+      }
+      if (!targetElement) {
+        return;
+      }
+      // 关键步骤：阻止原生 hash 导航，改用 JS 滚动定位，规避 CSP frame-src 拦截。
+      event.preventDefault();
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    true
+  );
 
   // 滚动上报的 rAF 节流句柄，0 表示当前无待处理帧。
   let scrollReportFrameHandle = 0;
@@ -264,7 +364,12 @@ export function bootstrapVscodePreviewRuntime(
     }
 
     if (normalizedMessage.type === options.renderContentMessageType) {
-      applyRenderedContent(previewRootElement, previewBaseElement, normalizedMessage);
+      applyRenderedContent(
+        previewRootElement,
+        previewBaseElement,
+        previewShellElement,
+        normalizedMessage
+      );
       // 关键步骤：重渲染替换了 DOM，锚点缓存立即失效。
       anchorIndex.invalidate();
       // 旧高亮目标元素已随 DOM 替换失效，置空待下次光标消息重新定位浮层。
@@ -399,11 +504,13 @@ function normalizeRuntimeMessage(message: unknown): NormalizedRuntimeMessage | u
  * 应用主进程下发的渲染结果并执行 hydration。
  * @param previewRootElement 预览根节点。
  * @param previewBaseElement base 标签节点。
+ * @param previewShellElement 满宽外壳节点，作为浮动工具栏与目录侧栏的挂载点。
  * @param message 标准化渲染消息。
  */
 function applyRenderedContent(
   previewRootElement: HTMLElement,
   previewBaseElement: HTMLBaseElement,
+  previewShellElement: HTMLElement,
   message: NormalizedRuntimeMessage
 ): void {
   // 下一次生效的 base href。
@@ -430,6 +537,11 @@ function applyRenderedContent(
   // 重新 hydrate 由 updateMarkdownImageState 依据真实加载结果纠正；
   // 代码块 hydrate 带幂等守卫，已包裹的块会被跳过。
   hydratePreviewRoot(previewRootElement);
+
+  // 关键步骤：内容落到 live DOM 后，把浮动工具栏（含按当前标题构建的目录）挂到满宽外壳上。
+  // mountMarkdownToolbar 幂等：会先清理旧实例，再依据最新标题重建目录侧栏。
+  // 注入宿主自己的平滑滚动实现，使侧栏目录跳转与行内 [TOC] 一致平滑。
+  mountMarkdownToolbar(previewShellElement, { scrollToHeading: scrollHeadingIntoViewSmoothly });
 }
 
 /**

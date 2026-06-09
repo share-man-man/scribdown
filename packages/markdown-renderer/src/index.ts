@@ -160,30 +160,11 @@ const TOC_MARKER_PATTERN = /^\s*\[toc]\s*$/i;
 // 目录容器类名。
 const TOC_CLASS_NAME = "scribdown-toc";
 
-// 目录分支容器类名。
-const TOC_BRANCH_CLASS_NAME = "scribdown-toc-branch";
-
 // 手绘卡片边框类名：可复用的「边框」基底，由内容折叠块、目录根等显式 opt-in 引入。
 const FRAME_CLASS_NAME = "scribdown-frame";
 
 // 内容折叠块类名：用户手写的原生 <details>（区别于目录用 <details>）在渲染时打上此标。
 const DETAILS_CLASS_NAME = "scribdown-details";
-
-// 目录分支摘要类名。
-const TOC_BRANCH_SUMMARY_CLASS_NAME = "scribdown-toc-branch-summary";
-
-// 目录分支跳转链接类名。
-const TOC_BRANCH_LINK_CLASS_NAME = "scribdown-toc-branch-link";
-
-// 目录分支 summary 左侧折叠图标（::before 伪元素）的视觉宽度，单位 px；
-// 与 toc.css `.scribdown-toc-branch-summary::before { width: 19px }` 保持一致。
-const TOC_BRANCH_TOGGLE_ICON_WIDTH = 19;
-
-// 目录分支折叠图标横向偏移所用 CSS 变量名，由 toc.css 中 `--scribdown-toc-toggle-offset` 定义。
-const TOC_BRANCH_TOGGLE_OFFSET_VAR = "--scribdown-toc-toggle-offset";
-
-// 兜底：当 CSS 变量未取到时使用的默认 toggle 偏移，单位 px。
-const TOC_BRANCH_TOGGLE_OFFSET_FALLBACK = 24;
 
 // 目录摘要按钮类名。
 const TOC_SUMMARY_CLASS_NAME = "scribdown-toc-summary";
@@ -200,20 +181,32 @@ const TOC_LIST_NESTED_CLASS_NAME = "scribdown-toc-list--nested";
 // 目录条目类名前缀。
 const TOC_ITEM_CLASS_PREFIX = "scribdown-toc-item";
 
-// 目录分支条目类名。
+// 目录分支条目类名（拥有可折叠子层级）。
 const TOC_ITEM_BRANCH_CLASS_NAME = "scribdown-toc-item--branch";
+
+// 目录分支条目折叠态类名（运行时由折叠按钮切换，控制隐藏嵌套列表与箭头朝向）。
+const TOC_ITEM_COLLAPSED_CLASS_NAME = "scribdown-toc-item--collapsed";
+
+// 目录条目标题跳转链接类名：叶子与分支共用同一种 <a href="#id"> 元素与跳转逻辑。
+const TOC_LINK_CLASS_NAME = "scribdown-toc-link";
+
+// 目录分支折叠按钮类名（与标题链接分离，专职展开/折叠，避免与跳转冲突）。
+const TOC_TOGGLE_CLASS_NAME = "scribdown-toc-toggle";
+
+// 目录分支折叠按钮可访问名称。
+const TOC_TOGGLE_ARIA_LABEL = "展开或折叠子目录";
+
+// 目录折叠按钮已绑定交互的标记 dataset 键，保证 hydrate 幂等。
+const TOC_TOGGLE_HYDRATED_DATA_KEY = "scribdownTocToggleHydrated";
+
+// 目录标题链接已绑定平滑滚动的标记 dataset 键，保证 hydrate 幂等。
+const TOC_LINK_HYDRATED_DATA_KEY = "scribdownTocLinkHydrated";
 
 // 目录可访问名称。
 const TOC_ARIA_LABEL = "目录";
 
 // 目录摘要显示文本。
 const TOC_SUMMARY_TEXT = "目录";
-
-// 目录分支跳转链接显示文本。
-const TOC_BRANCH_LINK_TEXT = "#";
-
-// 目录分支跳转链接可访问名称前缀。
-const TOC_BRANCH_LINK_ARIA_LABEL_PREFIX = "跳转到";
 
 // 空标题生成锚点时使用的前缀。
 const EMPTY_HEADING_SLUG_PREFIX = "section";
@@ -1963,17 +1956,46 @@ function updateMarkdownMermaidViewerCanvasSize(viewerState: MarkdownMermaidViewe
 }
 
 /**
+ * Markdown 交互 hydration 的可注入选项，用于让各宿主落地平台差异，
+ * 渲染器自身保持跨端一致（仅调用注入的实现）。
+ */
+export interface MarkdownInteractionOptions {
+  /**
+   * 目录条目跳转到目标标题的滚动实现，由宿主注入以适配各端平滑滚动差异。
+   * 缺省使用原生 `scrollIntoView({ behavior: "smooth" })`（标准浏览器即丝滑）；
+   * 若宿主原生平滑被降级（如 VS Code webview 对真实锚点点击会瞬时），
+   * 可注入自定义实现（如手动 requestAnimationFrame 动画）。
+   * @param targetElement 目标标题元素。
+   */
+  scrollToHeading?: (targetElement: HTMLElement) => void;
+}
+
+/**
+ * 默认目录跳转滚动实现：原生平滑 scrollIntoView。
+ * @param targetElement 目标标题元素。
+ */
+function defaultScrollToHeading(targetElement: HTMLElement): void {
+  targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/**
  * 对已渲染到 DOM 的 Markdown 内容执行交互 hydration。
  * 处理图片放大查看、视频占位、Mermaid、代码块复制等运行时行为。
  * 不挂载浮动工具栏；如需工具栏请额外调用 {@link mountMarkdownToolbar}。
  * @param rootElement 包含 Markdown 渲染结果的根节点。
+ * @param options 可注入交互选项（如目录跳转滚动实现）。
  */
-export function hydrateMarkdown(rootElement: ParentNode): void {
+export function hydrateMarkdown(
+  rootElement: ParentNode,
+  options: MarkdownInteractionOptions = {}
+): void {
   hydrateMarkdownImages(rootElement);
   hydrateMarkdownVideos(rootElement);
   // 关键步骤：mermaid 必须先于代码块 hydrate，避免被通用 code chrome 包装。
   hydrateMermaidBlocks(rootElement);
   hydrateCodeBlocks(rootElement);
+  // 关键步骤：为行内 [TOC] 绑定折叠与标题跳转；滚动实现由宿主注入，缺省原生平滑。
+  hydrateToc(rootElement, options.scrollToHeading ?? defaultScrollToHeading);
 }
 
 /**
@@ -1985,8 +2007,12 @@ export function hydrateMarkdown(rootElement: ParentNode): void {
  * 仅在浏览器环境生效；非浏览器环境（如 Node.js 单测）或 SSR 阶段直接跳过。
  * 重复调用会先清理 container 内的旧实例，可在每次 {@link hydrateMarkdown} 后安全重新挂载。
  * @param container 目标挂载容器；同时作为目录采集与点击外部关闭的作用域。
+ * @param options 可注入交互选项（如目录跳转滚动实现）。
  */
-export function mountMarkdownToolbar(container: Element): void {
+export function mountMarkdownToolbar(
+  container: Element,
+  options: MarkdownInteractionOptions = {}
+): void {
   /** 容器所属的 document。 */
   const ownerDocument = container.ownerDocument;
   if (!ownerDocument) {
@@ -1997,7 +2023,7 @@ export function mountMarkdownToolbar(container: Element): void {
   }
   // 关键步骤：恢复上次保存的内容宽度，再挂载工具栏。
   applyContentWidth(ownerDocument, loadContentWidth());
-  mountPageToolbar(ownerDocument, container);
+  mountPageToolbar(ownerDocument, container, options.scrollToHeading ?? defaultScrollToHeading);
 }
 
 /**
@@ -3381,20 +3407,20 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
   const defaultTagNames = defaultSchema.tagNames ?? [];
   // 默认属性白名单。
   const defaultAttributes = defaultSchema.attributes ?? {};
-  // details 元素的属性白名单。
+  // details 元素的属性白名单（目录根 + 用户手写折叠块；分支已改用 button，不再用 details）。
   const detailsAttributes = [
     "open",
-    ["className", DETAILS_CLASS_NAME, FRAME_CLASS_NAME, /^scribdown-toc(?:-branch)?$/u] as [
+    ["className", DETAILS_CLASS_NAME, FRAME_CLASS_NAME, TOC_CLASS_NAME] as [
       string,
       string,
       string,
-      RegExp
+      string
     ]
   ];
-  // summary 元素的属性白名单。
+  // summary 元素的属性白名单（仅目录根 summary）。
   const summaryAttributes = [
     ...(defaultAttributes.summary ?? []),
-    ["className", /^scribdown-toc(?:-branch)?-summary$/u] as [string, RegExp]
+    ["className", TOC_SUMMARY_CLASS_NAME] as [string, string]
   ];
   // nav 元素的属性白名单。
   const navAttributes = ["ariaLabel", ["className", /^scribdown-toc-nav$/u] as [string, RegExp]];
@@ -3405,8 +3431,15 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
     "ariaLabelledBy",
     "dataFootnoteBackref",
     "dataFootnoteRef",
-    ["className", "data-footnote-backref", TOC_BRANCH_LINK_CLASS_NAME] as [string, string, string],
+    ["className", "data-footnote-backref", TOC_LINK_CLASS_NAME] as [string, string, string],
     "href"
+  ];
+  // button 元素的属性白名单：仅放行目录分支折叠按钮所需属性，禁止任何事件处理属性。
+  const buttonAttributes = [
+    "type",
+    "ariaExpanded",
+    "ariaLabel",
+    ["className", TOC_TOGGLE_CLASS_NAME] as [string, string]
   ];
   // ol 元素的属性白名单。
   const orderedListAttributes = [
@@ -3491,6 +3524,7 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
     tagNames: Array.from(
       new Set([
         ...defaultTagNames,
+        "button",
         "details",
         "nav",
         "summary",
@@ -3513,6 +3547,7 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
     attributes: {
       ...defaultAttributes,
       "*": wildcardAttributes,
+      button: buttonAttributes,
       details: detailsAttributes,
       summary: summaryAttributes,
       nav: navAttributes,
@@ -4244,6 +4279,13 @@ function createTocListItem(tocItem: TocTreeItem): MarkdownNode {
   // 当前目录条目的 class 列表。
   const tocItemClassNames = createTocItemClassNames(tocItem.depth, hasChildren);
 
+  // 关键步骤：叶子与分支的标题都用同一个 <a href="#id">（createTocLinkNode）、共用同一套跳转；
+  // 分支只是额外在标题前放一个「独立的折叠按钮」、标题后放嵌套子列表。
+  // 折叠按钮与标题链接分离，从结构上消除「点标题既跳转又折叠」的冲突。
+  const itemChildren: MarkdownNode[] = hasChildren
+    ? [createTocToggleNode(), createTocLinkNode(tocItem), createTocListNode(tocItem.children, true)]
+    : [createTocLinkNode(tocItem)];
+
   return {
     type: "listItem",
     spread: false,
@@ -4253,7 +4295,7 @@ function createTocListItem(tocItem: TocTreeItem): MarkdownNode {
         className: tocItemClassNames
       }
     },
-    children: hasChildren ? [createTocBranchNode(tocItem)] : [createTocLinkParagraphNode(tocItem)]
+    children: itemChildren
   };
 }
 
@@ -4272,56 +4314,30 @@ function createTocItemClassNames(depth: number, hasChildren: boolean): string[] 
 }
 
 /**
- * 创建可折叠的目录分支节点。
- * @param tocItem 拥有子层级的目录条目。
- * @returns 可被 remark-rehype 转换为 details 的 Markdown 节点。
+ * 创建目录分支的折叠按钮节点（与标题链接分离，专职展开/折叠）。
+ * 默认 aria-expanded="true"（展开），运行时由 {@link hydrateToc} 绑定点击切换。
+ * @returns 可被 remark-rehype 转换为 button 的 Markdown 节点。
  */
-function createTocBranchNode(tocItem: TocTreeItem): MarkdownNode {
+function createTocToggleNode(): MarkdownNode {
   return {
-    type: "tocBranch",
+    type: "tocToggle",
     data: {
-      hName: "details",
+      hName: "button",
       hProperties: {
-        open: true,
-        className: [TOC_BRANCH_CLASS_NAME]
+        type: "button",
+        className: [TOC_TOGGLE_CLASS_NAME],
+        ariaExpanded: "true",
+        ariaLabel: TOC_TOGGLE_ARIA_LABEL
       }
     },
-    children: [
-      {
-        type: "tocBranchSummary",
-        data: {
-          hName: "summary",
-          hProperties: {
-            className: [TOC_BRANCH_SUMMARY_CLASS_NAME]
-          }
-        },
-        children: [
-          {
-            type: "text",
-            value: tocItem.text
-          },
-          createTocBranchLinkNode(tocItem)
-        ]
-      },
-      createTocListNode(tocItem.children, true)
-    ]
+    children: []
   };
 }
 
 /**
- * 创建目录叶子条目的链接段落。
- * @param tocItem 目录树条目。
- * @returns 包含锚点链接的段落节点。
- */
-function createTocLinkParagraphNode(tocItem: TocTreeItem): MarkdownNode {
-  return {
-    type: "paragraph",
-    children: [createTocLinkNode(tocItem)]
-  };
-}
-
-/**
- * 创建目录标题链接。
+ * 创建目录条目的标题跳转链接（叶子与分支共用）。
+ * 仅产出原生 <a href="#id">，由宿主锚点处理（webview 拦截器 / 浏览器原生 hash）统一滚动，
+ * 渲染器不再附加点击监听，避免与宿主重复触发滚动。
  * @param tocItem 目录树条目。
  * @returns Markdown 链接节点。
  */
@@ -4329,34 +4345,15 @@ function createTocLinkNode(tocItem: TocTreeItem): MarkdownNode {
   return {
     type: "link",
     url: `#${tocItem.id}`,
-    children: [
-      {
-        type: "text",
-        value: tocItem.text
-      }
-    ]
-  };
-}
-
-/**
- * 创建目录分支标题旁的跳转链接。
- * @param tocItem 目录树条目。
- * @returns Markdown 链接节点。
- */
-function createTocBranchLinkNode(tocItem: TocTreeItem): MarkdownNode {
-  return {
-    type: "link",
-    url: `#${tocItem.id}`,
     data: {
       hProperties: {
-        ariaLabel: `${TOC_BRANCH_LINK_ARIA_LABEL_PREFIX}${tocItem.text}`,
-        className: [TOC_BRANCH_LINK_CLASS_NAME]
+        className: [TOC_LINK_CLASS_NAME]
       }
     },
     children: [
       {
         type: "text",
-        value: TOC_BRANCH_LINK_TEXT
+        value: tocItem.text
       }
     ]
   };
@@ -4423,36 +4420,18 @@ function collectTocHeadingsFromDom(rootElement: ParentNode): TocHeading[] {
 }
 
 /**
- * 目录 DOM 构造选项，供 toolbar 抽屉等运行时入口复用。
- */
-interface CreateTocNavElementOptions {
-  /** 点击目录链接时触发的回调，常用于关闭抽屉。 */
-  onLinkClick?: (event: MouseEvent) => void;
-  /** 嵌套分支是否默认展开，默认 true 与 inline TOC 对齐。 */
-  branchInitiallyOpen?: boolean;
-}
-
-/**
- * 使用与 inline TOC 完全一致的 DOM 结构构建目录 nav 节点。
+ * 用与 inline TOC 完全一致的结构构建目录 nav 节点（toolbar 侧栏复用）。
+ * 标题统一为原生 <a href="#id">（跳转交给宿主锚点处理），分支额外带独立折叠按钮 + 嵌套列表；
+ * 折叠交互由挂载后调用的 {@link hydrateToc} 统一绑定。
  * @param ownerDocument 目标 document。
  * @param tocTreeItems 目录树根节点集合。
- * @param options 可选回调与展开策略。
  * @returns 含完整目录列表的 nav 元素。
  */
-function createTocNavElement(
-  ownerDocument: Document,
-  tocTreeItems: TocTreeItem[],
-  options: CreateTocNavElementOptions = {}
-): HTMLElement {
-  /** 嵌套分支默认展开开关。 */
-  const branchInitiallyOpen = options.branchInitiallyOpen ?? true;
-
+function createTocNavElement(ownerDocument: Document, tocTreeItems: TocTreeItem[]): HTMLElement {
   const navElement = ownerDocument.createElement("nav");
   navElement.setAttribute("aria-label", TOC_ARIA_LABEL);
   navElement.className = TOC_NAV_CLASS_NAME;
-  navElement.appendChild(
-    createTocListElement(ownerDocument, tocTreeItems, false, { ...options, branchInitiallyOpen })
-  );
+  navElement.appendChild(createTocListElement(ownerDocument, tocTreeItems, false));
   return navElement;
 }
 
@@ -4467,9 +4446,7 @@ function createTocNavElement(
 function createTocListElement(
   ownerDocument: Document,
   tocItems: TocTreeItem[],
-  isNested: boolean,
-  options: Required<Pick<CreateTocNavElementOptions, "branchInitiallyOpen">> &
-    CreateTocNavElementOptions
+  isNested: boolean
 ): HTMLOListElement {
   const listElement = ownerDocument.createElement("ol");
   listElement.className = isNested
@@ -4477,25 +4454,23 @@ function createTocListElement(
     : TOC_LIST_CLASS_NAME;
 
   for (const tocItem of tocItems) {
-    listElement.appendChild(createTocListItemElement(ownerDocument, tocItem, options));
+    listElement.appendChild(createTocListItemElement(ownerDocument, tocItem));
   }
 
   return listElement;
 }
 
 /**
- * 构造目录列表项，含可折叠分支与叶子链接两种形态。
+ * 构造目录列表项（li）：叶子与分支共用同一个标题链接 <a href="#id">。
+ * 分支额外在标题前插入「独立折叠按钮」、标题后插入嵌套子列表；不再用 <details>/<summary>，
+ * 从结构上消除「点标题既跳转又折叠」的冲突与 offsetX 像素 hack。
+ * 跳转交给宿主锚点处理（不挂渲染器点击监听，避免与宿主重复触发滚动）；
+ * 折叠交互由 {@link hydrateToc} 在挂载后统一绑定。
  * @param ownerDocument 目标 document。
  * @param tocItem 当前目录条目。
- * @param options 共享构造选项。
  * @returns li 元素。
  */
-function createTocListItemElement(
-  ownerDocument: Document,
-  tocItem: TocTreeItem,
-  options: Required<Pick<CreateTocNavElementOptions, "branchInitiallyOpen">> &
-    CreateTocNavElementOptions
-): HTMLLIElement {
+function createTocListItemElement(ownerDocument: Document, tocItem: TocTreeItem): HTMLLIElement {
   /** 当前条目是否拥有可折叠的子层级。 */
   const hasChildren = tocItem.children.length > 0;
 
@@ -4503,86 +4478,106 @@ function createTocListItemElement(
   itemElement.className = createTocItemClassNames(tocItem.depth, hasChildren).join(" ");
   itemElement.dataset.tocIndex = tocItem.index;
 
+  // 分支：标题前插入独立折叠按钮（与 inline TOC 同构，hydrate 时绑定展开/折叠）。
   if (hasChildren) {
-    // 分支条目：details + summary，summary 内并列展示分支标题与跳转锚点。
-    const branchElement = ownerDocument.createElement("details");
-    branchElement.className = TOC_BRANCH_CLASS_NAME;
-    branchElement.open = options.branchInitiallyOpen;
+    const toggleElement = ownerDocument.createElement("button");
+    toggleElement.type = "button";
+    toggleElement.className = TOC_TOGGLE_CLASS_NAME;
+    toggleElement.setAttribute("aria-expanded", "true");
+    toggleElement.setAttribute("aria-label", TOC_TOGGLE_ARIA_LABEL);
+    itemElement.appendChild(toggleElement);
+  }
 
-    const summaryElement = ownerDocument.createElement("summary");
-    summaryElement.className = TOC_BRANCH_SUMMARY_CLASS_NAME;
-    summaryElement.append(ownerDocument.createTextNode(tocItem.text));
+  // 标题链接：叶子与分支完全相同，仅产出原生 <a href="#id">，跳转交给宿主锚点处理。
+  const linkElement = ownerDocument.createElement("a");
+  linkElement.className = TOC_LINK_CLASS_NAME;
+  linkElement.href = `#${tocItem.id}`;
+  linkElement.textContent = tocItem.text;
+  itemElement.appendChild(linkElement);
 
-    /** 跳转到当前分支对应标题的隐式 # 锚点，复用浏览器原生 hash 导航。 */
-    const branchHref = `#${tocItem.id}`;
-
-    const branchLinkElement = ownerDocument.createElement("a");
-    branchLinkElement.href = branchHref;
-    branchLinkElement.setAttribute(
-      "aria-label",
-      `${TOC_BRANCH_LINK_ARIA_LABEL_PREFIX}${tocItem.text}`
-    );
-    branchLinkElement.className = TOC_BRANCH_LINK_CLASS_NAME;
-    branchLinkElement.textContent = TOC_BRANCH_LINK_TEXT;
-    // 关键步骤：阻止冒泡，防止 summary 拿到 click 后执行 details 默认 toggle。
-    branchLinkElement.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-    if (options.onLinkClick) {
-      branchLinkElement.addEventListener("click", options.onLinkClick);
-    }
-
-    // 关键步骤：分离 summary 的点击交互——
-    // 点击落在 ::before 的几何范围（左 padding 中那只手绘箭头）才 toggle 折叠态；
-    // 其它位置（标题文本/空白）触发跳转，使分支条目可直接通过文本点击导航。
-    summaryElement.addEventListener("click", (event) => {
-      // 默认行为是 toggle details，统一拦截后由我们自己分发。
-      event.preventDefault();
-      /** summary 所在窗口，用于读取 CSS 计算样式。 */
-      const summaryView = summaryElement.ownerDocument.defaultView;
-      if (!summaryView) {
-        return;
-      }
-      /** summary 的计算样式快照，用于读取 padding-left 与 toggle 偏移 CSS 变量。 */
-      const summaryStyles = summaryView.getComputedStyle(summaryElement);
-      /** summary 左 padding 像素值，等于当前层级的 --scribdown-toc-parent-offset。 */
-      const paddingLeftPx = parseFloat(summaryStyles.paddingLeft) || 0;
-      /** ::before 相对 summary 内左边的 x 偏移，由 CSS 变量给出，取不到时回退。 */
-      const toggleOffsetPx =
-        parseFloat(summaryStyles.getPropertyValue(TOC_BRANCH_TOGGLE_OFFSET_VAR)) ||
-        TOC_BRANCH_TOGGLE_OFFSET_FALLBACK;
-      /** ::before 在 summary 内的左/右 x 边界。 */
-      const toggleStartX = paddingLeftPx - toggleOffsetPx;
-      const toggleEndX = toggleStartX + TOC_BRANCH_TOGGLE_ICON_WIDTH;
-      if (event.offsetX >= toggleStartX && event.offsetX <= toggleEndX) {
-        // 命中折叠图标：切换 details 展开态。
-        branchElement.open = !branchElement.open;
-      } else {
-        // 命中标题文本/空白：触发分支跳转链接，沿用浏览器原生锚点导航。
-        branchLinkElement.click();
-      }
-    });
-
-    summaryElement.appendChild(branchLinkElement);
-    branchElement.appendChild(summaryElement);
-    branchElement.appendChild(
-      createTocListElement(ownerDocument, tocItem.children, true, options)
-    );
-    itemElement.appendChild(branchElement);
-  } else {
-    // 叶子条目：与 inline TOC 一致，使用 <p> 包裹跳转链接，避免列表项基线偏移。
-    const paragraphElement = ownerDocument.createElement("p");
-    const linkElement = ownerDocument.createElement("a");
-    linkElement.href = `#${tocItem.id}`;
-    linkElement.textContent = tocItem.text;
-    if (options.onLinkClick) {
-      linkElement.addEventListener("click", options.onLinkClick);
-    }
-    paragraphElement.appendChild(linkElement);
-    itemElement.appendChild(paragraphElement);
+  // 分支：标题后插入嵌套子列表。
+  if (hasChildren) {
+    itemElement.appendChild(createTocListElement(ownerDocument, tocItem.children, true));
   }
 
   return itemElement;
+}
+
+/**
+ * 为目录绑定运行时交互（inline TOC 与 toolbar 侧栏共用）：
+ * 1. 分支折叠按钮的展开/折叠；
+ * 2. 标题链接的跳转 —— 在冒泡阶段拦截原生 hash 跳转，改用注入的 scrollToHeading 滚动到标题
+ *    （webview 宿主拦截器对 .scribdown-toc-link 放行，跳转滚动完全交给这里）。
+ * 滚动实现由宿主注入（缺省原生平滑），渲染器只负责调用——平台差异落在 apps/* 各宿主。
+ * 幂等：已绑定过的元素（带 hydrate 标记）跳过，可安全在每次 hydrate / 挂载时重复调用。
+ * @param rootElement 含目录结构的根节点。
+ * @param scrollToHeading 跳转到目标标题的滚动实现（由宿主注入）。
+ */
+function hydrateToc(
+  rootElement: ParentNode,
+  scrollToHeading: (targetElement: HTMLElement) => void
+): void {
+  // 根节点内所有目录折叠按钮。
+  const toggleElements = rootElement.querySelectorAll<HTMLButtonElement>(
+    `button.${TOC_TOGGLE_CLASS_NAME}`
+  );
+
+  toggleElements.forEach((toggleElement) => {
+    if (toggleElement.dataset[TOC_TOGGLE_HYDRATED_DATA_KEY] === "true") {
+      return;
+    }
+    toggleElement.dataset[TOC_TOGGLE_HYDRATED_DATA_KEY] = "true";
+
+    toggleElement.addEventListener("click", () => {
+      // 按钮所属的目录条目（承载折叠态 class，并包含待显隐的嵌套列表）。
+      const itemElement = toggleElement.closest<HTMLLIElement>(`.${TOC_ITEM_CLASS_PREFIX}`);
+      if (!itemElement) {
+        return;
+      }
+      // 切换后是否处于折叠态。
+      const nextCollapsed = !itemElement.classList.contains(TOC_ITEM_COLLAPSED_CLASS_NAME);
+      itemElement.classList.toggle(TOC_ITEM_COLLAPSED_CLASS_NAME, nextCollapsed);
+      // 关键步骤：aria-expanded 与折叠态保持同步，供无障碍读屏与 CSS 箭头朝向使用。
+      toggleElement.setAttribute("aria-expanded", String(!nextCollapsed));
+    });
+  });
+
+  // 根节点内所有目录标题跳转链接。
+  const linkElements = rootElement.querySelectorAll<HTMLAnchorElement>(
+    `a.${TOC_LINK_CLASS_NAME}`
+  );
+
+  linkElements.forEach((linkElement) => {
+    if (linkElement.dataset[TOC_LINK_HYDRATED_DATA_KEY] === "true") {
+      return;
+    }
+    linkElement.dataset[TOC_LINK_HYDRATED_DATA_KEY] = "true";
+
+    linkElement.addEventListener("click", (event) => {
+      // 关键步骤：拦截原生 hash 跳转（webview 下会触发被 CSP 拦截的 iframe 导航），
+      // 改由宿主注入的 scrollToHeading 滚动定位。
+      event.preventDefault();
+      // 链接所属 document。
+      const ownerDocument = linkElement.ownerDocument;
+      // 目标标题 id（去掉前导 #）。
+      const rawTargetId = (linkElement.getAttribute("href") ?? "").slice(1);
+      if (!rawTargetId) {
+        return;
+      }
+      // 目标标题元素：优先按原文匹配，失败再尝试解码兜底（兼容被编码的中文 id）。
+      let targetElement = ownerDocument.getElementById(rawTargetId);
+      if (!targetElement) {
+        try {
+          targetElement = ownerDocument.getElementById(decodeURIComponent(rawTargetId));
+        } catch {
+          targetElement = null;
+        }
+      }
+      if (targetElement) {
+        scrollToHeading(targetElement);
+      }
+    });
+  });
 }
 
 /**
@@ -4699,7 +4694,7 @@ interface HastNode {
 /**
  * rehype 插件：为内容折叠块注入手绘边框 class，实现样式层的 opt-in。
  * 用户手写的原生 <details>（非目录用）打上 scribdown-details + scribdown-frame；
- * 目录根的 scribdown-frame 已在 mdast 阶段注入，目录根 / 目录分支在此跳过。
+ * 目录根的 scribdown-frame 已在 mdast 阶段注入，目录根在此跳过（分支已改用 button，无 details）。
  * 该插件运行在 rehype-raw 之后、rehype-sanitize 之前，注入的 class 由 sanitize 白名单放行。
  * @returns hast 转换器。
  */
@@ -4717,9 +4712,8 @@ function tagContentDetails(node: HastNode): void {
   if (node.type === "element" && node.tagName === "details") {
     // 当前 details 已有的 class 列表。
     const classNames = normalizeClassNames(node.properties?.className);
-    // 目录根 / 目录分支使用各自命名空间，不当作内容折叠块处理。
-    const isTocDetails =
-      classNames.includes(TOC_CLASS_NAME) || classNames.includes(TOC_BRANCH_CLASS_NAME);
+    // 目录根使用自己的命名空间，不当作内容折叠块处理。
+    const isTocDetails = classNames.includes(TOC_CLASS_NAME);
     if (!isTocDetails) {
       addClassNames(node, [DETAILS_CLASS_NAME, FRAME_CLASS_NAME]);
     }
@@ -5076,8 +5070,13 @@ const pageToolbarScrollspyTeardowns = new WeakMap<Element, () => void>();
  * 浏览器环境检查由对外的 {@link mountMarkdownToolbar} 完成。
  * @param ownerDocument 目标 document。
  * @param container 工具栏与目录抽屉的物理挂载点，同时作为目录采集作用域。
+ * @param scrollToHeading 目录跳转到目标标题的滚动实现（由宿主注入）。
  */
-function mountPageToolbar(ownerDocument: Document, container: Element): void {
+function mountPageToolbar(
+  ownerDocument: Document,
+  container: Element,
+  scrollToHeading: (targetElement: HTMLElement) => void
+): void {
   // 关键步骤：重挂载前先断开上一轮 scrollspy 的窗口监听，避免重复绑定。
   pageToolbarScrollspyTeardowns.get(container)?.();
   pageToolbarScrollspyTeardowns.delete(container);
@@ -5163,9 +5162,11 @@ function mountPageToolbar(ownerDocument: Document, container: Element): void {
     tocPanel.appendChild(emptyElement);
   } else {
     const tocTree = createTocTree(tocHeadings);
-    // 关键步骤：跳转后保留侧栏展开态，方便连续点击其它标题；用户可通过关闭按钮或目录入口主动收起。
+    // 关键步骤：与 inline [TOC] 共用同一个 createTocNavElement —— 叶子/分支同元素、同跳转。
+    // 标题为原生 <a href="#id">；折叠按钮与标题跳转随后由 hydrateToc 绑定，滚动用注入实现。
     const tocNavElement = createTocNavElement(ownerDocument, tocTree);
     tocPanel.appendChild(tocNavElement);
+    hydrateToc(tocNavElement, scrollToHeading);
   }
 
   // ── 目录按钮（工具栏第 1 个入口） ──

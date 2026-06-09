@@ -32,6 +32,13 @@ const PREVIEW_ROOT_ELEMENT_ID = "scribdown-preview-root";
 const PREVIEW_BASE_ELEMENT_ID = "scribdown-preview-base";
 
 /**
+ * Webview 预览外壳节点 ID：包裹 <main> 的满宽容器，作为浮动工具栏与目录侧栏的挂载点。
+ * 关键步骤：与浏览器扩展挂在 <body> 上保持一致的 DOM 结构 —— 宿主满宽且无内边距，
+ * 目录折叠时侧栏可贴住视口左缘完全收起，避免挂在带边框/居中/内边距的 .scribdown-markdown 上漏出一截。
+ */
+const PREVIEW_SHELL_ELEMENT_ID = "scribdown-preview-shell";
+
+/**
  * Webview UI 资源目录名。
  */
 const WEBVIEW_UI_DIRECTORY_NAME = "webview-ui";
@@ -833,13 +840,15 @@ function createPreviewShellHtml(
     </style>
   </head>
   <body class="${SCRIBDOWN_PAGE_CLASS_NAME}">
-    <main class="${SCRIBDOWN_APP_CLASS_NAME}">
-      <article
-        id="${PREVIEW_ROOT_ELEMENT_ID}"
-        class="${SCRIBDOWN_MARKDOWN_CLASS_NAME}"
-        data-preview-title="${PREVIEW_TITLE}"
-      ></article>
-    </main>
+    <div id="${PREVIEW_SHELL_ELEMENT_ID}">
+      <main class="${SCRIBDOWN_APP_CLASS_NAME}">
+        <article
+          id="${PREVIEW_ROOT_ELEMENT_ID}"
+          class="${SCRIBDOWN_MARKDOWN_CLASS_NAME}"
+          data-preview-title="${PREVIEW_TITLE}"
+        ></article>
+      </main>
+    </div>
     <script src="${previewRuntimeScriptHref}"></script>
     <script nonce="${scriptNonce}">
 ${runtimeBootstrapScript}
@@ -857,6 +866,7 @@ function createRuntimeBootstrapScript(): string {
   const runtimeBootstrapOptions = {
     previewRootElementId: PREVIEW_ROOT_ELEMENT_ID,
     previewBaseElementId: PREVIEW_BASE_ELEMENT_ID,
+    previewShellElementId: PREVIEW_SHELL_ELEMENT_ID,
     renderContentMessageType: RENDER_CONTENT_MESSAGE_TYPE,
     setPreviewScrollMessageType: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
     setPreviewCursorMessageType: SET_PREVIEW_CURSOR_MESSAGE_TYPE,

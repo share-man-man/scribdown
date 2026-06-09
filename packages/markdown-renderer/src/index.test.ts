@@ -8,6 +8,9 @@ describe("renderMarkdown", () => {
     const markdownText = ["# 文档标题", "", "[TOC]", "", "## 目录说明", "", "### 子章节"].join("\n");
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
+    // 分支条目的折叠按钮 HTML（叶子无按钮，分支才有；与标题链接分离）。
+    const tocToggleHtml =
+      '<button type="button" class="scribdown-toc-toggle" aria-expanded="true" aria-label="展开或折叠子目录"></button>';
 
     expect(renderedHtml).toContain(
       '<h1 id="文档标题" data-source-line="1"><span class="scribdown-heading-mark">文档标题</span></h1>'
@@ -16,17 +19,26 @@ describe("renderMarkdown", () => {
       '<details class="scribdown-toc scribdown-frame" data-source-line="3"><summary class="scribdown-toc-summary">目录</summary>'
     );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
+    // 分支条目：li + 折叠按钮 + 与叶子完全相同的标题链接（节点间有换行，分别断言）。
     expect(renderedHtml).toContain(
-      `<details open class="scribdown-toc-branch"><summary class="scribdown-toc-branch-summary">文档标题<a href="#${encodeURIComponent("文档标题")}" aria-label="跳转到文档标题" class="scribdown-toc-branch-link">#</a></summary>`
+      '<li data-toc-index="1" class="scribdown-toc-item scribdown-toc-item--depth-1 scribdown-toc-item--branch">'
     );
-    expect(renderedHtml).toContain('class="scribdown-toc-item scribdown-toc-item--depth-1 scribdown-toc-item--branch"');
+    expect(renderedHtml).toContain(tocToggleHtml);
+    expect(renderedHtml).toContain(
+      `<a href="#${encodeURIComponent("文档标题")}" class="scribdown-toc-link">文档标题</a>`
+    );
     expect(renderedHtml).toContain('<ol class="scribdown-toc-list scribdown-toc-list--nested">');
     expect(renderedHtml).toContain('data-toc-index="1.1"');
     expect(renderedHtml).toContain('data-toc-index="1.1.1"');
     expect(renderedHtml).toContain(
-      `<summary class="scribdown-toc-branch-summary">目录说明<a href="#${encodeURIComponent("目录说明")}" aria-label="跳转到目录说明" class="scribdown-toc-branch-link">#</a></summary>`
+      `<a href="#${encodeURIComponent("目录说明")}" class="scribdown-toc-link">目录说明</a>`
     );
-    expect(renderedHtml).toContain(`<a href="#${encodeURIComponent("子章节")}">子章节</a>`);
+    // 叶子条目：仅标题链接，无折叠按钮。
+    expect(renderedHtml).toContain(
+      `<a href="#${encodeURIComponent("子章节")}" class="scribdown-toc-link">子章节</a>`
+    );
+    // 不再渲染分支右侧的 # 跳转锚点。
+    expect(renderedHtml).not.toContain("scribdown-toc-branch-link");
   });
 
   it("nests toc heading levels inside collapsible branches", async () => {
@@ -34,18 +46,24 @@ describe("renderMarkdown", () => {
     const markdownText = ["[TOC]", "", "## 父级", "", "### 子级", "", "#### 孙级", "", "## 同级"].join("\n");
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
-    // 可折叠分支数量。
-    const tocBranchMatches = renderedHtml.match(/class="scribdown-toc-branch"/gu) ?? [];
+    // 可折叠分支数量（以分支条目 class 计数）。
+    const tocBranchMatches = renderedHtml.match(/scribdown-toc-item--branch/gu) ?? [];
+    // 分支条目的折叠按钮 HTML。
+    const tocToggleHtml =
+      '<button type="button" class="scribdown-toc-toggle" aria-expanded="true" aria-label="展开或折叠子目录"></button>';
 
     expect(tocBranchMatches).toHaveLength(2);
+    expect(renderedHtml).toContain(tocToggleHtml);
     expect(renderedHtml).toContain(
-      `<details open class="scribdown-toc-branch"><summary class="scribdown-toc-branch-summary">父级<a href="#${encodeURIComponent("父级")}" aria-label="跳转到父级" class="scribdown-toc-branch-link">#</a></summary>`
+      `<a href="#${encodeURIComponent("父级")}" class="scribdown-toc-link">父级</a>`
     );
     expect(renderedHtml).toContain(
-      `<details open class="scribdown-toc-branch"><summary class="scribdown-toc-branch-summary">子级<a href="#${encodeURIComponent("子级")}" aria-label="跳转到子级" class="scribdown-toc-branch-link">#</a></summary>`
+      `<a href="#${encodeURIComponent("子级")}" class="scribdown-toc-link">子级</a>`
     );
     expect(renderedHtml).toContain('data-toc-index="1.1.1" class="scribdown-toc-item scribdown-toc-item--depth-4"');
-    expect(renderedHtml).toContain(`<a href="#${encodeURIComponent("同级")}">同级</a>`);
+    expect(renderedHtml).toContain(
+      `<a href="#${encodeURIComponent("同级")}" class="scribdown-toc-link">同级</a>`
+    );
   });
 
   it("deduplicates heading ids", async () => {
@@ -60,8 +78,12 @@ describe("renderMarkdown", () => {
     expect(renderedHtml).toContain(
       '<h2 id="重复标题-1" data-source-line="5"><span class="scribdown-heading-mark">重复标题</span></h2>'
     );
-    expect(renderedHtml).toContain(`<a href="#${encodeURIComponent("重复标题")}">重复标题</a>`);
-    expect(renderedHtml).toContain(`<a href="#${encodeURIComponent("重复标题-1")}">重复标题</a>`);
+    expect(renderedHtml).toContain(
+      `<a href="#${encodeURIComponent("重复标题")}" class="scribdown-toc-link">重复标题</a>`
+    );
+    expect(renderedHtml).toContain(
+      `<a href="#${encodeURIComponent("重复标题-1")}" class="scribdown-toc-link">重复标题</a>`
+    );
   });
 
   it("renders term and colon lines as definition lists", async () => {
@@ -86,18 +108,24 @@ describe("renderMarkdown", () => {
     const markdownText = ["[TOC]", "", "## Safe Heading", "", "### Nested Heading"].join("\n");
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
+    // 分支条目的折叠按钮 HTML（验证 button 及其属性通过白名单清洗）。
+    const tocToggleHtml =
+      '<button type="button" class="scribdown-toc-toggle" aria-expanded="true" aria-label="展开或折叠子目录"></button>';
 
     expect(renderedHtml).toContain(
       '<details class="scribdown-toc scribdown-frame" data-source-line="1"><summary class="scribdown-toc-summary">目录</summary>'
     );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain('<ol class="scribdown-toc-list">');
-    expect(renderedHtml).toContain('<details open class="scribdown-toc-branch">');
-    expect(renderedHtml).toContain('<summary class="scribdown-toc-branch-summary">');
-    expect(renderedHtml).toContain('aria-label="跳转到Safe Heading" class="scribdown-toc-branch-link">#</a>');
-    expect(renderedHtml).toContain('<ol class="scribdown-toc-list scribdown-toc-list--nested">');
+    // 分支条目：li + 折叠按钮（清洗后保留）+ 标题链接，无 details/summary、无 # 锚点。
     expect(renderedHtml).toContain(
       '<li data-toc-index="1" class="scribdown-toc-item scribdown-toc-item--depth-2 scribdown-toc-item--branch">'
+    );
+    expect(renderedHtml).toContain(tocToggleHtml);
+    expect(renderedHtml).toContain('<a href="#safe-heading" class="scribdown-toc-link">Safe Heading</a>');
+    expect(renderedHtml).toContain('<ol class="scribdown-toc-list scribdown-toc-list--nested">');
+    expect(renderedHtml).toContain(
+      '<a href="#nested-heading" class="scribdown-toc-link">Nested Heading</a>'
     );
     expect(renderedHtml).toContain(
       '<h2 id="safe-heading" data-source-line="3"><span class="scribdown-heading-mark">Safe Heading</span></h2>'
@@ -105,6 +133,8 @@ describe("renderMarkdown", () => {
     expect(renderedHtml).toContain(
       '<h3 id="nested-heading" data-source-line="5"><span class="scribdown-heading-mark">Nested Heading</span></h3>'
     );
+    // 旧的分支 details/summary/# 锚点结构不再出现。
+    expect(renderedHtml).not.toContain("scribdown-toc-branch");
   });
 
   it("tags user-authored <details> with frame classes and keeps them through sanitize", async () => {

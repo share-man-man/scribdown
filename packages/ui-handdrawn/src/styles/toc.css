@@ -67,140 +67,82 @@
   padding-left: 0;
 }
 
-.scribdown-toc-item {
-  --scribdown-toc-toggle-offset: 24px;
-
-  position: relative;
-  min-height: 30px;
-  margin-bottom: 6px;
-  color: var(--scribdown-color-text-secondary);
+/* 嵌套子列表：层级缩进由每个条目左侧固定 gutter 累加体现，这里仅补一点纵向间距。 */
+.scribdown-toc-list--nested {
+  margin: 4px 0 0;
+  padding-left: 0;
 }
 
-.scribdown-toc-item::before {
-  content: none;
-}
-
-.scribdown-toc-item > p {
-  margin: 0;
-}
-
-.scribdown-toc-item.scribdown-toc-item--branch {
-  padding-left: var(--scribdown-toc-parent-offset);
-}
-
-/* 目录分支不引入 .scribdown-frame，天然无边框、无底色，故无需再显式重置。 */
-.scribdown-toc-branch-summary {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  margin-left: calc(0px - var(--scribdown-toc-parent-offset));
-  padding-left: var(--scribdown-toc-parent-offset);
-  cursor: pointer;
-  list-style: none;
-}
-
-.scribdown-toc-branch-summary::marker,
-.scribdown-toc-branch-summary::-webkit-details-marker {
+/* 折叠态：隐藏当前分支条目的嵌套子列表。 */
+.scribdown-toc-item--collapsed > .scribdown-toc-list--nested {
   display: none;
 }
 
-.scribdown-toc-branch-summary:focus {
+/* 目录条目：左侧预留固定 gutter 容纳折叠按钮；叶子无按钮但同样缩进，标题天然对齐。
+   层级缩进通过条目嵌套累加 padding-left 实现，无需 --depth-N 专门定位。 */
+.scribdown-toc-item {
+  position: relative;
+  min-height: 28px;
+  margin-bottom: 4px;
+  padding-left: 22px;
+  color: var(--scribdown-color-text-secondary);
+}
+
+/* 分支折叠按钮：定位在左侧 gutter，重置原生按钮样式，用手绘三角图标表示展开/折叠。
+   与标题链接彻底分离，点击只折叠、不跳转。 */
+.scribdown-toc-toggle {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-image: var(--scribdown-toc-toggle-icon);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  cursor: pointer;
+  /* 展开态：三角朝下。 */
+  transform: rotate(85deg);
+  transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+/* 折叠态：三角朝右。 */
+.scribdown-toc-item--collapsed > .scribdown-toc-toggle {
+  transform: rotate(-5deg);
+}
+
+.scribdown-toc-toggle:focus {
   outline: none;
 }
 
-.scribdown-toc-branch-summary:focus-visible {
+.scribdown-toc-toggle:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--scribdown-color-warning) 68%, transparent);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
-.scribdown-toc-branch-summary::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: calc(var(--scribdown-toc-parent-offset) - var(--scribdown-toc-toggle-offset));
-  width: 19px;
-  height: 19px;
-  background-image: var(--scribdown-toc-toggle-icon);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  transform: translateY(-50%) rotate(-4deg);
-  transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
-}
-
-.scribdown-toc-branch[open] > .scribdown-toc-branch-summary::before {
-  transform: translateY(-50%) rotate(88deg);
-}
-
-.scribdown-toc-branch-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  color: var(--scribdown-color-warning);
-  font-family: var(--scribdown-font-heading);
-  font-size: 20px;
-  line-height: 1;
-  opacity: 0.72;
-  text-decoration: none;
-}
-
-.scribdown-toc-branch-link:hover {
-  opacity: 1;
-  text-decoration: none;
-}
-
-.scribdown-toc-list--nested {
-  margin: 6px 0 0 calc(0px - var(--scribdown-toc-parent-offset));
-  padding-left: 0;
-}
-
-.scribdown-toc-item--depth-1 {
-  --scribdown-toc-parent-offset: 24px;
-
-  padding-left: 24px;
-}
-
-.scribdown-toc-item--depth-2 {
-  --scribdown-toc-parent-offset: 48px;
-
-  padding-left: 48px;
-}
-
-.scribdown-toc-item--depth-3 {
-  --scribdown-toc-parent-offset: 72px;
-
-  padding-left: 72px;
-}
-
-.scribdown-toc-item--depth-4 {
-  --scribdown-toc-parent-offset: 96px;
-
-  padding-left: 96px;
-}
-
-.scribdown-toc-item--depth-5 {
-  --scribdown-toc-parent-offset: 120px;
-
-  padding-left: 120px;
-}
-
-.scribdown-toc-item--depth-6 {
-  --scribdown-toc-parent-offset: 144px;
-
-  padding-left: 144px;
-}
-
-.scribdown-toc-nav a {
+/* 标题跳转链接：叶子与分支共用同一种元素与样式。 */
+.scribdown-toc-link {
   color: var(--scribdown-color-accent);
+  line-height: 1.5;
   text-decoration: none;
 }
 
-.scribdown-toc-nav a:hover {
+.scribdown-toc-link:hover {
   opacity: 0.8;
   text-decoration: none;
+}
+
+.scribdown-toc-link:focus {
+  outline: none;
+}
+
+.scribdown-toc-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--scribdown-color-warning) 68%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
