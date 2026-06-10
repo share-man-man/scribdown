@@ -192,6 +192,9 @@ const TOC_ITEM_COLLAPSED_CLASS_NAME = "scribdown-toc-item--collapsed";
 // 目录条目标题跳转链接类名：叶子与分支共用同一种 <a href="#id"> 元素与跳转逻辑。
 const TOC_LINK_CLASS_NAME = "scribdown-toc-link";
 
+// 目录标题链接「当前章节」高亮类名：scrollspy 命中当前可视区标题时切换，与工具栏当前指示器同步。
+const TOC_LINK_ACTIVE_CLASS_NAME = "scribdown-toc-link--active";
+
 // 目录分支折叠按钮类名（与标题链接分离，专职展开/折叠，避免与跳转冲突）。
 const TOC_TOGGLE_CLASS_NAME = "scribdown-toc-toggle";
 
@@ -5380,6 +5383,59 @@ function mountPageToolbar(
     /** 当前命中的标题元素，供点击跳转使用。 */
     let activeHeadingElement: HTMLHeadingElement = headingElements[0];
 
+    // ── 目录侧栏「当前章节」高亮（复用同一份 scrollspy 结果）──
+    // 关键步骤：建立「正文标题元素 → 目录链接」映射，使 scrollspy 命中标题后可反查并高亮对应目录项。
+    // 链接目标 id 解析与 hydrateToc 一致：优先原文匹配，失败再解码兜底（兼容被编码的中文 id）。
+    /** 正文标题元素 → 目录侧栏对应跳转链接的映射。 */
+    const tocLinkByHeading = new Map<HTMLHeadingElement, HTMLAnchorElement>();
+    tocPanel
+      .querySelectorAll<HTMLAnchorElement>(`a.${TOC_LINK_CLASS_NAME}`)
+      .forEach((linkElement) => {
+        /** 链接目标标题 id（去掉前导 #）。 */
+        const rawTargetId = (linkElement.getAttribute("href") ?? "").slice(1);
+        if (!rawTargetId) {
+          return;
+        }
+        /** 链接指向的标题元素，按原文匹配失败时解码兜底。 */
+        let targetHeading = ownerDocument.getElementById(rawTargetId);
+        if (!targetHeading) {
+          try {
+            targetHeading = ownerDocument.getElementById(decodeURIComponent(rawTargetId));
+          } catch {
+            targetHeading = null;
+          }
+        }
+        if (targetHeading instanceof HTMLHeadingElement) {
+          tocLinkByHeading.set(targetHeading, linkElement);
+        }
+      });
+
+    /** 当前高亮的目录链接；undefined 表示尚未高亮任何项。 */
+    let activeTocLink: HTMLAnchorElement | undefined;
+
+    /**
+     * 把目录侧栏「当前章节」高亮切换到指定标题对应的链接上。
+     * 按链接元素去重，未变化时直接返回，避免每帧重复读写 DOM。
+     * @param headingElement 当前命中的正文标题元素。
+     */
+    const setActiveTocLink = (headingElement: HTMLHeadingElement): void => {
+      /** 命中标题对应的目录链接，无对应项时为 undefined。 */
+      const nextLink = tocLinkByHeading.get(headingElement);
+      if (nextLink === activeTocLink) {
+        return;
+      }
+      if (activeTocLink) {
+        activeTocLink.classList.remove(TOC_LINK_ACTIVE_CLASS_NAME);
+        activeTocLink.removeAttribute("aria-current");
+      }
+      if (nextLink) {
+        nextLink.classList.add(TOC_LINK_ACTIVE_CLASS_NAME);
+        // 关键步骤：aria-current 把「当前所在位置」语义同步给读屏，与高亮类保持一致。
+        nextLink.setAttribute("aria-current", "location");
+      }
+      activeTocLink = nextLink;
+    };
+
     /**
      * 计算当前可视区所属标题并刷新指示器文本 + tip。
      * 取文档顺序中最后一个 top ≤ 判定线的标题；都未越线时回退到首个标题。
@@ -5396,6 +5452,8 @@ function mountPageToolbar(
       }
       // 关键步骤：始终同步当前标题引用（即便文本未变），保证点击跳转目标准确。
       activeHeadingElement = activeElement;
+      // 关键步骤：同步目录侧栏高亮到当前章节；按元素去重，独立于下方的文本去重短路。
+      setActiveTocLink(activeElement);
       /** 当前标题可见文本。 */
       const headingText = activeElement.textContent?.trim() ?? "";
       if (headingText === lastHeadingText) {

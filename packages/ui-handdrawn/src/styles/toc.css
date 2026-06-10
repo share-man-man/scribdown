@@ -146,3 +146,18 @@
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* 当前章节：scrollspy 命中当前可视区标题时高亮对应目录项，与工具栏当前章节指示器同步。
+   关键步骤：底色用 box-shadow「外扩」而非 padding，行内链接换行时不挤动布局。 */
+.scribdown-toc-link--active {
+  font-weight: 700;
+  opacity: 1;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--scribdown-color-accent) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--scribdown-color-accent) 15%, transparent);
+}
+
+/* 当前章节项 hover：保持高亮不被通用 hover 的半透明削弱。 */
+.scribdown-toc-link--active:hover {
+  opacity: 1;
+}
