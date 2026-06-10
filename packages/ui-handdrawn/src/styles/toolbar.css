@@ -327,37 +327,67 @@
 }
 
 /* ─── 目录侧栏 + 正文布局 ────────────────────────────────────── */
-/* 关键步骤：mountMarkdownToolbar 时给 container 加 .scribdown-toc-host，
-   并把 container 已有内容包进 .scribdown-content-area，与 TOC 共同走 flex 横向布局；
-   这样侧栏开/关时正文自然让位，不再依赖外层 padding。 */
+/* 关键步骤：mountMarkdownToolbar 时给 container（即 .scribdown-page 渲染根）加 .scribdown-toc-host，
+   并把已有内容包进 .scribdown-content-area > .scribdown-content-scroll：
+   - 渲染根：flex 横向布局，TOC 与正文并排；定高 + overflow:hidden，整页（window）不滚动。
+   - content-area：flex item，占满 TOC 之外的剩余宽度，仅作定位上下文（自身不滚动）。
+   - content-scroll：absolute + inset:0 铺满 content-area，正文的横向 + 纵向滚动都发生在此层。
+   这样 TOC 开合时正文自然让位，滚动收敛在内部、外层稳定不动。 */
 .scribdown-toc-host {
   display: flex;
   align-items: stretch;
+  /* TOC 宽度提到容器层，供 TOC 自身定宽 / 折叠位移共用。 */
+  --scribdown-toc-width: min(280px, 70vw);
+  /* 关键步骤：定高铺满视口；overflow:hidden 让整页不滚动，
+     折叠态 TOC（负 margin）也被裁切，滚动全部下沉到 content-scroll。 */
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 关键步骤：当 flex 布局根挂在 .scribdown-page 内层的满宽外壳上时（推荐结构，避免把 body 变成 flex 根），
+   body 自身仍是普通块流。此时把 body 也裁掉：整页滚动收敛在 content-scroll，且第三方漏到 body 的
+   绝对定位浮层（如 mermaid 渲染时留下的 .mermaidTooltip）不会撑出多余的整页滚动条。
+   仅在外壳确实成为 toc-host（工具栏已挂载）时生效，不影响「未挂工具栏 / 渲染期」的正常整页滚动。 */
+.scribdown-page:has(> .scribdown-toc-host) {
+  overflow: hidden;
 }
 
 .scribdown-content-area {
-  flex: 1;
+  /* 占满 TOC 之外的剩余宽度；min-width:0 解除 flex item 默认最小尺寸，允许收窄交给内部滚动。 */
+  flex: 1 1 0;
   min-width: 0;
+  /* 关键步骤：作为内部滚动层与光标高亮等绝对定位浮层的定位上下文（自身不滚动）。 */
+  position: relative;
 }
 
-/* 目录侧栏：作为 flex item 进入文档流，默认 margin-left 负值把自己收进左侧外。 */
+.scribdown-content-scroll {
+  /* 关键步骤：脱离 flex 尺寸链，以 absolute + inset:0 精确铺满 content-area，
+     正文超宽（表格 / 代码块）走横向滚动、超高走纵向滚动，都收敛在本层内部。 */
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+}
+
+/* 目录侧栏：flex item 贴最左，固定宽度；默认 margin-left 负值收进容器左外，is-open 归零滑入。 */
 .scribdown-toolbar-toc-panel {
   --scribdown-toc-width: min(280px, 70vw);
   flex-shrink: 0;
   box-sizing: border-box;
   width: var(--scribdown-toc-width);
-  /* 关键步骤：sticky 在长文档滚动时贴顶部；非滚动场景下退化为流内静态布局也 OK。 */
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  height: 100vh;
-  overflow-y: auto;
+  /* 关键步骤：填满外层容器高度（flex stretch 对齐 + 显式 100% 兜底），
+     内部支持横向 + 纵向滚动，超长 / 超宽目录条目在面板内自滚。 */
+  height: 100%;
+  /* 关键步骤：overlay 让滚动条悬浮在内容之上、不预留宽度，目录条目不被挤窄；
+     overflow:auto 作为不支持 overlay 时的兜底（仍可滚动，仅会预留滚动条宽度）。
+     滚动条的粗细 / 配色由 .scribdown-scrollbar-thin 统一提供（挂载时一并加到本元素上）。 */
+  overflow: auto;
+  overflow: overlay;
   background: var(--scribdown-color-surface);
   border-right: 1.5px solid var(--scribdown-color-border);
   box-shadow: var(--scribdown-shadow-md);
   padding: var(--scribdown-space-4);
-  /* 关键步骤：margin-left 负值占据负向布局空间，正文 flex:1 自然占满全宽；
-     切到 0 时正文自然让出 var(--scribdown-toc-width)，整体平滑过渡。 */
+  /* 关键步骤：margin-left 负值占据负向布局空间收起，正文 flex:1 自然占满全宽；
+     切到 0 时正文让出 var(--scribdown-toc-width)，整体平滑过渡。 */
   margin-left: calc(-1 * var(--scribdown-toc-width));
   transition: margin-left var(--scribdown-duration-base) var(--scribdown-easing-standard);
   z-index: 9001;
@@ -365,6 +395,39 @@
 
 .scribdown-toolbar-toc-panel.is-open {
   margin-left: 0;
+}
+
+/* ─── 通用细滚动条（主题色，opt-in）────────────────────────────────
+   目录侧栏（.scribdown-toolbar-toc-panel）与正文滚动层（.scribdown-content-scroll）共用：
+   挂载时显式给滚动容器加 .scribdown-scrollbar-thin 引入，不在此罗列各容器选择器。
+   - 标准 scrollbar-width / scrollbar-color：新版 Chromium / Firefox / VS Code Webview 生效；
+     VS Code Webview 会在根元素注入并向下继承 scrollbar-color，显式声明可覆盖宿主值。
+   - ::-webkit-scrollbar：仅作不支持标准属性的旧引擎兜底（标准属性一旦生效会停用 webkit 伪元素）。 */
+.scribdown-scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scribdown-color-accent) 60%, transparent) transparent;
+}
+
+.scribdown-scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scribdown-scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scribdown-scrollbar-thin::-webkit-scrollbar-thumb {
+  /* border + background-clip:content-box 让拇指四周留白、悬浮感更强；2px 边框后可见拇指仅 4px。
+     颜色取主题强调色（accent）的半透明，与目录链接同色系。 */
+  background-color: color-mix(in srgb, var(--scribdown-color-accent) 55%, transparent);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+.scribdown-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--scribdown-color-accent) 80%, transparent);
 }
 
 .scribdown-toolbar-toc-panel-title {

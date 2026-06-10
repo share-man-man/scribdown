@@ -1,12 +1,13 @@
 /* ─── Markdown 正文排版 ─────────────────────────────────────────────── */
 /* body-md：18px / 1.75 / 400 */
 .scribdown-markdown {
-  /* 关键步骤：内容宽度由 --scribdown-content-width 固定（不是 max-width），
-     视口比该宽度小则保留内容尺寸并允许横向滚动，避免低分辨率下被压缩破坏排版。
-     box-sizing: border-box 让自身 padding 计入 width，外框严格匹配设定值。
-     full 档由 preset value="100%" 触发，自动填满父容器，无横向溢出。 */
+  /* 关键步骤：列宽由父级 .scribdown-app（即 --scribdown-content-width）控制，本卡片 width:auto
+     填满其内容盒；box-sizing:border-box 让自身 padding 计入宽度。
+     max-width 兜底：脱离 .scribdown-app 单独使用（第三方接入 / 预览沙盒）时仍受 --scribdown-content-width 约束，
+     margin:auto 在此场景下居中。 */
   box-sizing: border-box;
-  width: var(--scribdown-content-width, 840px);
+  width: auto;
+  max-width: var(--scribdown-content-width, 840px);
   margin-left: auto;
   margin-right: auto;
   --scribdown-frame-edge-horizontal: url("../assets/rough-line-horizontal.svg");

@@ -11,6 +11,14 @@
 }
 
 .scribdown-app {
-  /* 关键步骤：内容宽度约束已转移到 .scribdown-markdown，wrapper 仅负责页面 padding。 */
+  box-sizing: border-box;
+  /* 关键步骤：正文列宽（含页面 padding）由 --scribdown-content-width 控制；box-sizing:border-box
+     让该宽度覆盖 padding 在内的整列外框。固定档（px）下视口更窄也保持该宽度不压缩，由外层
+     content-scroll 横向滚动，padding / 背景随列宽完整延伸；100% 档则铺满滚动视口。
+     视口比列宽更宽时 margin:auto 让整列居中。 */
+  width: var(--scribdown-content-width, 840px);
+  margin-left: auto;
+  margin-right: auto;
+  /* 关键步骤：wrapper 负责页面 padding，正文卡片（.scribdown-markdown）填满其内容盒。 */
   padding: var(--scribdown-space-6) var(--scribdown-space-5) var(--scribdown-space-7);
 }

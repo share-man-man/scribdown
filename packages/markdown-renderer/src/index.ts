@@ -11,6 +11,8 @@ import {
   SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME,
   SCRIBDOWN_TOC_HOST_CLASS_NAME,
   SCRIBDOWN_CONTENT_AREA_CLASS_NAME,
+  SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME,
+  SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME,
   SOURCE_LINE_DATA_ATTRIBUTE
 } from "@scribdown/shared";
 import DOMPurify from "dompurify";
@@ -5085,29 +5087,48 @@ function mountPageToolbar(
   container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_CLASS_NAME}`)?.remove();
   container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME}`)?.remove();
 
-  // 关键步骤：把 container 已有内容包进 .scribdown-content-area，
-  // 使 TOC 与正文同处一个 flex 流：TOC 用 margin-left 负值收起，正文 flex:1 自然让位。
-  // 幂等：复用已存在的 wrapper，避免重复包装。
+  // 关键步骤：把 container 已有内容包进 .scribdown-content-area > .scribdown-content-scroll，
+  // 形成统一布局：container 是 flex 容器（TOC + 正文横向并列），content-area flex:1 占满剩余宽度，
+  // 其内部的 content-scroll 以 absolute+inset:0 铺满并承载横向 / 纵向滚动（外层不滚动）。
+  // 幂等：复用已存在的 wrapper / 滚动层，避免重复包装。
   container.classList.add(SCRIBDOWN_TOC_HOST_CLASS_NAME);
+
+  /** 正文列容器（flex item，占满 TOC 之外的剩余宽度，作为滚动层的定位上下文）。 */
   let contentArea = container.querySelector(
     `:scope > .${SCRIBDOWN_CONTENT_AREA_CLASS_NAME}`
   ) as HTMLElement | null;
   if (!contentArea) {
     contentArea = ownerDocument.createElement("div");
     contentArea.className = SCRIBDOWN_CONTENT_AREA_CLASS_NAME;
-    // 关键步骤：剔除工具栏 / 侧栏 / 自身后，把剩余子节点全部移入 wrapper。
-    Array.from(container.children).forEach((child) => {
-      if (
-        child === contentArea ||
-        child.classList.contains(SCRIBDOWN_TOOLBAR_CLASS_NAME) ||
-        child.classList.contains(SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME)
-      ) {
-        return;
-      }
-      contentArea!.appendChild(child);
-    });
     container.appendChild(contentArea);
   }
+
+  /** 正文内部滚动层（absolute+inset:0 铺满 content-area，正文实际在此滚动）。 */
+  let contentScroll = contentArea.querySelector(
+    `:scope > .${SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME}`
+  ) as HTMLElement | null;
+  if (!contentScroll) {
+    contentScroll = ownerDocument.createElement("div");
+    // 关键步骤：正文滚动层与目录侧栏共用同一套细滚动条样式，显式 opt-in 引入。
+    contentScroll.className = `${SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME} ${SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME}`;
+    contentArea.appendChild(contentScroll);
+  }
+
+  // 关键步骤：把散落在 container / content-area 下的「裸正文内容」（剔除工具栏 / 侧栏 / 两层 wrapper 自身）
+  // 全部归集进滚动层；首次挂载时正文原本直接挂在 container 下，需移入，幂等情况下已在层内不会重复搬动。
+  const contentScrollElement = contentScroll;
+  const contentAreaElement = contentArea;
+  [...Array.from(container.children), ...Array.from(contentArea.children)].forEach((child) => {
+    if (
+      child === contentAreaElement ||
+      child === contentScrollElement ||
+      child.classList.contains(SCRIBDOWN_TOOLBAR_CLASS_NAME) ||
+      child.classList.contains(SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME)
+    ) {
+      return;
+    }
+    contentScrollElement.appendChild(child);
+  });
 
   const ownerWindow = ownerDocument.defaultView;
 
@@ -5118,7 +5139,8 @@ function mountPageToolbar(
   // ── 目录抽屉（按钮回调需要引用，先建好）──
   /** 目录浮动面板。 */
   const tocPanel = ownerDocument.createElement("div");
-  tocPanel.className = SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME;
+  // 关键步骤：目录侧栏与正文滚动层共用同一套细滚动条样式，显式 opt-in 引入。
+  tocPanel.className = `${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME} ${SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME}`;
 
   const tocTitle = ownerDocument.createElement("div");
   tocTitle.className = "scribdown-toolbar-toc-panel-title";
@@ -5284,6 +5306,9 @@ function mountPageToolbar(
   backTopItem.setAttribute("role", "menuitem");
   backTopItem.innerHTML = `${TOOLBAR_BACK_TOP_ICON_SVG}<span>回到顶部</span>`;
   backTopItem.addEventListener("click", () => {
+    // 关键步骤：正文滚动容器是 .scribdown-content-scroll，优先滚动它回到顶部；
+    // 同时兜底滚动 window，兼容仍以整页滚动的宿主（无害的空操作）。
+    contentScroll?.scrollTo({ top: 0, behavior: "smooth" });
     ownerWindow?.scrollTo({ top: 0, behavior: "smooth" });
     closeMoreMenu();
   });
@@ -5409,17 +5434,22 @@ function mountPageToolbar(
         }) ?? 0;
     };
 
-    ownerWindow?.addEventListener("scroll", onScrollOrResize, { passive: true });
+    // 关键步骤：正文已改为在 .scribdown-content-area 内部滚动（整页 window 不再滚动），
+    // scroll 事件不冒泡，故用「捕获阶段」在 window 上监听，可同时捕获到内部滚动容器派发的 scroll。
+    ownerWindow?.addEventListener("scroll", onScrollOrResize, {
+      passive: true,
+      capture: true
+    });
     ownerWindow?.addEventListener("resize", onScrollOrResize, { passive: true });
     // 首次同步一次当前章节。
     updateCurrentHeading();
 
-    // 关键步骤：登记清理函数，下次重挂载工具栏前断开窗口监听。
+    // 关键步骤：登记清理函数，下次重挂载工具栏前断开窗口监听（capture 标志需与注册时一致）。
     pageToolbarScrollspyTeardowns.set(container, () => {
       if (scrollRafId) {
         ownerWindow?.cancelAnimationFrame(scrollRafId);
       }
-      ownerWindow?.removeEventListener("scroll", onScrollOrResize);
+      ownerWindow?.removeEventListener("scroll", onScrollOrResize, { capture: true });
       ownerWindow?.removeEventListener("resize", onScrollOrResize);
     });
 

@@ -1,12 +1,56 @@
 import morphdom from "morphdom";
 import { hydrateMarkdown, mountMarkdownToolbar } from "@scribdown/markdown-renderer";
 import {
+  SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME,
   SOURCE_LINE_ACTIVE_CLASS_NAME,
   SOURCE_LINE_DATA_ATTRIBUTE,
   SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME
 } from "@scribdown/shared";
+
+// ─── 滚动容器抽象 ─────────────────────────────────────────────────────────────
+// 关键步骤：挂载工具栏后正文被包进 .scribdown-content-area > .scribdown-content-scroll，
+// 由内部滚动层承载滚动（整页 window 不再滚动）。滚动同步与光标高亮浮层均以该滚动层为坐标基准，
+// 直接读写其 scrollTop / 用其矩形换算偏移即可。工具栏挂载前的极早期回退到文档根滚动元素，
+// 仅作 null 安全——此时尚无正文，不会触发任何偏移计算，故无需为整页滚动单独建一套坐标系。
+
+/**
+ * 解析当前预览的滚动容器：优先 .scribdown-content-scroll（content-area 内的 absolute 滚动层），
+ * 回退文档根滚动元素（工具栏挂载前的极早期，仅作 null 安全）。
+ * @returns 当前承载正文纵向 / 横向滚动的元素。
+ */
+function resolvePreviewScroller(): HTMLElement {
+  return (
+    document.querySelector<HTMLElement>(`.${SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME}`) ??
+    (document.scrollingElement as HTMLElement | null) ??
+    document.documentElement
+  );
+}
+
+/**
+ * 取元素相对当前滚动容器「内容坐标系」的纵向偏移，等价于把 getBoundingClientRect 归一到容器内容顶部。
+ * @param element 目标元素。
+ * @param scroller 滚动容器元素。
+ * @returns 元素顶部在容器内容坐标系中的像素偏移。
+ */
+function getOffsetTopInScroller(element: Element, scroller: HTMLElement): number {
+  return (
+    element.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
+  );
+}
+
+/**
+ * 取元素相对当前滚动容器「内容坐标系」的横向偏移。
+ * @param element 目标元素。
+ * @param scroller 滚动容器元素。
+ * @returns 元素左侧在容器内容坐标系中的像素偏移。
+ */
+function getOffsetLeftInScroller(element: Element, scroller: HTMLElement): number {
+  return (
+    element.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft
+  );
+}
 
 /**
  * 目录标题链接 class，与 @scribdown/markdown-renderer 的 TOC_LINK_CLASS_NAME 对应。
@@ -27,12 +71,12 @@ const TOC_SCROLL_DURATION_MS = 320;
  * @param targetElement 目标标题元素。
  */
 function scrollHeadingIntoViewSmoothly(targetElement: HTMLElement): void {
-  // 文档滚动根。
-  const scroller = document.scrollingElement ?? document.documentElement;
+  // 当前正文滚动容器（content-area；工具栏未挂载时回退文档根）。
+  const scroller = resolvePreviewScroller();
   // 动画起始纵向滚动量。
   const startY = scroller.scrollTop;
-  // 目标纵向滚动量：元素相对视口顶 + 当前滚动量。
-  const targetY = targetElement.getBoundingClientRect().top + startY;
+  // 目标纵向滚动量：元素在滚动容器内容坐标系中的顶部偏移。
+  const targetY = getOffsetTopInScroller(targetElement, scroller);
   // 本次滚动位移。
   const distance = targetY - startY;
   if (distance === 0) {
@@ -51,7 +95,7 @@ function scrollHeadingIntoViewSmoothly(targetElement: HTMLElement): void {
     const progress = Math.min(1, (timestamp - startTimestamp) / TOC_SCROLL_DURATION_MS);
     // easeInOutCubic 缓动。
     const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
-    window.scrollTo(0, startY + distance * eased);
+    scroller.scrollTop = startY + distance * eased;
     if (progress < 1) {
       window.requestAnimationFrame(stepScroll);
     }
@@ -271,12 +315,20 @@ export function bootstrapVscodePreviewRuntime(
   const showCursorHighlight = (targetElement: HTMLElement): void => {
     activeHighlightElement = targetElement;
 
-    // 目标元素相对视口的矩形。
+    // 当前正文滚动容器，同时作为高亮浮层宿主。
+    const scroller = resolvePreviewScroller();
+    // 关键步骤：浮层须挂在滚动容器内，方能以容器内容坐标定位、随内容滚动自然移动；
+    // 容器在重渲染中可能被替换，故每次定位都纠正宿主归属。
+    if (cursorHighlightOverlay.parentElement !== scroller) {
+      scroller.appendChild(cursorHighlightOverlay);
+    }
+
+    // 目标元素相对视口的矩形（仅取尺寸；定位用容器内容坐标）。
     const rect = targetElement.getBoundingClientRect();
 
-    // 浮层使用文档绝对坐标定位，随页面滚动自然移动，无需在滚动时更新。
-    cursorHighlightOverlay.style.top = `${rect.top + window.scrollY}px`;
-    cursorHighlightOverlay.style.left = `${rect.left + window.scrollX}px`;
+    // 浮层使用滚动容器内容坐标定位，随容器滚动自然移动，无需在滚动时更新。
+    cursorHighlightOverlay.style.top = `${getOffsetTopInScroller(targetElement, scroller)}px`;
+    cursorHighlightOverlay.style.left = `${getOffsetLeftInScroller(targetElement, scroller)}px`;
     cursorHighlightOverlay.style.width = `${rect.width}px`;
     cursorHighlightOverlay.style.height = `${rect.height}px`;
     cursorHighlightOverlay.style.display = "block";
@@ -336,9 +388,15 @@ export function bootstrapVscodePreviewRuntime(
 
     // 高亮块相对视口的矩形。
     const rect = activeHighlightElement.getBoundingClientRect();
-    // 高亮块所在边缘：完全在视口上方为 top，完全在下方为 bottom，部分可见为 undefined。
+    // 当前滚动容器可视区相对视口的矩形，其上 / 下边界用于判定高亮块是否在可视区外。
+    const viewportRect = resolvePreviewScroller().getBoundingClientRect();
+    // 高亮块所在边缘：完全在可视区上方为 top，完全在下方为 bottom，部分可见为 undefined。
     const edge: "top" | "bottom" | undefined =
-      rect.bottom <= 0 ? "top" : rect.top >= window.innerHeight ? "bottom" : undefined;
+      rect.bottom <= viewportRect.top
+        ? "top"
+        : rect.top >= viewportRect.bottom
+          ? "bottom"
+          : undefined;
 
     if (edge && (force || edge !== lastOffscreenHintEdge)) {
       flashOffscreenHint(edge);
@@ -421,6 +479,8 @@ export function bootstrapVscodePreviewRuntime(
     }
   });
 
+  // 关键步骤：正文在 .scribdown-content-area 内部滚动，scroll 事件不冒泡，
+  // 故用「捕获阶段」在 window 上监听，可同时捕获到内部滚动容器派发的 scroll。
   window.addEventListener(
     "scroll",
     () => {
@@ -432,10 +492,12 @@ export function bootstrapVscodePreviewRuntime(
       scrollReportFrameHandle = window.requestAnimationFrame(() => {
         scrollReportFrameHandle = 0;
 
+        // 当前滚动容器视口顶部的纵向滚动量。
+        const currentScrollTop = resolvePreviewScroller().scrollTop;
         // 当前 scroll 事件是否为程序化滚动自身触发的回声。
         const isProgrammaticEcho =
           suppressedScrollY !== undefined &&
-          Math.abs(window.scrollY - suppressedScrollY) < 1;
+          Math.abs(currentScrollTop - suppressedScrollY) < 1;
 
         // logPreviewScroll(isProgrammaticEcho ? "programmatic-echo" : "user-scroll", {
         //   scrollY: window.scrollY,
@@ -460,7 +522,7 @@ export function bootstrapVscodePreviewRuntime(
         });
       });
     },
-    { passive: true }
+    { passive: true, capture: true }
   );
 
   vscodeApi.postMessage({ type: options.previewReadyMessageType });
@@ -556,6 +618,8 @@ function collectSourceLineAnchors(previewRootElement: HTMLElement): SourceLineAn
   );
   // 采集结果。
   const anchors: SourceLineAnchor[] = [];
+  // 关键步骤：锚点偏移须以「当前滚动容器内容坐标系」度量，与滚动同步读写保持同一基准。
+  const scroller = resolvePreviewScroller();
 
   anchorElements.forEach((anchorElement) => {
     // 锚点元素上的源码行号文本。
@@ -567,8 +631,8 @@ function collectSourceLineAnchors(previewRootElement: HTMLElement): SourceLineAn
       return;
     }
 
-    // 元素相对文档顶部的绝对像素偏移。
-    const offsetTop = anchorElement.getBoundingClientRect().top + window.scrollY;
+    // 元素相对滚动容器内容顶部的像素偏移。
+    const offsetTop = getOffsetTopInScroller(anchorElement, scroller);
     anchors.push({ line, offsetTop, element: anchorElement });
   });
 
@@ -622,8 +686,8 @@ function resolveTopSourceLine(anchors: SourceLineAnchor[]): number {
     return 1;
   }
 
-  // 当前视口顶部的文档像素偏移。
-  const viewportTop = window.scrollY;
+  // 当前视口顶部在滚动容器内容坐标系中的像素偏移。
+  const viewportTop = resolvePreviewScroller().scrollTop;
   // 视口顶部之上（含等于）的最后一个锚点索引（按像素偏移二分）。
   const previousAnchorIndex = findLastAnchorIndexAtMost(
     anchors,
@@ -703,19 +767,21 @@ function scrollPreviewToSourceLine(
     return undefined;
   }
 
-  // 目标纵向位置：源码行锚点换算出的文档像素偏移。
+  // 当前正文滚动容器。
+  const scroller = resolvePreviewScroller();
+  // 目标纵向位置：源码行锚点换算出的内容坐标系像素偏移。
   const targetY = resolveSourceLineOffsetTop(anchors, sourceLine);
 
-  window.scrollTo(0, targetY);
+  scroller.scrollTop = targetY;
 
   // logPreviewScroll("set-preview-scroll", {
   //   sourceLine,
   //   targetY,
-  //   scrolledY: window.scrollY
+  //   scrolledY: scroller.scrollTop
   // });
 
   // 返回滚动后的实际位置（已被浏览器约束到有效区间），供回声跳过比对。
-  return window.scrollY;
+  return scroller.scrollTop;
 }
 
 /**

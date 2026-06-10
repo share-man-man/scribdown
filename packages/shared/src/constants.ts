@@ -103,8 +103,21 @@ export const SCRIBDOWN_TOC_HOST_CLASS_NAME = "scribdown-toc-host";
 
 /**
  * 工具栏挂载时用于包裹 container 已有内容的 wrapper class，作为 flex 流中的正文 item，与 TOC 横向并列。
+ * 自身 flex:1 填满 TOC 之外的剩余宽度，并作为内部滚动层的定位上下文（position:relative）。
  */
 export const SCRIBDOWN_CONTENT_AREA_CLASS_NAME = "scribdown-content-area";
+
+/**
+ * 正文内部滚动层 class：位于 .scribdown-content-area 内，position:absolute + inset:0 铺满父级，
+ * 由它统一承载正文的横向与纵向滚动（外层 page / content-area 均不滚动）。
+ */
+export const SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME = "scribdown-content-scroll";
+
+/**
+ * 通用「细 + 主题色」滚动条 class：各滚动容器（目录侧栏、正文滚动层等）显式 opt-in 引入，
+ * 统一标准 scrollbar-* 与 ::-webkit-scrollbar 兜底配色，避免在多个容器选择器上重复罗列。
+ */
+export const SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME = "scribdown-scrollbar-thin";
 
 /**
  * 工具栏「更多」下拉菜单容器 class。
