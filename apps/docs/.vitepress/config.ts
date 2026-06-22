@@ -5,6 +5,10 @@ export default defineConfig({
   description: "手绘风格 Markdown 渲染器",
   lang: "zh-CN",
 
+  // 部署到 GitHub Pages 项目站点（https://share-man-man.github.io/scribdown/），
+  // 带子路径，必须设 base，否则线上静态资源会 404。若改用自有域名需改回 "/"。
+  base: "/scribdown/",
+
   // 默认 markdown-it 未启用 footnote，`[^x]: ...` 会被识别为链接引用定义，
   // 中文脚注内容会被当成 URL 触发 dead link 校验，这里忽略此模式。
   ignoreDeadLinks: [/^\.\/%E/],
@@ -67,11 +71,11 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/GrainFull/scribdown" },
+      { icon: "github", link: "https://github.com/share-man-man/scribdown" },
     ],
 
     footer: {
-      message: "Scribdown — 只做渲染，不做编辑",
+      message: "Scribdown — 手绘风格的markdwon渲染器",
     },
 
     search: {

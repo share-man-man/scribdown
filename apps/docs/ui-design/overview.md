@@ -28,7 +28,7 @@ Scribdown 的 UI 目标是：**用克制的手绘感提升 Markdown 阅读体验
 
 本节记录基于 [Markdown 样例](./markdown-fixture.md) 生成的 Image2.0 示例图，用作浅色主题预览画板的方向参考。后续 Pencil 出图和 UI 实现应提取其中的风格原则，不要求逐像素复刻。
 
-![Image2.0 渲染预览参考图](/ui-design-renderings.png)
+![Image2.0 渲染预览参考图](/ui-design.png)
 
 ### 这张图主要看什么
 
