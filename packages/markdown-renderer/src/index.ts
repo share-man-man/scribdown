@@ -1,5 +1,6 @@
 import {
   CONTENT_WIDTH_STORAGE_KEY,
+  PROJECT_HOMEPAGE_URL,
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_CLASS_NAME,
@@ -5063,6 +5064,16 @@ const TOOLBAR_WIDTH_ICON_SVG =
   "</svg>";
 
 /**
+ * 「关于」菜单项的内嵌 SVG 字符串（信息图标）。
+ */
+const TOOLBAR_ABOUT_ICON_SVG =
+  '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  '<circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/>' +
+  '<path d="M9 8v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+  '<circle cx="9" cy="5.6" r="0.9" fill="currentColor"/>' +
+  "</svg>";
+
+/**
  * 每个 container 上当前「当前章节指示器」scrollspy 的清理函数。
  * 重复挂载工具栏前先调用，断开旧的 scroll/resize 监听，避免监听堆积与对已卸载 DOM 的写入。
  */
@@ -5316,9 +5327,23 @@ function mountPageToolbar(
     closeMoreMenu();
   });
 
-  // 关键步骤：菜单项按可见顺序追加 —— 回到顶部 → 切换页面宽度（下拉）。
+  // 菜单项：关于（点击在新标签页打开项目 GitHub Pages 主页）。
+  /** 「关于」菜单项。 */
+  const aboutItem = ownerDocument.createElement("button");
+  aboutItem.type = "button";
+  aboutItem.className = SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME;
+  aboutItem.setAttribute("role", "menuitem");
+  aboutItem.innerHTML = `${TOOLBAR_ABOUT_ICON_SVG}<span>关于</span>`;
+  aboutItem.addEventListener("click", () => {
+    // 关键步骤：新标签页打开项目主页，noopener/noreferrer 阻断被打开页对本页的引用。
+    ownerWindow?.open(PROJECT_HOMEPAGE_URL, "_blank", "noopener,noreferrer");
+    closeMoreMenu();
+  });
+
+  // 关键步骤：菜单项按可见顺序追加 —— 回到顶部 → 切换页面宽度（下拉）→ 关于。
   menu.appendChild(backTopItem);
   menu.appendChild(widthGroup);
+  menu.appendChild(aboutItem);
 
   tocBtn.addEventListener("click", (e) => {
     e.stopPropagation();

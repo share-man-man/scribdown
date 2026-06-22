@@ -6,6 +6,11 @@ import { PlatformType, ThemeType } from "./enums";
 export const PROJECT_NAME = "Scribdown";
 
 /**
+ * 当前项目主页地址（部署在 GitHub Pages 的项目站点，带 /scribdown/ 子路径）。
+ */
+export const PROJECT_HOMEPAGE_URL = "https://share-man-man.github.io/scribdown/";
+
+/**
  * 当前项目固定 Node.js LTS 版本。
  */
 export const NODE_LTS_VERSION = "24.15.0";
