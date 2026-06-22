@@ -23,6 +23,7 @@
     "@playwright/test": "^1.54.2",
     "@types/node": "^24",
     "eslint": "^9.32.0",
+    "globals": "^17.6.0",
     "prettier": "^3.6.2",
     "roughjs": "^4.6.6",
     "tsup": "^8.5.1",

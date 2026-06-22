@@ -7,7 +7,7 @@
     "dev": "vite --port 9173 --strictPort",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

@@ -63,7 +63,7 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "package:vsix": "pnpm dlx @vscode/vsce package --no-dependencies --out scribdown-markdown-preview.vsix",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
