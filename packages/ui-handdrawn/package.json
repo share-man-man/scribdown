@@ -1,12 +1,26 @@
 {
   "name": "@scribdown/ui-handdrawn",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Scribdown 手绘风格视觉组件：设计 Token、样式与 SVG 资产。",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/share-man-man/scribdown.git",
+    "directory": "packages/ui-handdrawn"
+  },
   "exports": {
     "./styles.css": "./src/styles.css",
     "./styles/*": "./src/styles/*",
     "./assets/*": "./src/assets/*"
+  },
+  "files": [
+    "src/styles.css",
+    "src/styles",
+    "src/assets"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "test": "vitest run",
