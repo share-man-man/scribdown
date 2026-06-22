@@ -336,7 +336,7 @@ Frame (1440px, layout: vertical, gap: space-4, padding: space-4)
 
 对照以下清单逐项确认，全部通过后完成出图。
 
-- [ ] 严格遵守「只做渲染，不做编辑」的产品边界
+- [ ] Browser 与 VS Code 的 Markdown 渲染规则和视觉表达保持一致
 - [ ] 所有颜色、尺寸、动效均来自 `--scribdown-*` Token，无硬编码
 - [ ] 纸感、手绘感与可读性并存，装饰未压过正文
 - [ ] 浅色主题 Preview 画板已对照 [./overview.md#视觉基线](./overview.md#视觉基线) 检查页面壳层、标题、媒体块和失败态

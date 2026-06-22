@@ -1,6 +1,6 @@
 # Scribdown Markdown 完整语法预览
 
-> Scribdown 是一个**手绘风格**的 Markdown 渲染器，只负责*展示*，不负责编辑。
+> Scribdown 是一个具有**手绘风格**的 Markdown 渲染器，为内容提供统一、清晰的阅读体验。
 >
 > 这份文档覆盖 CommonMark、GFM 与常见扩展语法，用于视觉设计、渲染回归和安全策略验证。
 
@@ -124,7 +124,7 @@ Scribdown
 
 正常图片：
 
-![Paper texture placeholder](https://picsum.photos/id/1035/640/360 "图片标题")
+![Paper texture placeholder](https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png "图片标题")
 
 引用式图片：
 
@@ -132,7 +132,7 @@ Scribdown
 
 图片说明文：
 
-![Handdrawn preview with caption](https://picsum.photos/id/1035/640/360)
+![Handdrawn preview with caption](https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png)
 
 _Figure 1. 手绘风格预览页，正文区使用暖纸色背景与克制的装饰纹理。_
 
@@ -554,4 +554,4 @@ supercalifragilisticexpialidocious-supercalifragilisticexpialidocious-supercalif
 
 [docs]: https://example.com/docs
 [spec]: https://example.com/spec
-[preview]: https://picsum.photos/id/1035/640/360
+[preview]: https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png
