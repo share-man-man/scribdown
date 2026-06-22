@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# 串行执行，避免并发发布互相覆盖
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write # changesets 推送版本提交与 git tag
+  pull-requests: write # changesets 自动开 "Version Packages" PR
+  id-token: write # npm provenance（可选）
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要历史，供下方 git diff 检测 app 版本变化
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".tool-versions"
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org" # 写入 .npmrc，供 npm 发布鉴权
+      - run: pnpm install --frozen-lockfile
+
+      # 有未消费的 changeset → 开/更新 Version PR；
+      # Version PR 合并后（无 pending changeset）→ 执行 pnpm release 发 npm。
+      - name: Create Version PR or publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          publish: pnpm release
+          commit: "chore: 版本编排与发布"
+          title: "chore: 版本编排与发布"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # 仅当本次确实发布了（Version PR 已合并）才继续分发到商店。
+      # 通过对比合并提交前后的 app package.json version 行，判断哪个 app 需要发布。
+      - name: Detect app version changes
+        if: steps.changesets.outputs.published == 'true'
+        id: apps
+        run: |
+          vscode_changed=$(git diff HEAD^ HEAD -- apps/vscode-extension/package.json | grep -cE '^[+-].*"version"' || true)
+          echo "vscode=$([ "$vscode_changed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      # —— VS Code 商店 ——
+      - name: Publish VS Code Extension
+        if: steps.changesets.outputs.published == 'true' && steps.apps.outputs.vscode == 'true'
+        working-directory: apps/vscode-extension
+        run: pnpm dlx @vscode/vsce publish --no-dependencies
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      # —— Chrome 商店（仅上传草稿，不提交审核） ——
+      # 暂时注释：先跑通 npm + VS Code 流程，配好 Chrome 的 OAuth secrets 后再启用。
+      # 启用时：在上面的 "Detect app version changes" 步骤补回 browser_changed 检测，
+      # 并配置 CHROME_EXTENSION_ID / CHROME_CLIENT_ID / CHROME_CLIENT_SECRET / CHROME_REFRESH_TOKEN。
+      #
+      # - name: Upload Chrome draft
+      #   if: steps.changesets.outputs.published == 'true' && steps.apps.outputs.browser == 'true'
+      #   run: |
+      #     pnpm --filter @scribdown/browser-extension build
+      #     (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
+      #     # 不带 --auto-publish：只上传到草稿，是否提交审核/发布由你在后台手动决定
+      #     pnpm dlx chrome-webstore-upload-cli@3 upload \
+      #       --source "$RUNNER_TEMP/chrome-extension.zip" \
+      #       --extension-id "$CHROME_EXTENSION_ID" \
+      #       --client-id "$CHROME_CLIENT_ID" \
+      #       --client-secret "$CHROME_CLIENT_SECRET" \
+      #       --refresh-token "$CHROME_REFRESH_TOKEN"
+      #   env:
+      #     CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      #     CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      #     CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      #     CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}

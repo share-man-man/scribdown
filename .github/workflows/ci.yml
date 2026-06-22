@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 同一分支只跑最新一次，自动取消旧的进行中任务
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".tool-versions"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+      # 打包冒烟：确认各发布目标都能产出制品（不发布）
+      - name: Pack check (npm packages)
+        run: pnpm -r --filter "./packages/*" exec pnpm pack --pack-destination "$RUNNER_TEMP"
+      - name: Package check (VS Code extension)
+        working-directory: apps/vscode-extension
+        run: pnpm dlx @vscode/vsce package --no-dependencies --out "$RUNNER_TEMP/scribdown.vsix"
