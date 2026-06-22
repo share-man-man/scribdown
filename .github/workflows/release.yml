@@ -42,6 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # 启用 npm provenance：在 npm 页面展示「来源可验证」，依赖上方 id-token: write
+          NPM_CONFIG_PROVENANCE: true
 
       # 仅当本次确实发布了（Version PR 已合并）才继续分发到商店。
       # 通过对比合并提交前后的 app package.json version 行，判断哪个 app 需要发布。
