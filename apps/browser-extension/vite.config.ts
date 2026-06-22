@@ -4,9 +4,17 @@ import { crx } from "@crxjs/vite-plugin";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import manifest from "./manifest.json";
+import pkg from "./package.json";
 
 /** 当前配置文件所在目录，作为相对路径解析基准。 */
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
+
+/**
+ * 关键步骤：以 package.json 的 version 作为唯一版本号来源，覆盖 manifest.json 的 version。
+ * Chrome Web Store 以 manifest 版本判定发布版本，而 Changesets 只 bump package.json，
+ * 这里在构建时同步，避免两处版本漂移。
+ */
+const manifestWithVersion = { ...manifest, version: pkg.version };
 
 /**
  * 浏览器插件应用的 Vite 配置。
@@ -17,7 +25,7 @@ const projectRoot = fileURLToPath(new URL(".", import.meta.url));
  * @returns Vite 配置对象。
  */
 export default defineConfig({
-  plugins: [react(), crx({ manifest })],
+  plugins: [react(), crx({ manifest: manifestWithVersion })],
   build: {
     rollupOptions: {
       input: {
