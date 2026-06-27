@@ -36,9 +36,7 @@ async function readEffectiveIntervalSec(): Promise<number> {
   /** storage 中读到的原始间隔配置值。 */
   const raw = result[REFRESH_INTERVAL_STORAGE_KEY];
   /** 解析后的间隔秒数，未设置时回落到默认值。 */
-  const parsed = typeof raw === "number" && !Number.isNaN(raw)
-    ? raw
-    : DEFAULT_REFRESH_INTERVAL_SEC;
+  const parsed = typeof raw === "number" && !Number.isNaN(raw) ? raw : DEFAULT_REFRESH_INTERVAL_SEC;
   return Math.min(MAX_REFRESH_INTERVAL_SEC, Math.max(MIN_REFRESH_INTERVAL_SEC, parsed));
 }
 
@@ -56,6 +54,12 @@ export function startPollingSource(options: PollSourceOptions): () => void {
   let timer: ReturnType<typeof setTimeout> | null = null;
   /** 是否已被取消，避免清理后异步回调继续排程。 */
   let cancelled = false;
+  /** 当前是否正在执行一轮拉取/渲染，避免 storage 变化时并发启动第二轮。 */
+  let running = false;
+  /** 当前是否已有下一轮 timer 排程，保证同一时刻最多一个 pending timer。 */
+  let scheduled = false;
+  /** storage 变化发生在运行中时置 true，等当前 tick 结束后再按最新配置重排一次。 */
+  let rescheduleRequested = false;
 
   /**
    * 清空当前 pending 的定时器（如有）。
@@ -65,6 +69,7 @@ export function startPollingSource(options: PollSourceOptions): () => void {
       clearTimeout(timer);
       timer = null;
     }
+    scheduled = false;
   };
 
   /**
@@ -72,14 +77,19 @@ export function startPollingSource(options: PollSourceOptions): () => void {
    */
   const scheduleNext = async (): Promise<void> => {
     if (cancelled) return;
+    if (scheduled) return;
     /** 本次读到的有效间隔（秒）。 */
     const intervalSec = await readEffectiveIntervalSec();
     if (cancelled) return;
+    if (scheduled) return;
     if (intervalSec <= 0) {
       timer = null;
       return;
     }
+    scheduled = true;
     timer = setTimeout(() => {
+      scheduled = false;
+      timer = null;
       void tick();
     }, intervalSec * 1000);
   };
@@ -89,6 +99,11 @@ export function startPollingSource(options: PollSourceOptions): () => void {
    */
   const tick = async (): Promise<void> => {
     if (cancelled) return;
+    if (running) {
+      rescheduleRequested = true;
+      return;
+    }
+    running = true;
     try {
       /** 本轮拉取到的最新原始文本。 */
       const latest = await options.fetchLatest();
@@ -98,6 +113,11 @@ export function startPollingSource(options: PollSourceOptions): () => void {
       }
     } catch {
       // 关键步骤：单次拉取失败不打断轮询，下一周期再尝试。
+    }
+    running = false;
+    if (rescheduleRequested) {
+      rescheduleRequested = false;
+      clearTimer();
     }
     await scheduleNext();
   };
@@ -120,6 +140,10 @@ export function startPollingSource(options: PollSourceOptions): () => void {
       return;
     }
     clearTimer();
+    if (running) {
+      rescheduleRequested = true;
+      return;
+    }
     void scheduleNext();
   };
 
