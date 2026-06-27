@@ -13,21 +13,10 @@ type GrammarModule = { default: LanguageRegistration[] };
 type GrammarLoader = () => Promise<GrammarModule>;
 
 /**
- * 高亮器初始化时即刻拉取的语言（覆盖 .md 文档中最高频的代码块语种）。
- * 使用动态 import 而非 静态 import：grammar JSON 仍作为独立 chunk 异步加载，
- * 不会内联进主 bundle，但 createHighlighterCore 会并发 await 全部，渲染前已就绪。
+ * 高亮器初始化时即刻拉取的语言。
+ * 浏览器扩展冷启动对包加载敏感，这里保持为空；具体 grammar 按代码块语言懒加载。
  */
-export const CODE_HIGHLIGHTER_EAGER_LOADERS: GrammarLoader[] = [
-  () => import("@shikijs/langs/bash"),
-  () => import("@shikijs/langs/css"),
-  () => import("@shikijs/langs/diff"),
-  () => import("@shikijs/langs/html"),
-  () => import("@shikijs/langs/javascript"),
-  () => import("@shikijs/langs/json"),
-  () => import("@shikijs/langs/markdown"),
-  () => import("@shikijs/langs/typescript"),
-  () => import("@shikijs/langs/yaml")
-];
+export const CODE_HIGHLIGHTER_EAGER_LOADERS: GrammarLoader[] = [];
 
 /**
  * 懒加载语言注册表：id 归一化（小写）→ 动态 import 函数。
@@ -36,6 +25,22 @@ export const CODE_HIGHLIGHTER_EAGER_LOADERS: GrammarLoader[] = [
  * 已在 eager 列表中的语言不需要在此重复（其 grammar 自带的 aliases 会在 loadLanguage 时一并注册）。
  */
 export const CODE_HIGHLIGHTER_LAZY_LANGS: Record<string, GrammarLoader> = {
+  // 高频基础语言
+  bash: () => import("@shikijs/langs/bash"),
+  sh: () => import("@shikijs/langs/bash"),
+  shell: () => import("@shikijs/langs/bash"),
+  css: () => import("@shikijs/langs/css"),
+  diff: () => import("@shikijs/langs/diff"),
+  html: () => import("@shikijs/langs/html"),
+  js: () => import("@shikijs/langs/javascript"),
+  javascript: () => import("@shikijs/langs/javascript"),
+  json: () => import("@shikijs/langs/json"),
+  markdown: () => import("@shikijs/langs/markdown"),
+  md: () => import("@shikijs/langs/markdown"),
+  ts: () => import("@shikijs/langs/typescript"),
+  typescript: () => import("@shikijs/langs/typescript"),
+  yaml: () => import("@shikijs/langs/yaml"),
+  yml: () => import("@shikijs/langs/yaml"),
   // 前端框架与扩展
   jsx: () => import("@shikijs/langs/jsx"),
   tsx: () => import("@shikijs/langs/tsx"),
