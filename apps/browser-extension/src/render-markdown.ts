@@ -43,7 +43,7 @@ function resolveExtensionResourceUrl(resourcePath: string): string {
  * @param rawUrl 原始属性值。
  * @returns true 表示该值是需要重写的相对 URL。
  */
-function shouldRewriteRelativeUrl(rawUrl: string): boolean {
+export function shouldRewriteRelativeUrl(rawUrl: string): boolean {
   /** 去掉首尾空白后的 URL 文本。 */
   const trimmedUrl = rawUrl.trim();
   if (!trimmedUrl || trimmedUrl.startsWith("#") || trimmedUrl.startsWith("//")) {
@@ -65,7 +65,7 @@ function shouldRewriteRelativeUrl(rawUrl: string): boolean {
  * @param rootElement 需要处理的渲染根节点。
  * @param sourceUrl 原始 Markdown 文件 URL。
  */
-function rewriteRelativeUrls(rootElement: Element, sourceUrl: string): void {
+export function rewriteRelativeUrls(rootElement: Element, sourceUrl: string): void {
   /** 用于解析相对 URL 的源文件 URL。 */
   const baseUrl = new URL(sourceUrl);
   /** 需要处理 href/src 属性的元素集合。 */

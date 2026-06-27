@@ -1,5 +1,6 @@
 import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
 import { renderMarkdownToDocument } from "./render-markdown";
+import { extractFilename, validateViewerSourceUrl } from "./viewer-url";
 
 // 仅当源响应是这些纯文本/Markdown 变体时才进行渲染，避免把任意 HTML 当 Markdown 处理。
 const MARKDOWN_PLAINTEXT_MIME_TYPES = new Set<string>([
@@ -7,10 +8,6 @@ const MARKDOWN_PLAINTEXT_MIME_TYPES = new Set<string>([
   "text/markdown",
   "text/x-markdown"
 ]);
-
-// 只允许这些 scheme 作为 src，挡住 `javascript:` / `data:` 等可执行 URL，
-// 否则后续设置到 <a href="..."> 上会生成可点击的恶意链接。
-const ALLOWED_SRC_SCHEMES = new Set<string>(["http:", "https:"]);
 
 /**
  * 在当前文档中渲染一个简洁的错误页。
@@ -65,23 +62,6 @@ function renderError(message: string, sourceUrl: string | null): void {
   document.body.appendChild(wrap);
 }
 
-/**
- * 从 URL 路径中提取文件名，失败时回退到固定字面量。
- * @param sourceUrl 完整的源 URL。
- * @returns 解码后的文件名。
- */
-function extractFilename(sourceUrl: string): string {
-  try {
-    /** 解析得到的 URL 对象。 */
-    const url = new URL(sourceUrl);
-    /** 路径末段，可能为空（以 `/` 结尾）。 */
-    const lastSegment = url.pathname.split("/").filter(Boolean).pop();
-    return decodeURIComponent(lastSegment ?? "Markdown");
-  } catch {
-    return "Markdown";
-  }
-}
-
 (async () => {
   // 关键步骤：拒绝在第三方页面 iframe 中渲染。即使别的网站用
   // `<iframe src="chrome-extension://<id>/viewer.html?src=...">` 嵌入我们，
@@ -100,15 +80,10 @@ function extractFilename(sourceUrl: string): string {
 
   // 关键步骤：校验 src 的 scheme，仅放行 http/https。
   // 拦下 `javascript:` / `data:` / `file:` 等，避免在错误页 <a href> 上挂可执行链接。
-  try {
-    /** 解析 src 得到的 URL 对象。 */
-    const parsedSrc = new URL(sourceUrl);
-    if (!ALLOWED_SRC_SCHEMES.has(parsedSrc.protocol)) {
-      renderError(`不支持的协议（${parsedSrc.protocol}），仅允许 http / https。`, null);
-      return;
-    }
-  } catch {
-    renderError("src 参数不是合法的 URL。", null);
+  /** viewer src 参数的安全校验结果。 */
+  const sourceValidation = validateViewerSourceUrl(sourceUrl);
+  if (!sourceValidation.ok) {
+    renderError(sourceValidation.message, null);
     return;
   }
 
