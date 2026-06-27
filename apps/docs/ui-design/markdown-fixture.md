@@ -122,6 +122,8 @@ Scribdown
 
 ## 图片示例
 
+![相对路径](../../browser-extension/icons/icon-128.png "相对路径")
+
 正常图片：
 
 ![Paper texture placeholder](https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png "图片标题")
@@ -313,6 +315,20 @@ export class TaskScheduler<TPayload> extends EventEmitter {
       this.emit("drained");
     }
   }
+}
+```
+
+```json
+{
+  "name": "scribdown",
+  "features": {
+    "codeBlock": {
+      "copy": true,
+      "collapse": true,
+      "languages": ["json", "jsonc", "json5"]
+    }
+  },
+  "theme": "handdrawn"
 }
 ```
 
