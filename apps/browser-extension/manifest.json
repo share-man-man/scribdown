@@ -24,13 +24,13 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "background": {
-    "service_worker": "src/background.ts",
+    "service_worker": "src/entries/background.ts",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["file:///*.md", "http://*/*.md", "https://*/*.md"],
-      "js": ["src/content.ts"],
+      "js": ["src/entries/content.ts"],
       "run_at": "document_start"
     }
   ],

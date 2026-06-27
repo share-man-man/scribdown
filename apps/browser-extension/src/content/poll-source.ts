@@ -1,11 +1,9 @@
 import {
-  DEFAULT_REFRESH_INTERVAL_SEC,
   EXTENSION_ENABLED_STORAGE_KEY,
-  MAX_REFRESH_INTERVAL_SEC,
-  MIN_REFRESH_INTERVAL_SEC,
+  parseRefreshIntervalSec,
   REFRESH_ENABLED_STORAGE_KEY,
   REFRESH_INTERVAL_STORAGE_KEY
-} from "./constants";
+} from "../config/storage";
 
 /**
  * 源文件轮询参数。
@@ -33,11 +31,9 @@ async function readEffectiveIntervalSec(): Promise<number> {
   ]);
   if (result[EXTENSION_ENABLED_STORAGE_KEY] === false) return 0;
   if (result[REFRESH_ENABLED_STORAGE_KEY] === false) return 0;
-  /** storage 中读到的原始间隔配置值。 */
-  const raw = result[REFRESH_INTERVAL_STORAGE_KEY];
   /** 解析后的间隔秒数，未设置时回落到默认值。 */
-  const parsed = typeof raw === "number" && !Number.isNaN(raw) ? raw : DEFAULT_REFRESH_INTERVAL_SEC;
-  return Math.min(MAX_REFRESH_INTERVAL_SEC, Math.max(MIN_REFRESH_INTERVAL_SEC, parsed));
+  const parsed = parseRefreshIntervalSec(result[REFRESH_INTERVAL_STORAGE_KEY]);
+  return parsed;
 }
 
 /**

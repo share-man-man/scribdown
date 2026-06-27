@@ -6,9 +6,12 @@ import {
   EXTENSION_ENABLED_STORAGE_KEY,
   MAX_REFRESH_INTERVAL_SEC,
   MIN_REFRESH_INTERVAL_SEC,
+  clampRefreshIntervalSec,
+  parseRefreshIntervalSec,
   REFRESH_ENABLED_STORAGE_KEY,
   REFRESH_INTERVAL_STORAGE_KEY
-} from "./constants";
+} from "../config/storage";
+import { REFRESH_BADGE_MESSAGE } from "../messages/runtime";
 
 /**
  * popup 初次挂载时读取到的扩展配置。
@@ -20,22 +23,6 @@ interface PopupInitialState {
   refreshEnabled: boolean;
   /** 内容刷新间隔（秒），已 clamp 到合法范围。 */
   intervalSec: number;
-}
-
-/**
- * 将任意输入值 clamp 到允许的刷新间隔范围内。
- * 非法值（NaN / 非数字）回落到默认值。
- * @param value 原始输入值。
- * @returns 合法范围内的整数秒数。
- */
-function clampInterval(value: number): number {
-  if (!Number.isFinite(value)) return DEFAULT_REFRESH_INTERVAL_SEC;
-  /** 向下取整后的秒数，避免小数引入显示歧义。 */
-  const integer = Math.floor(value);
-  return Math.min(
-    MAX_REFRESH_INTERVAL_SEC,
-    Math.max(MIN_REFRESH_INTERVAL_SEC, integer)
-  );
 }
 
 /**
@@ -54,13 +41,8 @@ async function readInitialState(): Promise<PopupInitialState> {
   const enabled = result[EXTENSION_ENABLED_STORAGE_KEY] !== false;
   /** 解析后的自动刷新开关，未显式置 false 视为启用。 */
   const refreshEnabled = result[REFRESH_ENABLED_STORAGE_KEY] !== false;
-  /** storage 中原始间隔值。 */
-  const rawInterval = result[REFRESH_INTERVAL_STORAGE_KEY];
   /** 解析后的间隔秒数。 */
-  const intervalSec =
-    typeof rawInterval === "number"
-      ? clampInterval(rawInterval)
-      : DEFAULT_REFRESH_INTERVAL_SEC;
+  const intervalSec = parseRefreshIntervalSec(result[REFRESH_INTERVAL_STORAGE_KEY]);
   return { enabled, refreshEnabled, intervalSec };
 }
 
@@ -147,7 +129,7 @@ export function Popup(): ReactElement {
       void chrome.extension.isAllowedFileSchemeAccess().then((allowed) => {
         setFileAccessAllowed(allowed);
       });
-      void chrome.runtime.sendMessage({ type: "scribdown:refresh-badge" });
+      void chrome.runtime.sendMessage({ type: REFRESH_BADGE_MESSAGE });
     };
     refreshFileAccess();
 
@@ -172,11 +154,7 @@ export function Popup(): ReactElement {
       if (REFRESH_INTERVAL_STORAGE_KEY in changes) {
         /** 外部写入的新间隔值。 */
         const nextRaw = changes[REFRESH_INTERVAL_STORAGE_KEY].newValue;
-        setIntervalSec(
-          typeof nextRaw === "number"
-            ? clampInterval(nextRaw)
-            : DEFAULT_REFRESH_INTERVAL_SEC
-        );
+        setIntervalSec(parseRefreshIntervalSec(nextRaw));
       }
     };
 
@@ -219,7 +197,7 @@ export function Popup(): ReactElement {
     /** 用户输入解析后的秒数。 */
     const parsed = Number(event.target.value);
     /** clamp 到允许范围后的最终值。 */
-    const next = clampInterval(parsed);
+    const next = clampRefreshIntervalSec(parsed);
     setIntervalSec(next);
     void chrome.storage.local.set({ [REFRESH_INTERVAL_STORAGE_KEY]: next });
   };

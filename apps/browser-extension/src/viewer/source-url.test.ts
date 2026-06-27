@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { extractFilename, validateViewerSourceUrl } from "./viewer-url";
+import { extractFilename, validateViewerSourceUrl } from "./source-url";
 
-describe("viewer-url", () => {
+describe("source-url", () => {
   it("accepts only http and https source URLs", () => {
     /** 合法的 HTTPS 校验结果。 */
     const httpsResult = validateViewerSourceUrl("https://example.com/readme.md");

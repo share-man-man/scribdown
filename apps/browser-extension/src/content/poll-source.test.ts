@@ -5,7 +5,7 @@ import {
   EXTENSION_ENABLED_STORAGE_KEY,
   REFRESH_ENABLED_STORAGE_KEY,
   REFRESH_INTERVAL_STORAGE_KEY
-} from "./constants";
+} from "../config/storage";
 import { startPollingSource } from "./poll-source";
 
 describe("startPollingSource", () => {

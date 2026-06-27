@@ -32,3 +32,30 @@ export const MIN_REFRESH_INTERVAL_SEC = 1;
  * 刷新间隔上限（秒）。防止误输入超大值导致体验异常。
  */
 export const MAX_REFRESH_INTERVAL_SEC = 60;
+
+/**
+ * 将任意输入值 clamp 到允许的刷新间隔范围内。
+ * 非法值（NaN / 非数字）回落到默认值。
+ * @param value 原始输入值。
+ * @returns 合法范围内的整数秒数。
+ */
+export function clampRefreshIntervalSec(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_REFRESH_INTERVAL_SEC;
+  /** 向下取整后的秒数，避免小数引入显示歧义。 */
+  const integer = Math.floor(value);
+  return Math.min(
+    MAX_REFRESH_INTERVAL_SEC,
+    Math.max(MIN_REFRESH_INTERVAL_SEC, integer)
+  );
+}
+
+/**
+ * 解析 chrome.storage 中的刷新间隔值。
+ * @param rawInterval chrome.storage.local 中读到的原始值。
+ * @returns 合法范围内的刷新间隔秒数。
+ */
+export function parseRefreshIntervalSec(rawInterval: unknown): number {
+  return typeof rawInterval === "number"
+    ? clampRefreshIntervalSec(rawInterval)
+    : DEFAULT_REFRESH_INTERVAL_SEC;
+}

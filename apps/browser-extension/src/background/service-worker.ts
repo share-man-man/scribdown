@@ -2,7 +2,15 @@
 // 实际拦截/重定向由 content script 在页面 document_start 时按 document.contentType 决策，
 // 这样无需 webNavigation 权限，也避免 background 做 HEAD 预检带来的双请求开销。
 
-import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
+import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
+import {
+  BYPASS_ONCE_MESSAGE,
+  CONSUME_BYPASS_MESSAGE,
+  FETCH_FILE_MESSAGE,
+  REFRESH_BADGE_MESSAGE,
+  getRuntimeMessageType,
+  getRuntimeMessageUrl
+} from "../messages/runtime";
 
 /** 用户主动选择「查看原始链接」时跳过一次重定向的 URL 集合。 */
 const bypassUrls = new Set<string>();
@@ -107,7 +115,7 @@ chrome.runtime.onMessage.addListener((message) => {
   if (
     message &&
     typeof message === "object" &&
-    (message as { type?: unknown }).type === "scribdown:refresh-badge"
+    getRuntimeMessageType(message) === REFRESH_BADGE_MESSAGE
   ) {
     void syncBadgeFromState();
   }
@@ -128,24 +136,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== "object") return false;
 
   /** 消息类型字段，做类型收窄。 */
-  const type = (message as { type?: unknown }).type;
+  const type = getRuntimeMessageType(message);
   /** 消息携带的 URL 字段，做类型收窄。 */
-  const url = (message as { url?: unknown }).url;
+  const url = getRuntimeMessageUrl(message);
 
-  if (type === "scribdown:bypass-once" && typeof url === "string") {
+  if (type === BYPASS_ONCE_MESSAGE && typeof url === "string") {
     bypassUrls.add(url);
     sendResponse({ ok: true });
     return false;
   }
 
-  if (type === "scribdown:consume-bypass" && typeof url === "string") {
+  if (type === CONSUME_BYPASS_MESSAGE && typeof url === "string") {
     /** 当前 URL 是否命中并已被消费。 */
     const bypassed = bypassUrls.delete(url);
     sendResponse({ bypassed });
     return false;
   }
 
-  if (type === "scribdown:fetch-file" && typeof url === "string") {
+  if (type === FETCH_FILE_MESSAGE && typeof url === "string") {
     // 关键步骤：仅允许代理 file:// 协议，避免被滥用为任意来源的 fetch 跳板。
     if (!url.startsWith("file://")) {
       sendResponse({ ok: false, error: "unsupported scheme" });

@@ -1,13 +1,8 @@
-import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
-import { renderMarkdownToDocument } from "./render-markdown";
-import { extractFilename, validateViewerSourceUrl } from "./viewer-url";
-
-// 仅当源响应是这些纯文本/Markdown 变体时才进行渲染，避免把任意 HTML 当 Markdown 处理。
-const MARKDOWN_PLAINTEXT_MIME_TYPES = new Set<string>([
-  "text/plain",
-  "text/markdown",
-  "text/x-markdown"
-]);
+import { MARKDOWN_PLAINTEXT_MIME_TYPES } from "../config/markdown-mime-types";
+import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
+import { BYPASS_ONCE_MESSAGE } from "../messages/runtime";
+import { renderMarkdownToDocument } from "../rendering/render-markdown";
+import { extractFilename, validateViewerSourceUrl } from "./source-url";
 
 /**
  * 在当前文档中渲染一个简洁的错误页。
@@ -52,7 +47,7 @@ function renderError(message: string, sourceUrl: string | null): void {
     // 否则原 URL 重新加载后会被 content script 再次按 contentType 拦回 viewer。
     link.addEventListener("click", (event) => {
       event.preventDefault();
-      chrome.runtime.sendMessage({ type: "scribdown:bypass-once", url: sourceUrl }).finally(() => {
+      chrome.runtime.sendMessage({ type: BYPASS_ONCE_MESSAGE, url: sourceUrl }).finally(() => {
         window.location.href = sourceUrl;
       });
     });

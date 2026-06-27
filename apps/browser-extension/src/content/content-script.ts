@@ -1,14 +1,11 @@
-import { EXTENSION_ENABLED_STORAGE_KEY } from "./constants";
+import { MARKDOWN_PLAINTEXT_MIME_TYPES } from "../config/markdown-mime-types";
+import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
+import {
+  CONSUME_BYPASS_MESSAGE,
+  FETCH_FILE_MESSAGE
+} from "../messages/runtime";
+import { renderMarkdownToDocument } from "../rendering/render-markdown";
 import { startPollingSource } from "./poll-source";
-import { renderMarkdownToDocument } from "./render-markdown";
-
-// 仅当当前文档 Content-Type 是这些纯文本/Markdown 变体时才介入。
-// GitHub `…/blob/…/*.md` 这类返回 text/html 的页面会落到「不介入」分支，由源站自行展示。
-const MARKDOWN_PLAINTEXT_MIME_TYPES = new Set<string>([
-  "text/plain",
-  "text/markdown",
-  "text/x-markdown"
-]);
 
 /**
  * 等待 DOM 解析到 body 阶段，便于读取浏览器为纯文本 `.md` 自动包装的 `<pre>` 内容。
@@ -58,7 +55,7 @@ async function renderFileUrlInPlace(): Promise<void> {
     fetchLatest: async () => {
       /** background 代理拉取的响应；ok=false 时附带 error 描述。 */
       const response = (await chrome.runtime.sendMessage({
-        type: "scribdown:fetch-file",
+        type: FETCH_FILE_MESSAGE,
         url: window.location.href
       })) as { ok?: boolean; text?: string; error?: string } | undefined;
       if (!response?.ok || typeof response.text !== "string") {
@@ -85,7 +82,7 @@ async function redirectToViewer(): Promise<void> {
   // 关键步骤：先消费一次性 bypass，避免「查看原始链接」回到原 URL 后又被拦回 viewer。
   /** background 维护的 bypass 标记消费结果。 */
   const bypassResult = (await chrome.runtime.sendMessage({
-    type: "scribdown:consume-bypass",
+    type: CONSUME_BYPASS_MESSAGE,
     url: location.href
   })) as { bypassed?: boolean } | undefined;
   if (bypassResult?.bypassed) return;

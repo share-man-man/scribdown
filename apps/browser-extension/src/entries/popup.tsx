@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Popup } from "./Popup";
-import "./popup.css";
+import { Popup } from "../popup/Popup";
+import "../popup/popup.css";
 
 /**
  * 启动扩展 popup 入口。

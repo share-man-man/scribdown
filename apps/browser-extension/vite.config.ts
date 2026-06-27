@@ -39,8 +39,7 @@ export default defineConfig({
   //   的 baseURI 解析得到 `file:///assets/xxx.js`，触发 CORS。
   // - 这里强制把 JS 资源 URL 换成扩展 origin 下的绝对地址，让 <link href> 与后续
   //   `import()` 一并落到 `chrome-extension://<id>/assets/...`。
-  // - 仅对 JS 宿主生效；CSS 中 `url(/assets/*)` 由 render-markdown.ts 的
-  //   resolveExtensionAssetUrls 单独处理。
+  // - 仅对 JS 宿主生效；渲染样式 URL 由 src/rendering/render-markdown.ts 解析为扩展 URL。
   experimental: {
     renderBuiltUrl: (filename, { hostType }) => {
       if (hostType === "js") {
