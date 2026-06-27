@@ -33,3 +33,8 @@ jobs:
       - name: Package check (VS Code extension)
         working-directory: apps/vscode-extension
         run: pnpm dlx @vscode/vsce package --no-dependencies --out "$RUNNER_TEMP/scribdown.vsix"
+      - name: Package check (Chrome extension)
+        run: |
+          pnpm --filter @scribdown/browser-extension build
+          (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
+          zip -T "$RUNNER_TEMP/chrome-extension.zip"

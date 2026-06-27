@@ -47,42 +47,38 @@ jobs:
           # 启用 npm provenance：在 npm 页面展示「来源可验证」，依赖上方 id-token: write
           NPM_CONFIG_PROVENANCE: true
 
-      # 仅当本次确实发布了（Version PR 已合并）才继续分发到商店。
       # 通过对比合并提交前后的 app package.json version 行，判断哪个 app 需要发布。
+      # app 包是 private，不依赖 changesets 的 npm published 输出，避免跳过商店发布。
       - name: Detect app version changes
-        if: steps.changesets.outputs.published == 'true'
         id: apps
         run: |
           vscode_changed=$(git diff HEAD^ HEAD -- apps/vscode-extension/package.json | grep -cE '^[+-].*"version"' || true)
+          browser_changed=$(git diff HEAD^ HEAD -- apps/browser-extension/package.json | grep -cE '^[+-].*"version"' || true)
           echo "vscode=$([ "$vscode_changed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "browser=$([ "$browser_changed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       # —— VS Code 商店 ——
       - name: Publish VS Code Extension
-        if: steps.changesets.outputs.published == 'true' && steps.apps.outputs.vscode == 'true'
+        if: steps.apps.outputs.vscode == 'true'
         working-directory: apps/vscode-extension
         run: pnpm dlx @vscode/vsce publish --no-dependencies
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
-      # —— Chrome 商店（仅上传草稿，不提交审核） ——
-      # 暂时注释：先跑通 npm + VS Code 流程，配好 Chrome 的 OAuth secrets 后再启用。
-      # 启用时：在上面的 "Detect app version changes" 步骤补回 browser_changed 检测，
-      # 并配置 CHROME_EXTENSION_ID / CHROME_CLIENT_ID / CHROME_CLIENT_SECRET / CHROME_REFRESH_TOKEN。
-      #
-      # - name: Upload Chrome draft
-      #   if: steps.changesets.outputs.published == 'true' && steps.apps.outputs.browser == 'true'
-      #   run: |
-      #     pnpm --filter @scribdown/browser-extension build
-      #     (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
-      #     # 不带 --auto-publish：只上传到草稿，是否提交审核/发布由你在后台手动决定
-      #     pnpm dlx chrome-webstore-upload-cli@3 upload \
-      #       --source "$RUNNER_TEMP/chrome-extension.zip" \
-      #       --extension-id "$CHROME_EXTENSION_ID" \
-      #       --client-id "$CHROME_CLIENT_ID" \
-      #       --client-secret "$CHROME_CLIENT_SECRET" \
-      #       --refresh-token "$CHROME_REFRESH_TOKEN"
-      #   env:
-      #     CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-      #     CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-      #     CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-      #     CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      # —— Chrome 商店 ——
+      - name: Publish Chrome Extension
+        if: steps.apps.outputs.browser == 'true'
+        run: |
+          pnpm --filter @scribdown/browser-extension build
+          (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
+          pnpm dlx chrome-webstore-upload-cli@3 \
+            --source "$RUNNER_TEMP/chrome-extension.zip" \
+            --extension-id "$CHROME_EXTENSION_ID" \
+            --client-id "$CHROME_CLIENT_ID" \
+            --client-secret "$CHROME_CLIENT_SECRET" \
+            --refresh-token "$CHROME_REFRESH_TOKEN"
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
