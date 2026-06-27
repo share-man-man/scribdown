@@ -35,14 +35,12 @@ async function renderFileUrlInPlace(): Promise<void> {
   if (!rawMarkdown.trim()) return;
 
   /** 当前文件的展示名，用于页面标题。 */
-  const filename = decodeURIComponent(
-    window.location.pathname.split("/").pop() ?? "Markdown"
-  );
+  const filename = decodeURIComponent(window.location.pathname.split("/").pop() ?? "Markdown");
 
   // vite.config.ts 的 renderBuiltUrl 已把动态 chunk URL 统一改写为
   // `chrome.runtime.getURL(...)`，shiki grammar 与 wasm 引擎都从扩展 origin 加载，
   // 不再受 file:// 的 CORS 限制，因此 file:// 场景也启用代码高亮。
-  await renderMarkdownToDocument(rawMarkdown, filename);
+  await renderMarkdownToDocument(rawMarkdown, filename, window.location.href);
 
   // 关键步骤：启动文件轮询，磁盘内容更新后无需手动刷新即可看到最新版本。
   // 注意：content script 在 file:// 页面里的 origin 是 null，直接 fetch 会被 CORS 拦掉，
@@ -73,7 +71,7 @@ async function renderFileUrlInPlace(): Promise<void> {
       const previousScrollY = window.scrollY;
       // 关键步骤：shiki 实例与 grammar chunk 在初次渲染后已全部缓存，
       // 后续重渲染复用缓存，开销可忽略，无需禁用代码高亮。
-      await renderMarkdownToDocument(latest, filename);
+      await renderMarkdownToDocument(latest, filename, window.location.href);
       window.scrollTo(0, previousScrollY);
     }
   });
@@ -93,18 +91,14 @@ async function redirectToViewer(): Promise<void> {
   if (bypassResult?.bypassed) return;
 
   /** 扩展 viewer 页面的目标 URL，src 参数携带原始资源地址。 */
-  const viewerUrl = chrome.runtime.getURL(
-    `viewer.html?src=${encodeURIComponent(location.href)}`
-  );
+  const viewerUrl = chrome.runtime.getURL(`viewer.html?src=${encodeURIComponent(location.href)}`);
   window.location.replace(viewerUrl);
 }
 
 (async () => {
   // 关键步骤：尊重 popup 总开关，关闭时让浏览器原样展示，不做任何渲染或重定向。
   /** 从 chrome.storage.local 读到的当前启用状态（未设置视为启用）。 */
-  const enabledResult = await chrome.storage.local.get(
-    EXTENSION_ENABLED_STORAGE_KEY
-  );
+  const enabledResult = await chrome.storage.local.get(EXTENSION_ENABLED_STORAGE_KEY);
   if (enabledResult[EXTENSION_ENABLED_STORAGE_KEY] === false) return;
 
   // 关键步骤：以实际响应的 Content-Type 为准而非 URL 后缀。

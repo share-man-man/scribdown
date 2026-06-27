@@ -1,0 +1,5 @@
+/**
+ * 浏览器插件 Markdown 渲染页专用样式入口。
+ * popup 保持独立 CSS 入口，避免弹窗样式与正文渲染样式互相耦合。
+ */
+@import "@scribdown/ui-handdrawn/styles.css";

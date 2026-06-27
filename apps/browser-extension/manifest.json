@@ -18,15 +18,8 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "permissions": [
-    "storage",
-    "alarms"
-  ],
-  "host_permissions": [
-    "http://*/*.md",
-    "https://*/*.md",
-    "file:///*"
-  ],
+  "permissions": ["storage", "alarms"],
+  "host_permissions": ["http://*/*.md", "https://*/*.md", "file:///*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
@@ -36,19 +29,15 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "file://**/*.md",
-        "http://*/*.md",
-        "https://*/*.md"
-      ],
+      "matches": ["file:///*.md", "http://*/*.md", "https://*/*.md"],
       "js": ["src/content.ts"],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "resources": ["viewer.html"]
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "resources": ["viewer.html", "assets/*.css", "assets/*"]
     }
   ]
 }

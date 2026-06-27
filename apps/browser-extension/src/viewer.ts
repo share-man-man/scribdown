@@ -55,11 +55,9 @@ function renderError(message: string, sourceUrl: string | null): void {
     // 否则原 URL 重新加载后会被 content script 再次按 contentType 拦回 viewer。
     link.addEventListener("click", (event) => {
       event.preventDefault();
-      chrome.runtime
-        .sendMessage({ type: "scribdown:bypass-once", url: sourceUrl })
-        .finally(() => {
-          window.location.href = sourceUrl;
-        });
+      chrome.runtime.sendMessage({ type: "scribdown:bypass-once", url: sourceUrl }).finally(() => {
+        window.location.href = sourceUrl;
+      });
     });
     wrap.appendChild(link);
   }
@@ -106,10 +104,7 @@ function extractFilename(sourceUrl: string): string {
     /** 解析 src 得到的 URL 对象。 */
     const parsedSrc = new URL(sourceUrl);
     if (!ALLOWED_SRC_SCHEMES.has(parsedSrc.protocol)) {
-      renderError(
-        `不支持的协议（${parsedSrc.protocol}），仅允许 http / https。`,
-        null
-      );
+      renderError(`不支持的协议（${parsedSrc.protocol}），仅允许 http / https。`, null);
       return;
     }
   } catch {
@@ -122,9 +117,7 @@ function extractFilename(sourceUrl: string): string {
   // content script 同样会读 storage 决定是否介入，因此这里只需 location.replace，
   // 无需额外 bypass 协调。
   /** storage 中的当前启用状态（未设置视为启用）。 */
-  const enabledResult = await chrome.storage.local.get(
-    EXTENSION_ENABLED_STORAGE_KEY
-  );
+  const enabledResult = await chrome.storage.local.get(EXTENSION_ENABLED_STORAGE_KEY);
   if (enabledResult[EXTENSION_ENABLED_STORAGE_KEY] === false) {
     window.location.replace(sourceUrl);
     return;
@@ -137,10 +130,7 @@ function extractFilename(sourceUrl: string): string {
   try {
     response = await fetch(sourceUrl, { credentials: "include" });
   } catch (err) {
-    renderError(
-      `请求失败：${err instanceof Error ? err.message : String(err)}`,
-      sourceUrl
-    );
+    renderError(`请求失败：${err instanceof Error ? err.message : String(err)}`, sourceUrl);
     return;
   }
 
@@ -156,10 +146,7 @@ function extractFilename(sourceUrl: string): string {
     .trim()
     .toLowerCase();
   if (!MARKDOWN_PLAINTEXT_MIME_TYPES.has(contentType)) {
-    renderError(
-      `响应不是 Markdown 类型（Content-Type: ${contentType || "未声明"}）。`,
-      sourceUrl
-    );
+    renderError(`响应不是 Markdown 类型（Content-Type: ${contentType || "未声明"}）。`, sourceUrl);
     return;
   }
 
@@ -170,7 +157,7 @@ function extractFilename(sourceUrl: string): string {
     return;
   }
 
-  await renderMarkdownToDocument(rawMarkdown, extractFilename(sourceUrl));
+  await renderMarkdownToDocument(rawMarkdown, extractFilename(sourceUrl), sourceUrl);
 
   // 关键步骤：恢复原 URL 上的 hash 锚点，让 `…/foo.md#section` 链接落到对应章节。
   // 渲染完成后再设置 location.hash，触发浏览器自带的锚点滚动。
