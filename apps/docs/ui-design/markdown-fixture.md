@@ -1,3 +1,11 @@
+---
+name: markdown-fixture
+description: Scribdown 完整语法预览文档，覆盖 CommonMark、GFM 与常见扩展语法。
+metadata:
+  type: user | feedback | project | reference
+  tags: [markdown, fixture, 手绘风格]
+---
+
 # Scribdown Markdown 完整语法预览
 
 > Scribdown 是一个具有**手绘风格**的 Markdown 渲染器，为内容提供统一、清晰的阅读体验。

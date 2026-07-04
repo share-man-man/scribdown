@@ -223,6 +223,61 @@ describe("renderMarkdown", () => {
     expect(renderedHtml).toContain('<figcaption class="scribdown-image-caption">图片标题</figcaption>');
   });
 
+  it("renders yaml frontmatter as a metadata card", async () => {
+    // 输入 Markdown 覆盖文档头部 frontmatter（含嵌套对象）与正文标题。
+    const markdownText = [
+      "---",
+      "name: weekly-learning-doc",
+      "description: 产出每周的 AI 学习成果包文档。",
+      "metadata:",
+      "  type: user | feedback | project | reference",
+      "---",
+      "",
+      "# 正文标题"
+    ].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText);
+
+    // 卡片容器复用 .scribdown-frame 手绘边框，并保留源码行锚点。
+    expect(renderedHtml).toContain(
+      '<div class="scribdown-frontmatter scribdown-frame" data-source-line="1">'
+    );
+    expect(renderedHtml).toContain(
+      '<div class="scribdown-frontmatter__chrome"><span class="scribdown-frontmatter__label">元数据</span></div>'
+    );
+    // 顶层键值对渲染为 dl 列表。
+    expect(renderedHtml).toContain('<dl class="scribdown-frontmatter__list">');
+    expect(renderedHtml).toContain("<dt>name</dt><dd>weekly-learning-doc</dd>");
+    expect(renderedHtml).toContain("<dt>description</dt><dd>产出每周的 AI 学习成果包文档。</dd>");
+    // 嵌套对象展开为带修饰类的嵌套 dl。
+    expect(renderedHtml).toContain(
+      '<dl class="scribdown-frontmatter__list scribdown-frontmatter__list--nested"><dt>type</dt><dd>user | feedback | project | reference</dd></dl>'
+    );
+    // frontmatter 原文不再以正文形式出现（--- 不产生 hr / 标题误判）。
+    expect(renderedHtml).not.toContain("name: weekly-learning-doc</p>");
+  });
+
+  it("falls back to a yaml code block when frontmatter fails to parse", async () => {
+    // 输入 Markdown 覆盖非法 yaml frontmatter（缩进错误导致解析失败）。
+    const markdownText = ["---", "name: [unclosed", "---", "", "正文段落"].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText);
+
+    // 解析失败时回退为 yaml 代码块展示原文。
+    expect(renderedHtml).toContain('<code class="language-yaml"');
+    expect(renderedHtml).not.toContain("scribdown-frontmatter");
+  });
+
+  it("does not treat mid-document thematic breaks as frontmatter", async () => {
+    // 输入 Markdown 覆盖正文中的分隔线（--- 不在文档起始处）。
+    const markdownText = ["正文段落", "", "---", "", "后续段落"].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText);
+
+    expect(renderedHtml).toContain("<hr");
+    expect(renderedHtml).not.toContain("scribdown-frontmatter");
+  });
+
   it("wraps reference images in the same figure structure", async () => {
     // 输入 Markdown 覆盖引用式图片定义。
     const markdownText = ["![手绘风格预览][preview]", "", "[preview]: /preview.jpg"].join("\n");

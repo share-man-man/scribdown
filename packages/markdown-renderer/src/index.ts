@@ -20,9 +20,11 @@ import DOMPurify from "dompurify";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
+import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
+import { parse as parseYamlSource } from "yaml";
 import githubLightTheme from "@shikijs/themes/github-light";
 import { type HighlighterCore, createHighlighterCore } from "shiki/core";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
@@ -48,6 +50,7 @@ const SOURCE_LINE_HAST_PROPERTY = SOURCE_LINE_DATA_ATTRIBUTE.replace(
 interface MarkdownNode {
   type: string;
   value?: string;
+  lang?: string;
   depth?: number;
   url?: string;
   alt?: string;
@@ -168,6 +171,30 @@ const FRAME_CLASS_NAME = "scribdown-frame";
 
 // 内容折叠块类名：用户手写的原生 <details>（区别于目录用 <details>）在渲染时打上此标。
 const DETAILS_CLASS_NAME = "scribdown-details";
+
+// Frontmatter 元数据卡片容器类名（文档头部 YAML 键值对展示）。
+const FRONTMATTER_CLASS_NAME = "scribdown-frontmatter";
+
+// Frontmatter 顶部 chrome 容器类名（仅承载「元数据」标签）。
+const FRONTMATTER_CHROME_CLASS_NAME = "scribdown-frontmatter__chrome";
+
+// Frontmatter 标签类名。
+const FRONTMATTER_LABEL_CLASS_NAME = "scribdown-frontmatter__label";
+
+// Frontmatter 键值列表类名。
+const FRONTMATTER_LIST_CLASS_NAME = "scribdown-frontmatter__list";
+
+// Frontmatter 嵌套键值列表类名（对象类型的值向下展开一层）。
+const FRONTMATTER_LIST_NESTED_CLASS_NAME = "scribdown-frontmatter__list--nested";
+
+// Frontmatter 标签展示文本。
+const FRONTMATTER_LABEL_TEXT = "元数据";
+
+// Frontmatter 数组值中各标量项的拼接分隔符。
+const FRONTMATTER_ARRAY_SEPARATOR = ", ";
+
+// Frontmatter 解析失败时回退代码块使用的语言标识。
+const FRONTMATTER_FALLBACK_LANGUAGE_ID = "yaml";
 
 // 目录摘要按钮类名。
 const TOC_SUMMARY_CLASS_NAME = "scribdown-toc-summary";
@@ -654,6 +681,8 @@ export async function renderMarkdown(markdownText: string): Promise<string> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkFrontmatter)
+    .use(remarkFrontmatterMetadata)
     .use(remarkHighlightMark)
     .use(remarkDefinitionLists)
     .use(remarkTableOfContents)
@@ -3458,12 +3487,25 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       RegExp
     ]
   ];
+  // div 元素的属性白名单：放行 frontmatter 元数据卡片容器与 chrome 的 class。
+  const divAttributes = [
+    ...(defaultAttributes.div ?? []),
+    ["className", FRONTMATTER_CLASS_NAME, FRAME_CLASS_NAME, FRONTMATTER_CHROME_CLASS_NAME] as [
+      string,
+      ...string[]
+    ]
+  ];
+  // dl 元素的属性白名单：放行 frontmatter 键值列表（含嵌套修饰类）的 class。
+  const definitionListAttributes = [
+    ["className", /^scribdown-frontmatter__list(?:--nested)?$/u] as [string, RegExp]
+  ];
   // span 元素的属性白名单：放行标题行内包裹层与图片 / 视频 frame / fallback 的 class。
   const spanAttributes = [
     ...(defaultAttributes.span ?? []),
     [
       "className",
       HEADING_MARK_CLASS_NAME,
+      FRONTMATTER_LABEL_CLASS_NAME,
       IMAGE_FRAME_CLASS_NAME,
       IMAGE_FALLBACK_CLASS_NAME,
       IMAGE_FALLBACK_ICON_CLASS_NAME,
@@ -3560,6 +3602,8 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       a: linkAttributes,
       ol: orderedListAttributes,
       li: listItemAttributes,
+      div: divAttributes,
+      dl: definitionListAttributes,
       span: spanAttributes,
       abbr: abbrAttributes,
       figure: figureAttributes,
@@ -3569,6 +3613,171 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       source: sourceAttributes
     }
   };
+}
+
+/**
+ * remark 插件：把文档头部的 YAML frontmatter 渲染为元数据卡片。
+ * remark-frontmatter 仅负责把 `---` 包裹的头部解析为 yaml 节点，
+ * 本插件再把 yaml 节点转换为键值列表结构；解析失败时回退为 yaml 代码块展示原文。
+ * @returns Markdown AST 转换器。
+ */
+function remarkFrontmatterMetadata(): (tree: MarkdownNode) => void {
+  return (tree: MarkdownNode) => {
+    // 顶层块级节点列表。
+    const childNodes = tree.children ?? [];
+    // frontmatter 只可能出现在文档首个节点（remark-frontmatter 仅识别文档起始处的 ---）。
+    const yamlNode = childNodes[0];
+
+    if (!yamlNode || yamlNode.type !== "yaml" || typeof yamlNode.value !== "string") {
+      return;
+    }
+
+    childNodes[0] = createFrontmatterNode(yamlNode);
+  };
+}
+
+/**
+ * 把 yaml frontmatter 节点转换为元数据卡片节点。
+ * @param yamlNode remark-frontmatter 解析出的 yaml 节点。
+ * @returns 元数据卡片节点；yaml 解析失败或非键值对象时返回 yaml 代码块节点。
+ */
+function createFrontmatterNode(yamlNode: MarkdownNode): MarkdownNode {
+  // yaml 原文文本。
+  const yamlSource = yamlNode.value ?? "";
+  // yaml 解析结果，解析失败时保持 undefined。
+  let parsedValue: unknown;
+
+  try {
+    parsedValue = parseYamlSource(yamlSource);
+  } catch {
+    parsedValue = undefined;
+  }
+
+  // 关键步骤：仅键值对象按卡片渲染；解析失败或非对象时回退为 yaml 代码块展示原文。
+  if (!isPlainRecord(parsedValue)) {
+    return {
+      type: "code",
+      lang: FRONTMATTER_FALLBACK_LANGUAGE_ID,
+      position: yamlNode.position,
+      value: yamlSource
+    };
+  }
+
+  return {
+    type: "frontmatterMetadata",
+    // 关键步骤：保留原节点源码位置，使 remarkSourceLine 能标注 data-source-line。
+    position: yamlNode.position,
+    data: {
+      hName: "div",
+      hProperties: { className: [FRONTMATTER_CLASS_NAME, FRAME_CLASS_NAME] }
+    },
+    children: [
+      {
+        type: "frontmatterChrome",
+        data: {
+          hName: "div",
+          hProperties: { className: [FRONTMATTER_CHROME_CLASS_NAME] }
+        },
+        children: [
+          {
+            type: "frontmatterLabel",
+            data: {
+              hName: "span",
+              hProperties: { className: [FRONTMATTER_LABEL_CLASS_NAME] }
+            },
+            children: [{ type: "text", value: FRONTMATTER_LABEL_TEXT }]
+          }
+        ]
+      },
+      createFrontmatterListNode(parsedValue, false)
+    ]
+  };
+}
+
+/**
+ * 判断值是否为纯键值对象（排除 null 与数组）。
+ * @param value 待判断的值。
+ * @returns 是否为纯键值对象。
+ */
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * 把键值对象转换为 dl 键值列表节点，对象类型的值递归展开为嵌套列表。
+ * @param record frontmatter 中的键值对象。
+ * @param nested 是否为嵌套层（嵌套层追加修饰类）。
+ * @returns dl 键值列表节点。
+ */
+function createFrontmatterListNode(record: Record<string, unknown>, nested: boolean): MarkdownNode {
+  // dl 的 className 列表：嵌套层追加修饰类。
+  const listClassNames = nested
+    ? [FRONTMATTER_LIST_CLASS_NAME, FRONTMATTER_LIST_NESTED_CLASS_NAME]
+    : [FRONTMATTER_LIST_CLASS_NAME];
+  // dt / dd 交替排列的子节点列表。
+  const listChildren: MarkdownNode[] = [];
+
+  Object.entries(record).forEach(([entryKey, entryValue]) => {
+    listChildren.push({
+      type: "frontmatterTerm",
+      data: { hName: "dt" },
+      children: [{ type: "text", value: entryKey }]
+    });
+    listChildren.push({
+      type: "frontmatterDescription",
+      data: { hName: "dd" },
+      children: createFrontmatterValueNodes(entryValue)
+    });
+  });
+
+  return {
+    type: "frontmatterList",
+    data: {
+      hName: "dl",
+      hProperties: { className: listClassNames }
+    },
+    children: listChildren
+  };
+}
+
+/**
+ * 把 frontmatter 中的单个值转换为 dd 内容节点列表。
+ * @param value frontmatter 中的任意值。
+ * @returns dd 的子节点列表。
+ */
+function createFrontmatterValueNodes(value: unknown): MarkdownNode[] {
+  // 对象值向下展开为嵌套键值列表。
+  if (isPlainRecord(value)) {
+    return [createFrontmatterListNode(value, true)];
+  }
+
+  // 数组值逐项格式化后拼接为一行文本。
+  if (Array.isArray(value)) {
+    return [
+      {
+        type: "text",
+        value: value.map(formatFrontmatterScalar).join(FRONTMATTER_ARRAY_SEPARATOR)
+      }
+    ];
+  }
+
+  return [{ type: "text", value: formatFrontmatterScalar(value) }];
+}
+
+/**
+ * 把 frontmatter 标量值格式化为展示文本。
+ * @param value frontmatter 中的标量值。
+ * @returns 展示文本；null / undefined 展示为空串。
+ */
+function formatFrontmatterScalar(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  // 数组内的嵌套对象极少见，退化为 JSON 文本展示。
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  return String(value);
 }
 
 /**

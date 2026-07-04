@@ -31,6 +31,9 @@
 /* 7. 目录（[TOC]） */
 @import "./styles/toc.css";
 
+/* 7.1 Frontmatter 元数据卡片 */
+@import "./styles/frontmatter.css";
+
 /* 8. 代码：inline code + 代码块 + 语言标签 + 复制按钮 */
 @import "./styles/code.css";
 

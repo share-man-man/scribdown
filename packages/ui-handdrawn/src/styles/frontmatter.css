@@ -1,0 +1,54 @@
+/* Frontmatter 元数据卡片：文档头部 YAML 键值对展示。
+   手绘边框由 .scribdown-frame 基底提供（渲染器输出时显式 opt-in），
+   本文件仅负责底色、留白与键值列表排版。 */
+.scribdown-markdown .scribdown-frontmatter {
+  margin: 0 0 var(--scribdown-space-6);
+  padding: var(--scribdown-space-3) var(--scribdown-space-4) var(--scribdown-space-4);
+  background: var(--scribdown-color-surface);
+  border-radius: var(--scribdown-radius-md);
+  box-shadow: var(--scribdown-shadow-sm);
+}
+
+/* 顶部 chrome：仅承载「元数据」标签，与正文列表拉开间距。 */
+.scribdown-markdown .scribdown-frontmatter__chrome {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--scribdown-space-2);
+}
+
+/* 标签样式与 mermaid / 代码块语言标签保持一致的手写标注感。 */
+.scribdown-markdown .scribdown-frontmatter__label {
+  font-family: var(--scribdown-font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--scribdown-color-text-primary) 78%, transparent);
+}
+
+/* 键值列表：键列按内容宽度收缩，值列占满剩余空间。 */
+.scribdown-markdown .scribdown-frontmatter__list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--scribdown-space-4);
+  row-gap: var(--scribdown-space-1);
+  margin: 0;
+}
+
+.scribdown-markdown .scribdown-frontmatter__list dt {
+  font-family: var(--scribdown-font-code);
+  font-size: 0.88em;
+  font-weight: 600;
+  color: var(--scribdown-color-accent);
+}
+
+.scribdown-markdown .scribdown-frontmatter__list dd {
+  margin: 0;
+  color: var(--scribdown-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* 嵌套键值列表：对象类型的值向下展开一层，靠左侧细线体现层级。 */
+.scribdown-markdown .scribdown-frontmatter__list--nested {
+  padding-left: var(--scribdown-space-3);
+  border-left: 2px solid color-mix(in srgb, var(--scribdown-color-border) 60%, transparent);
+}
