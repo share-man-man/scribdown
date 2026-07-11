@@ -6,7 +6,8 @@ import {
   SOURCE_LINE_DATA_ATTRIBUTE,
   SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
-  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME
+  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
+  TOC_LINK_CLASS_NAME
 } from "@scribdown/shared";
 
 // ─── 滚动容器抽象 ─────────────────────────────────────────────────────────────
@@ -51,12 +52,6 @@ function getOffsetLeftInScroller(element: Element, scroller: HTMLElement): numbe
     element.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft
   );
 }
-
-/**
- * 目录标题链接 class，与 @scribdown/markdown-renderer 的 TOC_LINK_CLASS_NAME 对应。
- * 这些链接的跳转由渲染器在冒泡阶段处理，捕获阶段的宿主锚点拦截器需放行（详见拦截逻辑注释）。
- */
-const TOC_LINK_CLASS_NAME = "scribdown-toc-link";
 
 /**
  * 目录跳转的手动平滑滚动动画时长（毫秒）。

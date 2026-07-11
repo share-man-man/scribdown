@@ -148,6 +148,66 @@ export const SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_CLASS_NAME =
   "scribdown-toolbar-menu-sub-item";
 
 /**
+ * 工具栏菜单子项左侧勾选占位 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_MARK_CLASS_NAME =
+  "scribdown-toolbar-menu-sub-item-mark";
+
+/**
+ * 工具栏菜单子项文字标签 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_LABEL_CLASS_NAME =
+  "scribdown-toolbar-menu-sub-item-label";
+
+/**
+ * 工具栏菜单「下拉选择」触发行的文字标签 class（例：页面宽度）。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME =
+  "scribdown-toolbar-menu-select-label";
+
+/**
+ * 工具栏菜单「下拉选择」触发行的当前值展示 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_SELECT_VALUE_CLASS_NAME =
+  "scribdown-toolbar-menu-select-value";
+
+/**
+ * 工具栏菜单「下拉选择」触发行的 chevron 箭头 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_SELECT_CHEVRON_CLASS_NAME =
+  "scribdown-toolbar-menu-select-chevron";
+
+/**
+ * 工具栏菜单分组内可折叠的档位列表容器 class。
+ */
+export const SCRIBDOWN_TOOLBAR_MENU_GROUP_CHOICES_CLASS_NAME =
+  "scribdown-toolbar-menu-group-choices";
+
+/**
+ * 工具栏目录侧栏顶部标题行 class。
+ */
+export const SCRIBDOWN_TOOLBAR_TOC_PANEL_TITLE_CLASS_NAME =
+  "scribdown-toolbar-toc-panel-title";
+
+/**
+ * 工具栏目录侧栏右上角关闭按钮 class。
+ */
+export const SCRIBDOWN_TOOLBAR_TOC_PANEL_CLOSE_CLASS_NAME =
+  "scribdown-toolbar-toc-panel-close";
+
+/**
+ * 工具栏目录侧栏「暂无标题」空态 class。
+ */
+export const SCRIBDOWN_TOOLBAR_TOC_PANEL_EMPTY_CLASS_NAME =
+  "scribdown-toolbar-toc-panel-empty";
+
+/**
+ * 工具栏当前章节指示器的可见文本 class。
+ */
+export const SCRIBDOWN_TOOLBAR_CURRENT_TEXT_CLASS_NAME =
+  "scribdown-toolbar-current-text";
+
+/**
  * localStorage 中保存页面内容宽度的 key。
  */
 export const CONTENT_WIDTH_STORAGE_KEY = "scribdown-content-width";
