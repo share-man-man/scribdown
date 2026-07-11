@@ -70,6 +70,16 @@ const PREVIEW_READY_MESSAGE_TYPE = "preview-ready";
 const PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE = "preview-scroll-changed";
 
 /**
+ * Webview -> Extension 消息类型：请求打开预览内点击的链接。
+ */
+const PREVIEW_OPEN_LINK_MESSAGE_TYPE = "preview-open-link";
+
+/**
+ * 匹配带 scheme 的链接（如 http:、https:、mailto:），用于区分外部链接与相对路径文档链接。
+ */
+const EXTERNAL_LINK_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
+
+/**
  * Extension -> Webview 消息类型：渲染内容。
  */
 const RENDER_CONTENT_MESSAGE_TYPE = "render-content";
@@ -120,6 +130,7 @@ const EDITOR_SCROLL_SYNC_THROTTLE_MS = 16;
 interface PreviewMessagePayload {
   type: string;
   sourceLine?: number;
+  href?: string;
 }
 
 /**
@@ -366,6 +377,11 @@ class ScribdownPreviewController implements vscode.Disposable {
         // 预览上报的顶部源码行号。
         const sourceLine = normalizedMessage.sourceLine ?? 1;
         this.handlePreviewScroll(sourceLine);
+        return;
+      }
+
+      if (normalizedMessage.type === PREVIEW_OPEN_LINK_MESSAGE_TYPE) {
+        void this.handlePreviewLinkOpen(normalizedMessage.href);
       }
     });
 
@@ -584,6 +600,73 @@ class ScribdownPreviewController implements vscode.Disposable {
   }
 
   /**
+   * 处理预览内链接点击：外部链接交给系统默认应用，相对路径解析成本地文件后在编辑器中打开。
+   * 与 VS Code 内置 Markdown 预览的链接路由行为对齐。
+   * @param href 链接原始 href 文本（未经 base 解析）。
+   */
+  private async handlePreviewLinkOpen(href: string | undefined): Promise<void> {
+    if (!href) {
+      return;
+    }
+
+    // ── 外部链接：http(s)、mailto 等带 scheme 的地址，交给系统默认应用打开。──
+    if (EXTERNAL_LINK_SCHEME_PATTERN.test(href)) {
+      try {
+        await vscode.env.openExternal(vscode.Uri.parse(href, true));
+      } catch {
+        vscode.window.showWarningMessage(`无法打开链接：${href}`);
+      }
+      return;
+    }
+
+    // ── 相对路径链接：基于当前预览文档解析成本地文件 URI。──
+    // 当前预览绑定文档。
+    const previewDocument = this.getPreviewDocument();
+
+    if (!previewDocument) {
+      return;
+    }
+
+    // 去掉锚点片段后的路径部分（如 "docs/guide.md#usage" -> "docs/guide.md"）；
+    // 跨文件链接的锚点片段不参与定位，仅打开目标文件。
+    const [rawPathPart = ""] = href.split("#");
+
+    if (!rawPathPart) {
+      return;
+    }
+
+    // 解码百分号转义后的路径文本（兼容空格与中文文件名）。
+    let decodedPath = rawPathPart;
+    try {
+      decodedPath = decodeURIComponent(rawPathPart);
+    } catch {
+      // 解码失败时按原文处理。
+    }
+
+    // 目标文件 URI：以 "/" 开头按工作区根目录解析，否则按当前文档目录解析。
+    const targetUri = resolvePreviewLinkTargetUri(previewDocument.uri, decodedPath);
+
+    if (!targetUri) {
+      return;
+    }
+
+    // 关键步骤：先确认目标文件存在，避免 vscode.open 对不存在路径弹出晦涩的系统错误。
+    try {
+      await vscode.workspace.fs.stat(targetUri);
+    } catch {
+      vscode.window.showWarningMessage(`链接目标不存在：${decodedPath}`);
+      return;
+    }
+
+    // 当前预览文档所在编辑器列，让链接目标与源文档同列打开；预览面板保持在侧边。
+    const targetViewColumn = this.getPreviewEditor()?.viewColumn ?? vscode.ViewColumn.One;
+
+    // 关键步骤：vscode.open 会按文件类型选择合适的编辑器（文本 / 图片 / 自定义编辑器）。
+    // 打开 Markdown 文件后，激活编辑器变化监听会自动把预览重新绑定到新文档。
+    await vscode.commands.executeCommand("vscode.open", targetUri, targetViewColumn);
+  }
+
+  /**
    * 处理预览滚动上报，按源码行号把预览滚动同步到编辑器。
    * @param sourceLine 预览顶部对应的源码行号（1-based，可能为小数）。
    */
@@ -682,10 +765,16 @@ export function deactivate(): void {
  * @returns 是 Markdown 文档时返回 true。
  */
 function isMarkdownDocument(document: vscode.TextDocument): boolean {
-  return (
-    document.languageId === MARKDOWN_LANGUAGE_ID ||
-    document.uri.path.toLowerCase().endsWith(MARKDOWN_FILE_EXTNAME)
-  );
+  return document.languageId === MARKDOWN_LANGUAGE_ID || isMarkdownPath(document.uri.path);
+}
+
+/**
+ * 判断文件路径是否为 Markdown 文件（按 .md 扩展名）。
+ * @param filePath 待判断的文件路径。
+ * @returns 是 Markdown 文件路径时返回 true。
+ */
+function isMarkdownPath(filePath: string): boolean {
+  return filePath.toLowerCase().endsWith(MARKDOWN_FILE_EXTNAME);
 }
 
 /**
@@ -729,6 +818,31 @@ function resolveEditorTopLine(editor: vscode.TextEditor): number {
   const visibleRange = editor.visibleRanges[0];
 
   return (visibleRange ? visibleRange.start.line : editor.selection.active.line) + 1;
+}
+
+/**
+ * 解析预览链接目标文件 URI。
+ * @param documentUri 当前预览文档 URI。
+ * @param linkPath 已解码的链接路径（不含锚点片段）。
+ * @returns 目标文件 URI；无法解析时返回 undefined。
+ */
+function resolvePreviewLinkTargetUri(
+  documentUri: vscode.Uri,
+  linkPath: string
+): vscode.Uri | undefined {
+  if (linkPath.startsWith("/")) {
+    // 以 "/" 开头的路径按当前文档所属工作区根目录解析（与内置 Markdown 预览一致）。
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(documentUri);
+
+    if (!workspaceFolder) {
+      return undefined;
+    }
+
+    return vscode.Uri.joinPath(workspaceFolder.uri, linkPath);
+  }
+
+  // 相对路径按当前文档所在目录解析（joinPath 会规范化 "./" 与 "../"）。
+  return vscode.Uri.joinPath(documentUri, "..", linkPath);
 }
 
 /**
@@ -888,7 +1002,8 @@ function createRuntimeBootstrapScript(): string {
     setPreviewCursorMessageType: SET_PREVIEW_CURSOR_MESSAGE_TYPE,
     clearPreviewCursorMessageType: CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE,
     previewReadyMessageType: PREVIEW_READY_MESSAGE_TYPE,
-    previewScrollChangedMessageType: PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE
+    previewScrollChangedMessageType: PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE,
+    previewOpenLinkMessageType: PREVIEW_OPEN_LINK_MESSAGE_TYPE
   };
   // JSON 序列化后的初始化入参。
   const runtimeBootstrapOptionsText = JSON.stringify(runtimeBootstrapOptions);
@@ -997,10 +1112,13 @@ function normalizeWebviewMessage(message: unknown): PreviewMessagePayload | unde
 
   // 消息源码行号字段。
   const sourceLineField = messageRecord.sourceLine;
+  // 消息链接地址字段。
+  const hrefField = messageRecord.href;
 
   return {
     type: typeField,
-    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined
+    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined,
+    href: typeof hrefField === "string" ? hrefField : undefined
   };
 }
 

@@ -119,6 +119,33 @@ export interface VscodePreviewRuntimeBootstrapOptions {
   clearPreviewCursorMessageType: string;
   previewReadyMessageType: string;
   previewScrollChangedMessageType: string;
+  previewOpenLinkMessageType: string;
+}
+
+/**
+ * 出于安全考虑禁止从预览内容触发的链接 scheme：
+ * command: 链接可直接执行任意 VS Code 命令，渲染的是不可信 Markdown，必须屏蔽。
+ */
+const BLOCKED_LINK_SCHEME_PATTERN = /^command:/i;
+
+/**
+ * 按锚点 id 查找目标元素：优先按原文匹配，失败再尝试解码兜底（兼容被编码的中文 id）。
+ * @param rawAnchorId 锚点 id 原文（不含前导 #）。
+ * @returns 命中的目标元素；未命中时返回 null。
+ */
+function findAnchorTargetElement(rawAnchorId: string): HTMLElement | null {
+  // 按原文命中的目标元素。
+  const directTarget = document.getElementById(rawAnchorId);
+
+  if (directTarget) {
+    return directTarget;
+  }
+
+  try {
+    return document.getElementById(decodeURIComponent(rawAnchorId));
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -237,10 +264,11 @@ export function bootstrapVscodePreviewRuntime(
   }
 
   // 关键步骤：VS Code Webview 文档承载于 iframe 且设置了 <base href="…vscode-resource…">，
-  // 原生点击 <a href="#id">（目录、行内 [TOC]、脚注等同文档锚点）会把 hash 解析到 base 上、
-  // 触发 iframe 导航，被 CSP "frame-src 'self'" 拦截而报错。
-  // 这里在「捕获阶段」统一拦截同文档锚点点击——捕获先于元素自身的冒泡监听执行，
-  // 不受目录分支链接 stopPropagation 影响——改为 JS 平滑滚动到目标，规避导航。
+  // 原生点击任何 <a> 都会按 base 解析并触发 iframe 导航：
+  // 同文档锚点（#id）被 CSP "frame-src 'self'" 拦截报错；
+  // 相对路径链接会被解析成 vscode-resource CDN 地址、离开预览页面。
+  // 这里在「捕获阶段」统一拦截——捕获先于元素自身的冒泡监听执行，
+  // 不受目录分支链接 stopPropagation 影响——锚点改为 JS 滚动，其余链接发回扩展进程路由。
   previewShellElement.addEventListener(
     "click",
     (event) => {
@@ -250,33 +278,50 @@ export function bootstrapVscodePreviewRuntime(
       if (!(anchorElement instanceof HTMLAnchorElement)) {
         return;
       }
-      // 原始 href 文本：仅处理形如 "#id" 的同文档锚点，放过空 hash 与外链。
+      // 原始 href 文本（未经 base 解析）。
       const rawHref = anchorElement.getAttribute("href");
-      if (!rawHref || rawHref.length < 2 || rawHref.charAt(0) !== "#") {
+      if (!rawHref) {
         return;
       }
-      // 关键步骤：目录标题链接（class 对应 markdown-renderer 的 TOC_LINK_CLASS_NAME）由渲染器
-      // 在「冒泡阶段」自行 scrollIntoView 平滑滚动；本拦截器处于「捕获阶段」，实测在此调用
-      // scrollIntoView 会被 webview 降级为瞬时滚动，故对目录链接放行，避免抢先做瞬时滚动。
-      if (anchorElement.classList.contains(TOC_LINK_CLASS_NAME)) {
-        return;
-      }
-      // 锚点 id（去掉前导 #）：优先按原文匹配，失败再尝试解码兜底（兼容被编码的中文 id）。
-      const rawTargetId = rawHref.slice(1);
-      let targetElement = document.getElementById(rawTargetId);
-      if (!targetElement) {
-        try {
-          targetElement = document.getElementById(decodeURIComponent(rawTargetId));
-        } catch {
-          targetElement = null;
+
+      if (rawHref.charAt(0) === "#") {
+        // ── 分支一：同文档锚点，JS 滚动定位 ──
+        // 空 hash（"#"）无目标可滚，放行走原生行为。
+        if (rawHref.length < 2) {
+          return;
         }
-      }
-      if (!targetElement) {
+        // 关键步骤：目录标题链接（class 对应 markdown-renderer 的 TOC_LINK_CLASS_NAME）由渲染器
+        // 在「冒泡阶段」自行 scrollIntoView 平滑滚动；本拦截器处于「捕获阶段」，实测在此调用
+        // scrollIntoView 会被 webview 降级为瞬时滚动，故对目录链接放行，避免抢先做瞬时滚动。
+        if (anchorElement.classList.contains(TOC_LINK_CLASS_NAME)) {
+          return;
+        }
+        // 锚点 id（去掉前导 #）对应的目标元素。
+        const targetElement = findAnchorTargetElement(rawHref.slice(1));
+        if (!targetElement) {
+          return;
+        }
+        // 关键步骤：阻止原生 hash 导航，改用 JS 滚动定位，规避 CSP frame-src 拦截。
+        event.preventDefault();
+        targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
-      // 关键步骤：阻止原生 hash 导航，改用 JS 滚动定位，规避 CSP frame-src 拦截。
+
+      // ── 分支二：非锚点链接，交给扩展进程路由 ──
+      // 关键步骤：无论外链还是相对路径都必须 preventDefault，
+      // 否则浏览器会按 <base> 解析成 vscode-resource 地址并导航离开预览。
       event.preventDefault();
-      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // command: 等危险 scheme 直接屏蔽，不转发。
+      if (BLOCKED_LINK_SCHEME_PATTERN.test(rawHref)) {
+        return;
+      }
+
+      // 把原始 href（相对路径或外链）发回扩展进程，由扩展侧解析并打开。
+      vscodeApi.postMessage({
+        type: options.previewOpenLinkMessageType,
+        href: rawHref
+      });
     },
     true
   );
