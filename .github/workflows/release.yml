@@ -49,7 +49,11 @@ jobs:
 
       # 通过对比合并提交前后的 app package.json version 行，判断哪个 app 需要发布。
       # app 包是 private，不依赖 changesets 的 npm published 输出，避免跳过商店发布。
+      # hasChangesets == 'false' 表示本次是 Version PR 合并后的发布轮；
+      # 开 PR 轮时 changesets/action 会把工作区留在 changeset-release 分支的版本 bump 提交上，
+      # 不加此门禁会误判 app 版本变化、提前触发商店发布。
       - name: Detect app version changes
+        if: steps.changesets.outputs.hasChangesets == 'false'
         id: apps
         run: |
           vscode_changed=$(git diff HEAD^ HEAD -- apps/vscode-extension/package.json | grep -cE '^[+-].*"version"' || true)
