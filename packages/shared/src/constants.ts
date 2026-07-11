@@ -39,6 +39,13 @@ export const OPEN_PREVIEW_COMMAND = "scribdown.openPreview";
 export const MARKDOWN_LANGUAGE_ID = "markdown";
 
 /**
+ * Markdown 文件扩展名。
+ * 用于兜底识别被宿主注册为其他语言 ID 的 Markdown 文件（如 VS Code 内置
+ * prompt-basics 扩展把 SKILL.md 注册为 skill 语言）。
+ */
+export const MARKDOWN_FILE_EXTNAME = ".md";
+
+/**
  * Scribdown 页面根容器 class。
  */
 export const SCRIBDOWN_PAGE_CLASS_NAME = "scribdown-page";

@@ -45,14 +45,14 @@
       "editor/title": [
         {
           "command": "scribdown.openPreview",
-          "when": "resourceLangId == markdown",
+          "when": "resourceLangId == markdown || resourceExtname == .md",
           "group": "navigation"
         }
       ],
       "editor/context": [
         {
           "command": "scribdown.openPreview",
-          "when": "resourceLangId == markdown",
+          "when": "resourceLangId == markdown || resourceExtname == .md",
           "group": "navigation"
         }
       ]

@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { renderMarkdown } from "@scribdown/markdown-renderer";
 import {
+  MARKDOWN_FILE_EXTNAME,
   MARKDOWN_LANGUAGE_ID,
   OPEN_PREVIEW_COMMAND,
   PROJECT_NAME,
@@ -555,7 +556,7 @@ class ScribdownPreviewController implements vscode.Disposable {
       return;
     }
 
-    if (activeEditor && activeEditor.document.languageId === MARKDOWN_LANGUAGE_ID) {
+    if (activeEditor && isMarkdownDocument(activeEditor.document)) {
       // 关键步骤：切到其他 Markdown 文档时，自动把预览重新绑定到新文档。
       void this.bindPanelToDocument(activeEditor.document);
       return;
@@ -673,6 +674,21 @@ export function deactivate(): void {
 }
 
 /**
+ * 判断文档是否应按 Markdown 处理。
+ * 关键步骤：除语言 ID 外还按 .md 扩展名兜底 —— VS Code 内置 prompt-basics
+ * 扩展会把 SKILL.md 等文件注册为独立语言 ID，仅凭语言 ID 会漏判。
+ * 与 package.json 中菜单的 when 条件（resourceLangId == markdown || resourceExtname == .md）保持一致。
+ * @param document 待判断的文档。
+ * @returns 是 Markdown 文档时返回 true。
+ */
+function isMarkdownDocument(document: vscode.TextDocument): boolean {
+  return (
+    document.languageId === MARKDOWN_LANGUAGE_ID ||
+    document.uri.path.toLowerCase().endsWith(MARKDOWN_FILE_EXTNAME)
+  );
+}
+
+/**
  * 读取当前激活 Markdown 文档。
  * @returns 当前文档，不存在时返回 undefined。
  */
@@ -687,7 +703,7 @@ function getActiveMarkdownDocument(): vscode.TextDocument | undefined {
   // 当前编辑器文档。
   const activeDocument = activeEditor.document;
 
-  if (activeDocument.languageId !== MARKDOWN_LANGUAGE_ID) {
+  if (!isMarkdownDocument(activeDocument)) {
     return undefined;
   }
 
