@@ -1,5 +1,16 @@
 # @scribdown/browser-extension
 
+## 0.1.1
+
+### Patch Changes
+
+- 3a0f949: 修复渲染器静态资源未随插件暴露及相对路径 URL 解析问题；修复文件轮询可能产生重复定时器的问题。源码目录按功能重组，行为不变。
+- Updated dependencies [3a0f949]
+- Updated dependencies [3a0f949]
+  - @scribdown/markdown-renderer@0.2.0
+  - @scribdown/shared@0.2.0
+  - @scribdown/ui-handdrawn@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
