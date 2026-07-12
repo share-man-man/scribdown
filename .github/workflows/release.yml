@@ -15,8 +15,13 @@ permissions:
   id-token: write # npm provenance（可选）
 
 jobs:
+  # 版本编排 + npm 发布：开 PR 轮只更新 Version PR；发布轮发 npm 并输出 app 版本变化标记
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      vscode: ${{ steps.apps.outputs.vscode }}
+      browser: ${{ steps.apps.outputs.browser }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,11 +66,23 @@ jobs:
           echo "vscode=$([ "$vscode_changed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "browser=$([ "$browser_changed" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      # —— VS Code 商店 ——
+  # —— VS Code 商店 ——（与 Chrome 并行，互不阻断）
+  publish-vscode:
+    needs: release
+    if: needs.release.outputs.vscode == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".tool-versions"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # 幂等保护：Marketplace 已存在同版本时跳过，避免历史误发布导致重复发布报错
       - name: Publish VS Code Extension
-        if: steps.apps.outputs.vscode == 'true'
         working-directory: apps/vscode-extension
-        # 幂等保护：Marketplace 已存在同版本时跳过，避免历史误发布导致重复发布报错、阻断后续步骤
         run: |
           ext_id=$(node -p "p=require('./package.json'); p.publisher + '.' + p.name")
           local_version=$(node -p "require('./package.json').version")
@@ -78,9 +95,41 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
-      # —— Chrome 商店 ——
+  # —— Chrome 商店 ——（与 VS Code 并行，互不阻断）
+  publish-chrome:
+    needs: release
+    if: needs.release.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".tool-versions"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # 幂等保护：Web Store 草稿已是同版本时跳过（manifest 版本由 vite 构建时取自 package.json）
+      - name: Check published version
+        id: store
+        run: |
+          local_version=$(node -p "require('./apps/browser-extension/package.json').version")
+          access_token=$(curl -sf https://oauth2.googleapis.com/token \
+            -d client_id="$CHROME_CLIENT_ID" \
+            -d client_secret="$CHROME_CLIENT_SECRET" \
+            -d refresh_token="$CHROME_REFRESH_TOKEN" \
+            -d grant_type=refresh_token | jq -r .access_token)
+          store_version=$(curl -sf "https://www.googleapis.com/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID?projection=DRAFT" \
+            -H "Authorization: Bearer $access_token" | jq -r '.crxVersion // empty')
+          echo "本地版本: $local_version，商店草稿版本: ${store_version:-<未知>}"
+          echo "skip=$([ "$local_version" = "$store_version" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
       - name: Publish Chrome Extension
-        if: steps.apps.outputs.browser == 'true'
+        if: steps.store.outputs.skip != 'true'
         run: |
           pnpm --filter @scribdown/browser-extension build
           (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
