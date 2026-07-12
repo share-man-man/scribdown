@@ -34,6 +34,12 @@ features:
     details: 原始 HTML 经 rehype-sanitize + DOMPurify 双层清洗，外链与不可信资源加载失败时稳定降级，不破坏主内容流。
 ---
 
+<script setup>
+// 关键步骤：原生 HTML 里的绝对路径链接不会被 VitePress 自动加 base 前缀
+// （站点部署在 /scribdown/ 子路径下），需用 withBase 显式拼接。
+import { withBase } from "vitepress";
+</script>
+
 <section class="home-section">
   <h2 class="home-section__title">所见即所得的手绘渲染</h2>
   <p class="home-section__subtitle">同一份 Markdown，在 Scribdown 里呈现为纸感、线条与轻盈层级——下面是真实渲染样张。</p>
@@ -55,8 +61,9 @@ features:
     <h2>装上插件，立刻换个心情读文档</h2>
     <p>几分钟完成本地构建与加载，浏览器与 VS Code 都能用上同款手绘渲染。</p>
     <div class="home-cta__actions">
-      <a class="home-cta__btn home-cta__btn--brand" href="/guide/quick-start">快速上手 →</a>
-      <a class="home-cta__btn home-cta__btn--alt" href="/ui-design/overview">了解设计体系</a>
+      <!-- 站点未开启 cleanUrls，显式带 .html 后缀，保证不经客户端路由（如新标签页直开）也能命中静态文件。 -->
+      <a class="home-cta__btn home-cta__btn--brand" :href="withBase('/guide/quick-start.html')">快速上手 →</a>
+      <a class="home-cta__btn home-cta__btn--alt" :href="withBase('/ui-design/overview.html')">了解设计体系</a>
     </div>
   </div>
 </section>

@@ -19,7 +19,17 @@ import {
   TOC_TOGGLE_CLASS_NAME
 } from "@scribdown/shared";
 
-import { extractNodeText, visitMarkdownNode, type MarkdownNode } from "../core/ast";
+import GithubSlugger from "github-slugger";
+import type { Link, Paragraph, Root } from "mdast";
+import { visit } from "unist-util-visit";
+
+import {
+  extractNodeText,
+  type Toc,
+  type TocItem,
+  type TocList,
+  type TocToggle
+} from "../core/ast";
 
 /**
  * 目录中的单个标题条目。
@@ -63,8 +73,8 @@ const EMPTY_HEADING_SLUG_PREFIX = "section";
  * remark 插件：收集标题、生成标题锚点，并把独占一段的 [TOC] 替换为目录。
  * @returns Markdown AST 转换器。
  */
-function remarkTableOfContents(): (tree: MarkdownNode) => void {
-  return (tree: MarkdownNode) => {
+function remarkTableOfContents(): (tree: Root) => void {
+  return (tree: Root) => {
     // 标题条目，同时会在收集时写入 heading id。
     const tocHeadings = collectTocHeadings(tree);
 
@@ -78,9 +88,10 @@ function remarkTableOfContents(): (tree: MarkdownNode) => void {
  * @param tree Markdown 根节点。
  * @returns 可用于渲染目录的标题列表。
  */
-function collectTocHeadings(tree: MarkdownNode): TocHeading[] {
-  // 标题 slug 使用次数，用于处理重复标题。
-  const headingSlugCounts = new Map<string, number>();
+function collectTocHeadings(tree: Root): TocHeading[] {
+  // 标题锚点生成器：github-slugger 与 GitHub / VS Code 内置预览同源，
+  // 实例内部自带重复标题计数（"重复标题" → "重复标题-1"）；每次渲染新建实例保证计数从零开始。
+  const headingSlugger = new GithubSlugger();
   // 收集到的目录标题条目。
   const tocHeadings: TocHeading[] = [];
   // 各标题层级的计数器，用于生成 1 / 1.1 / 1.1.1 这类目录序号。
@@ -88,17 +99,13 @@ function collectTocHeadings(tree: MarkdownNode): TocHeading[] {
   // 文档内最浅标题层级，用作目录序号的根层级。
   let rootHeadingDepth: number | undefined;
 
-  visitMarkdownNode(tree, (node: MarkdownNode) => {
-    if (node.type !== "heading") {
-      return;
-    }
-
-    // 标题层级默认回退到二级标题。
-    const headingDepth = node.depth ?? 2;
+  visit(tree, "heading", (node) => {
+    // 当前标题层级。
+    const headingDepth = node.depth;
     // 从标题行内节点提取纯文本。
     const headingText = extractNodeText(node).trim();
     // 为标题生成去重后的锚点。
-    const headingId = createUniqueSlug(headingText, headingSlugCounts, tocHeadings.length + 1);
+    const headingId = createHeadingId(headingSlugger, headingText, tocHeadings.length + 1);
     // 根据标题层级生成目录编号。
     const headingIndex = createHeadingIndex(
       headingDepth,
@@ -127,7 +134,7 @@ function collectTocHeadings(tree: MarkdownNode): TocHeading[] {
             className: [HEADING_MARK_CLASS_NAME]
           }
         },
-        children: node.children ?? []
+        children: node.children
       }
     ];
 
@@ -147,41 +154,30 @@ function collectTocHeadings(tree: MarkdownNode): TocHeading[] {
  * @param node 当前节点。
  * @param tocHeadings 目录标题条目。
  */
-function replaceTocMarkers(node: MarkdownNode, tocHeadings: TocHeading[]): void {
-  if (!node.children) {
-    return;
-  }
-
-  // 当前节点的子节点数组。
-  const childNodes = node.children;
-  // 子节点索引。
-  for (let childIndex = 0; childIndex < childNodes.length; childIndex += 1) {
-    // 当前子节点。
-    const childNode = childNodes[childIndex];
-
-    if (isTocMarkerParagraph(childNode)) {
-      childNodes[childIndex] = createTocNode(tocHeadings, childNode);
-      continue;
+function replaceTocMarkers(tree: Root, tocHeadings: TocHeading[]): void {
+  visit(tree, "paragraph", (node, index, parent) => {
+    if (parent === undefined || index === undefined || !isTocMarkerParagraph(node)) {
+      return;
     }
 
-    replaceTocMarkers(childNode, tocHeadings);
-  }
+    parent.children[index] = createTocNode(tocHeadings, node);
+  });
 }
 
 /**
  * 判断段落是否是独占的 [TOC] 标记。
- * @param node 待判断节点。
+ * @param node 待判断段落节点。
  * @returns 当前节点是否为目录占位段落。
  */
-function isTocMarkerParagraph(node: MarkdownNode): boolean {
-  if (node.type !== "paragraph" || !node.children || node.children.length !== 1) {
+function isTocMarkerParagraph(node: Paragraph): boolean {
+  if (node.children.length !== 1) {
     return false;
   }
 
   // 段落内唯一的行内节点。
   const onlyChild = node.children[0];
 
-  return onlyChild.type === "text" && TOC_MARKER_PATTERN.test(onlyChild.value ?? "");
+  return onlyChild.type === "text" && TOC_MARKER_PATTERN.test(onlyChild.value);
 }
 
 /**
@@ -190,7 +186,7 @@ function isTocMarkerParagraph(node: MarkdownNode): boolean {
  * @param markerNode [TOC] 标记段落节点，用于保留源码位置。
  * @returns 可被 remark-rehype 转换为 details 的 Markdown 节点。
  */
-function createTocNode(tocHeadings: TocHeading[], markerNode: MarkdownNode): MarkdownNode {
+function createTocNode(tocHeadings: TocHeading[], markerNode: Paragraph): Toc {
   // 层级化后的目录条目，用于生成可折叠分支。
   const tocTree = createTocTree(tocHeadings);
 
@@ -280,17 +276,16 @@ function createTocTree(tocHeadings: TocHeading[]): TocTreeItem[] {
  * @param isNested 是否为嵌套列表。
  * @returns Markdown 列表节点。
  */
-function createTocListNode(tocItems: TocTreeItem[], isNested: boolean): MarkdownNode {
+function createTocListNode(tocItems: TocTreeItem[], isNested: boolean): TocList {
   // 当前目录列表需要输出的类名。
   const tocListClassNames = isNested
     ? [TOC_LIST_CLASS_NAME, TOC_LIST_NESTED_CLASS_NAME]
     : [TOC_LIST_CLASS_NAME];
 
   return {
-    type: "list",
-    ordered: true,
-    spread: false,
+    type: "tocList",
     data: {
+      hName: "ol",
       hProperties: {
         className: tocListClassNames
       }
@@ -304,7 +299,7 @@ function createTocListNode(tocItems: TocTreeItem[], isNested: boolean): Markdown
  * @param tocItem 目录树条目。
  * @returns Markdown 列表项节点。
  */
-function createTocListItem(tocItem: TocTreeItem): MarkdownNode {
+function createTocListItem(tocItem: TocTreeItem): TocItem {
   // 当前条目是否拥有可折叠的子层级。
   const hasChildren = tocItem.children.length > 0;
   // 当前目录条目的 class 列表。
@@ -313,14 +308,14 @@ function createTocListItem(tocItem: TocTreeItem): MarkdownNode {
   // 关键步骤：叶子与分支的标题都用同一个 <a href="#id">（createTocLinkNode）、共用同一套跳转；
   // 分支只是额外在标题前放一个「独立的折叠按钮」、标题后放嵌套子列表。
   // 折叠按钮与标题链接分离，从结构上消除「点标题既跳转又折叠」的冲突。
-  const itemChildren: MarkdownNode[] = hasChildren
+  const itemChildren: TocItem["children"] = hasChildren
     ? [createTocToggleNode(), createTocLinkNode(tocItem), createTocListNode(tocItem.children, true)]
     : [createTocLinkNode(tocItem)];
 
   return {
-    type: "listItem",
-    spread: false,
+    type: "tocItem",
     data: {
+      hName: "li",
       hProperties: {
         dataTocIndex: tocItem.index,
         className: tocItemClassNames
@@ -349,7 +344,7 @@ function createTocItemClassNames(depth: number, hasChildren: boolean): string[] 
  * 默认 aria-expanded="true"（展开），运行时由 {@link hydrateToc} 绑定点击切换。
  * @returns 可被 remark-rehype 转换为 button 的 Markdown 节点。
  */
-function createTocToggleNode(): MarkdownNode {
+function createTocToggleNode(): TocToggle {
   return {
     type: "tocToggle",
     data: {
@@ -372,7 +367,7 @@ function createTocToggleNode(): MarkdownNode {
  * @param tocItem 目录树条目。
  * @returns Markdown 链接节点。
  */
-function createTocLinkNode(tocItem: TocTreeItem): MarkdownNode {
+function createTocLinkNode(tocItem: TocTreeItem): Link {
   return {
     type: "link",
     url: `#${tocItem.id}`,
@@ -391,33 +386,28 @@ function createTocLinkNode(tocItem: TocTreeItem): MarkdownNode {
 }
 
 /**
- * 生成去重后的标题 slug。
+ * 生成去重后的标题锚点 id。
+ * slug 规则完全交给 github-slugger（与 GitHub / VS Code 内置预览同源），
+ * 仅补充空标题（或纯符号标题被删空）时的 "section-N" 回退，github-slugger 对空结果返回空串。
+ * @param headingSlugger 当前文档的 slugger 实例（内部自带重复计数）。
  * @param headingText 标题文本。
- * @param slugCounts 已使用 slug 计数。
  * @param fallbackIndex 空标题回退序号。
  * @returns 唯一标题锚点。
  */
-function createUniqueSlug(
+function createHeadingId(
+  headingSlugger: GithubSlugger,
   headingText: string,
-  slugCounts: Map<string, number>,
   fallbackIndex: number
 ): string {
-  // 标准化后的基础 slug。
-  const normalizedSlug = normalizeSlugText(headingText);
-  // 空标题的回退 slug。
-  const fallbackSlug = `${EMPTY_HEADING_SLUG_PREFIX}-${fallbackIndex}`;
-  // 本次使用的基础 slug。
-  const baseSlug = normalizedSlug || fallbackSlug;
-  // 当前 slug 已出现次数。
-  const usedCount = slugCounts.get(baseSlug) ?? 0;
+  // github-slugger 生成的基础 slug（重复标题自动追加 -1 / -2 后缀）。
+  const baseSlug = headingSlugger.slug(headingText);
 
-  slugCounts.set(baseSlug, usedCount + 1);
-
-  if (usedCount === 0) {
+  if (baseSlug) {
     return baseSlug;
   }
 
-  return `${baseSlug}-${usedCount}`;
+  // 关键步骤：空 slug 走回退命名，也经 slugger 登记，与后续同名标题保持互斥。
+  return headingSlugger.slug(`${EMPTY_HEADING_SLUG_PREFIX}-${fallbackIndex}`);
 }
 
 /**
@@ -450,22 +440,6 @@ function createHeadingIndex(
   }
 
   return headingIndexCounts.slice(startDepth, headingDepth + 1).join(".");
-}
-
-/**
- * 将标题文本标准化为 URL 片段。
- * @param headingText 标题文本。
- * @returns 标准化后的 slug。
- */
-function normalizeSlugText(headingText: string): string {
-  return headingText
-    .trim()
-    .toLowerCase()
-    .replace(/<[^>]+>/g, "")
-    .replace(/[^\p{L}\p{N}\s_-]+/gu, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
 }
 
 /**

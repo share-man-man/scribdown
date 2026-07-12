@@ -66,6 +66,17 @@ describe("renderMarkdown", () => {
     );
   });
 
+  it("generates github-style heading slugs without collapsing hyphens", async () => {
+    // 输入 Markdown 覆盖「文字 / 分隔符」类标题：GitHub 规则下 " / " 产生两个连续连字符。
+    const markdownText = "## 聊天 / 新建对话首页";
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText);
+
+    // 关键断言：slug 与 GitHub / VS Code 内置预览一致（每个空格各替换为一个 "-"，不合并），
+    // 保证外部按 GitHub 惯例书写的 "#聊天--新建对话首页" 锚点可命中。
+    expect(renderedHtml).toContain('<h2 id="聊天--新建对话首页"');
+  });
+
   it("deduplicates heading ids", async () => {
     // 输入 Markdown 覆盖重复标题。
     const markdownText = ["[TOC]", "", "## 重复标题", "", "## 重复标题"].join("\n");

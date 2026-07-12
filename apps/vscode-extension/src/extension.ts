@@ -100,6 +100,11 @@ const SET_PREVIEW_CURSOR_MESSAGE_TYPE = "set-preview-cursor";
 const CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE = "clear-preview-cursor";
 
 /**
+ * Extension -> Webview 消息类型：按锚点 id 滚动预览到对应标题（跨文件链接的 #fragment 定位）。
+ */
+const SCROLL_PREVIEW_TO_ANCHOR_MESSAGE_TYPE = "scroll-preview-to-anchor";
+
+/**
  * 滚动同步驱动方枚举。
  */
 const SCROLL_SYNC_SOURCE = {
@@ -176,6 +181,11 @@ class ScribdownPreviewController implements vscode.Disposable {
    * 编辑器滚动同步上次实际发送的时间戳（毫秒）。
    */
   private editorScrollLastSentAt = 0;
+
+  /**
+   * 跨文件链接携带的待定位锚点：目标文档渲染完成后滚动到该锚点并清除。
+   */
+  private pendingAnchor: { documentUriText: string; anchorId: string } | undefined;
 
   /**
    * 编辑器滚动同步节流间隔内待发送的最新源码行号；undefined 表示无待发送值。
@@ -438,6 +448,16 @@ class ScribdownPreviewController implements vscode.Disposable {
         this.postEditorScrollSync(resolveEditorTopLine(previewEditor));
         this.postPreviewCursorSync(resolveCursorSourceLine(previewEditor));
       }
+
+      // 关键步骤：本次渲染命中跨文件链接的目标文档时，在滚动/光标同步之后下发锚点定位，
+      // 保证 Webview 按消息顺序最后执行锚点滚动、不被顶部对齐覆盖；无论命中与否都清空，
+      // 避免过期锚点在后续切换文档时误触发。
+      if (this.pendingAnchor) {
+        if (this.pendingAnchor.documentUriText === document.uri.toString()) {
+          this.postPreviewAnchorScroll(this.pendingAnchor.anchorId);
+        }
+        this.pendingAnchor = undefined;
+      }
     } catch (error) {
       // 渲染错误文本。
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -627,9 +647,18 @@ class ScribdownPreviewController implements vscode.Disposable {
       return;
     }
 
-    // 去掉锚点片段后的路径部分（如 "docs/guide.md#usage" -> "docs/guide.md"）；
-    // 跨文件链接的锚点片段不参与定位，仅打开目标文件。
-    const [rawPathPart = ""] = href.split("#");
+    // 拆分路径与锚点片段（如 "docs/guide.md#usage" -> ["docs/guide.md", "usage"]）；
+    // 锚点片段在目标文件渲染完成后用于滚动定位。
+    const [rawPathPart = "", ...anchorParts] = href.split("#");
+    // 锚点片段原文（可能被百分号编码，如中文标题锚点）。
+    const rawAnchorPart = anchorParts.join("#");
+    // 解码后的锚点 id；解码失败按原文处理。
+    let anchorId = rawAnchorPart;
+    try {
+      anchorId = decodeURIComponent(rawAnchorPart);
+    } catch {
+      // 保持原文。
+    }
 
     if (!rawPathPart) {
       return;
@@ -661,9 +690,33 @@ class ScribdownPreviewController implements vscode.Disposable {
     // 当前预览文档所在编辑器列，让链接目标与源文档同列打开；预览面板保持在侧边。
     const targetViewColumn = this.getPreviewEditor()?.viewColumn ?? vscode.ViewColumn.One;
 
+    // 目标文件与当前预览文档是否为同一文件（同文件带锚点链接不会触发重新渲染）。
+    const isSameDocument = targetUri.toString() === this.previewDocumentUriText;
+
+    // 关键步骤：跨文件链接先登记待定位锚点，等目标文档渲染完成后（renderDocumentToPanel）
+    // 再下发滚动消息；同文件链接内容已渲染，打开编辑器后直接下发。
+    if (anchorId && !isSameDocument) {
+      this.pendingAnchor = { documentUriText: targetUri.toString(), anchorId };
+    }
+
     // 关键步骤：vscode.open 会按文件类型选择合适的编辑器（文本 / 图片 / 自定义编辑器）。
     // 打开 Markdown 文件后，激活编辑器变化监听会自动把预览重新绑定到新文档。
     await vscode.commands.executeCommand("vscode.open", targetUri, targetViewColumn);
+
+    if (anchorId && isSameDocument) {
+      this.postPreviewAnchorScroll(anchorId);
+    }
+  }
+
+  /**
+   * 下发按锚点 id 滚动预览的消息。
+   * @param anchorId 目标标题锚点 id（已解码）。
+   */
+  private postPreviewAnchorScroll(anchorId: string): void {
+    void this.panel?.webview.postMessage({
+      type: SCROLL_PREVIEW_TO_ANCHOR_MESSAGE_TYPE,
+      anchorId
+    });
   }
 
   /**
@@ -1001,6 +1054,7 @@ function createRuntimeBootstrapScript(): string {
     setPreviewScrollMessageType: SET_PREVIEW_SCROLL_MESSAGE_TYPE,
     setPreviewCursorMessageType: SET_PREVIEW_CURSOR_MESSAGE_TYPE,
     clearPreviewCursorMessageType: CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE,
+    scrollPreviewToAnchorMessageType: SCROLL_PREVIEW_TO_ANCHOR_MESSAGE_TYPE,
     previewReadyMessageType: PREVIEW_READY_MESSAGE_TYPE,
     previewScrollChangedMessageType: PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE,
     previewOpenLinkMessageType: PREVIEW_OPEN_LINK_MESSAGE_TYPE
