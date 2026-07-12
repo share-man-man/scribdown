@@ -413,15 +413,19 @@ function mountPageToolbar(
   });
 
   // 菜单项：关于（点击在新标签页打开项目 GitHub Pages 主页）。
+  // 关键步骤：用原生 <a> 而非 button + window.open —— VS Code Webview 沙箱禁用 window.open，
+  // 但 <a> 点击会被 Webview 侧的链接拦截器捕获并转交扩展进程 openExternal；
+  // 浏览器宿主则直接走原生新标签页行为，两端共用同一实现。
   /** 「关于」菜单项。 */
-  const aboutItem = ownerDocument.createElement("button");
-  aboutItem.type = "button";
+  const aboutItem = ownerDocument.createElement("a");
+  aboutItem.href = PROJECT_HOMEPAGE_URL;
+  aboutItem.target = "_blank";
+  // noopener/noreferrer 阻断被打开页对本页的引用。
+  aboutItem.rel = "noopener noreferrer";
   aboutItem.className = SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME;
   aboutItem.setAttribute("role", "menuitem");
   aboutItem.innerHTML = `${TOOLBAR_ABOUT_ICON_SVG}<span>关于</span>`;
   aboutItem.addEventListener("click", () => {
-    // 关键步骤：新标签页打开项目主页，noopener/noreferrer 阻断被打开页对本页的引用。
-    ownerWindow?.open(PROJECT_HOMEPAGE_URL, "_blank", "noopener,noreferrer");
     closeMoreMenu();
   });
 

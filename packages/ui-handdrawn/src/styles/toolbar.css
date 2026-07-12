@@ -181,12 +181,13 @@
   visibility: visible;
 }
 
-/* 单个菜单项：横向 icon + 文本。 */
+/* 单个菜单项：横向 icon + 文本（可能是 button 或 a，链接形态需去掉下划线）。 */
 .scribdown-toolbar-menu-item {
   display: flex;
   align-items: center;
   gap: var(--scribdown-space-2);
   width: 100%;
+  box-sizing: border-box;
   padding: 8px 10px;
   background: transparent;
   border: 0;
@@ -195,6 +196,7 @@
   font-family: var(--scribdown-font-body);
   font-size: 14px;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
   transition:
     color var(--scribdown-duration-fast) var(--scribdown-easing-standard),
