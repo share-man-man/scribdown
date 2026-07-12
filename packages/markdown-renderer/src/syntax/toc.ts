@@ -20,7 +20,7 @@ import {
 } from "@scribdown/shared";
 
 import GithubSlugger from "github-slugger";
-import type { Link, Paragraph, Root, Text } from "mdast";
+import type { Link, Paragraph, Root } from "mdast";
 import { visit } from "unist-util-visit";
 
 import {
