@@ -5,7 +5,9 @@
 
 import { DETAILS_CLASS_NAME, FRAME_CLASS_NAME, TOC_CLASS_NAME } from "@scribdown/shared";
 
-import type { HastNode } from "../core/ast";
+import type { Root } from "hast";
+import { classnames } from "hast-util-classnames";
+import { visit } from "unist-util-visit";
 
 /**
  * rehype 插件：为内容折叠块注入手绘边框 class，实现样式层的 opt-in。
@@ -14,32 +16,23 @@ import type { HastNode } from "../core/ast";
  * 该插件运行在 rehype-raw 之后、rehype-sanitize 之前，注入的 class 由 sanitize 白名单放行。
  * @returns hast 转换器。
  */
-function rehypeFrameClass(): (tree: HastNode) => void {
-  return (tree: HastNode) => {
-    tagContentDetails(tree);
+function rehypeFrameClass(): (tree: Root) => void {
+  return (tree: Root) => {
+    visit(tree, "element", (node) => {
+      if (node.tagName !== "details") {
+        return;
+      }
+
+      // 当前 details 已有的 class 列表（可能是数组、字符串或缺失）。
+      const classNames = normalizeClassNames(node.properties.className);
+
+      // 目录根使用自己的命名空间，不当作内容折叠块处理。
+      if (!classNames.includes(TOC_CLASS_NAME)) {
+        // 关键步骤：hast-util-classnames 追加 class 并去重，保留已有 class。
+        classnames(node, DETAILS_CLASS_NAME, FRAME_CLASS_NAME);
+      }
+    });
   };
-}
-
-/**
- * 深度优先遍历 hast 树，为内容折叠块注入边框 class。
- * @param node 当前 hast 节点。
- */
-function tagContentDetails(node: HastNode): void {
-  if (node.type === "element" && node.tagName === "details") {
-    // 当前 details 已有的 class 列表。
-    const classNames = normalizeClassNames(node.properties?.className);
-    // 目录根使用自己的命名空间，不当作内容折叠块处理。
-    const isTocDetails = classNames.includes(TOC_CLASS_NAME);
-    if (!isTocDetails) {
-      addClassNames(node, [DETAILS_CLASS_NAME, FRAME_CLASS_NAME]);
-    }
-  }
-
-  if (Array.isArray(node.children)) {
-    for (const childNode of node.children) {
-      tagContentDetails(childNode);
-    }
-  }
 }
 
 /**
@@ -55,22 +48,6 @@ function normalizeClassNames(className: unknown): string[] {
     return className.split(/\s+/u).filter(Boolean);
   }
   return [];
-}
-
-/**
- * 向 hast 元素追加 class 名（去重）。
- * @param node 目标 hast 元素。
- * @param classNamesToAdd 待追加的 class 名列表。
- */
-function addClassNames(node: HastNode, classNamesToAdd: string[]): void {
-  // 合并去重后的 class 列表。
-  const mergedClassNames = normalizeClassNames(node.properties?.className);
-  for (const classNameToAdd of classNamesToAdd) {
-    if (!mergedClassNames.includes(classNameToAdd)) {
-      mergedClassNames.push(classNameToAdd);
-    }
-  }
-  node.properties = { ...node.properties, className: mergedClassNames };
 }
 
 export { rehypeFrameClass };

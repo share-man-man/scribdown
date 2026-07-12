@@ -11,9 +11,15 @@ import {
   FRONTMATTER_LIST_NESTED_CLASS_NAME
 } from "@scribdown/shared";
 
+import type { Code, Root, Yaml } from "mdast";
 import { parse as parseYamlSource } from "yaml";
 
-import type { MarkdownNode } from "../core/ast";
+import type {
+  FrontmatterDescription,
+  FrontmatterList,
+  FrontmatterMetadata,
+  FrontmatterTerm
+} from "../core/ast";
 
 // Frontmatter 标签展示文本。
 const FRONTMATTER_LABEL_TEXT = "元数据";
@@ -30,14 +36,14 @@ const FRONTMATTER_FALLBACK_LANGUAGE_ID = "yaml";
  * 本插件再把 yaml 节点转换为键值列表结构；解析失败时回退为 yaml 代码块展示原文。
  * @returns Markdown AST 转换器。
  */
-function remarkFrontmatterMetadata(): (tree: MarkdownNode) => void {
-  return (tree: MarkdownNode) => {
+function remarkFrontmatterMetadata(): (tree: Root) => void {
+  return (tree: Root) => {
     // 顶层块级节点列表。
-    const childNodes = tree.children ?? [];
+    const childNodes = tree.children;
     // frontmatter 只可能出现在文档首个节点（remark-frontmatter 仅识别文档起始处的 ---）。
     const yamlNode = childNodes[0];
 
-    if (!yamlNode || yamlNode.type !== "yaml" || typeof yamlNode.value !== "string") {
+    if (!yamlNode || yamlNode.type !== "yaml") {
       return;
     }
 
@@ -50,9 +56,9 @@ function remarkFrontmatterMetadata(): (tree: MarkdownNode) => void {
  * @param yamlNode remark-frontmatter 解析出的 yaml 节点。
  * @returns 元数据卡片节点；yaml 解析失败或非键值对象时返回 yaml 代码块节点。
  */
-function createFrontmatterNode(yamlNode: MarkdownNode): MarkdownNode {
+function createFrontmatterNode(yamlNode: Yaml): FrontmatterMetadata | Code {
   // yaml 原文文本。
-  const yamlSource = yamlNode.value ?? "";
+  const yamlSource = yamlNode.value;
   // yaml 解析结果，解析失败时保持 undefined。
   let parsedValue: unknown;
 
@@ -118,13 +124,13 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
  * @param nested 是否为嵌套层（嵌套层追加修饰类）。
  * @returns dl 键值列表节点。
  */
-function createFrontmatterListNode(record: Record<string, unknown>, nested: boolean): MarkdownNode {
+function createFrontmatterListNode(record: Record<string, unknown>, nested: boolean): FrontmatterList {
   // dl 的 className 列表：嵌套层追加修饰类。
   const listClassNames = nested
     ? [FRONTMATTER_LIST_CLASS_NAME, FRONTMATTER_LIST_NESTED_CLASS_NAME]
     : [FRONTMATTER_LIST_CLASS_NAME];
   // dt / dd 交替排列的子节点列表。
-  const listChildren: MarkdownNode[] = [];
+  const listChildren: (FrontmatterTerm | FrontmatterDescription)[] = [];
 
   Object.entries(record).forEach(([entryKey, entryValue]) => {
     listChildren.push({
@@ -154,7 +160,7 @@ function createFrontmatterListNode(record: Record<string, unknown>, nested: bool
  * @param value frontmatter 中的任意值。
  * @returns dd 的子节点列表。
  */
-function createFrontmatterValueNodes(value: unknown): MarkdownNode[] {
+function createFrontmatterValueNodes(value: unknown): FrontmatterDescription["children"] {
   // 对象值向下展开为嵌套键值列表。
   if (isPlainRecord(value)) {
     return [createFrontmatterListNode(value, true)];

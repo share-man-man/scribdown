@@ -15,7 +15,9 @@ import {
   VIDEO_FRAME_LOADED_CLASS_NAME
 } from "@scribdown/shared";
 
-import type { HastNode } from "../core/ast";
+import type { Element, ElementContent, Root } from "hast";
+import { classnames } from "hast-util-classnames";
+import { SKIP, visit } from "unist-util-visit";
 
 // 视频运行时已绑定标记的 dataset 键。
 const VIDEO_HYDRATED_DATA_KEY = "scribdownVideoHydrated";
@@ -29,43 +31,28 @@ const VIDEO_FALLBACK_DEFAULT_TEXT = "视频加载失败";
  * 该插件运行在 rehype-raw 之后、rehype-sanitize 之前，结构清洗在后兜底。
  * @returns hast 转换器。
  */
-function rehypeVideoFigures(): (tree: HastNode) => void {
-  return (tree: HastNode) => {
-    transformVideoFigures(tree);
+function rehypeVideoFigures(): (tree: Root) => void {
+  return (tree: Root) => {
+    visit(tree, "element", (node, index, parent) => {
+      if (parent === undefined || index === undefined) {
+        return;
+      }
+
+      if (isHastVideoElement(node)) {
+        parent.children[index] = createVideoFigureHast(node);
+        // 关键步骤：figure 内部无需再遍历，跳过并从替换节点之后继续。
+        return SKIP;
+      }
+
+      // <p><video/></p> 形式（行内 HTML 解析的常见结果）：把整段替换为 figure。
+      /** 仅包含单个 video 的段落剥离结果。 */
+      const standaloneVideo = extractStandaloneParagraphVideo(node);
+      if (standaloneVideo) {
+        parent.children[index] = createVideoFigureHast(standaloneVideo);
+        return SKIP;
+      }
+    });
   };
-}
-
-/**
- * 深度优先遍历 hast 树，把 video 节点替换为 video figure 结构。
- * @param node 当前 hast 节点。
- */
-function transformVideoFigures(node: HastNode): void {
-  if (!Array.isArray(node.children)) {
-    return;
-  }
-
-  // 当前节点的子节点数组。
-  const childNodes = node.children;
-  // 子节点索引。
-  for (let childIndex = 0; childIndex < childNodes.length; childIndex += 1) {
-    // 当前子节点。
-    const childNode = childNodes[childIndex];
-
-    if (isHastVideoElement(childNode)) {
-      childNodes[childIndex] = createVideoFigureHast(childNode);
-      continue;
-    }
-
-    // <p><video/></p> 形式（行内 HTML 解析的常见结果）：把整段替换为 figure。
-    /** 仅包含单个 video 的段落剥离结果。 */
-    const standaloneVideo = extractStandaloneParagraphVideo(childNode);
-    if (standaloneVideo) {
-      childNodes[childIndex] = createVideoFigureHast(standaloneVideo);
-      continue;
-    }
-
-    transformVideoFigures(childNode);
-  }
 }
 
 /**
@@ -73,27 +60,23 @@ function transformVideoFigures(node: HastNode): void {
  * @param node 待判断的 hast 节点。
  * @returns 是否为 video 元素。
  */
-function isHastVideoElement(node: HastNode): boolean {
+function isHastVideoElement(node: ElementContent): node is Element {
   return node.type === "element" && node.tagName === "video";
 }
 
 /**
  * 尝试从只包含单个 <video> 的 <p> 段落中剥离出该 video 节点。
- * @param node 待检查的 hast 节点。
+ * @param node 待检查的 hast 元素。
  * @returns 剥离出的 video 节点；不匹配则返回 undefined。
  */
-function extractStandaloneParagraphVideo(node: HastNode): HastNode | undefined {
-  if (
-    node.type !== "element" ||
-    node.tagName !== "p" ||
-    !Array.isArray(node.children)
-  ) {
+function extractStandaloneParagraphVideo(node: Element): Element | undefined {
+  if (node.tagName !== "p") {
     return undefined;
   }
 
   /** 段落内忽略纯空白文本节点后的有效子节点列表。 */
   const significantChildren = node.children.filter((childNode) => {
-    if (childNode.type === "text" && typeof childNode.value === "string") {
+    if (childNode.type === "text") {
       return childNode.value.trim().length > 0;
     }
     return true;
@@ -114,7 +97,7 @@ function extractStandaloneParagraphVideo(node: HastNode): HastNode | undefined {
  * @param videoNode 原始 video 节点。
  * @returns 新的 figure hast 节点。
  */
-function createVideoFigureHast(videoNode: HastNode): HastNode {
+function createVideoFigureHast(videoNode: Element): Element {
   decorateHastVideoElement(videoNode);
 
   /** 用于失败态展示的源 URL。 */
@@ -136,27 +119,11 @@ function createVideoFigureHast(videoNode: HastNode): HastNode {
 }
 
 /**
- * 给 video 节点的 className 数组追加统一类名（保留原有 class）。
+ * 给 video 节点追加统一类名（hast-util-classnames 保留原有 class 并去重）。
  * @param videoNode 待装饰的 video 节点。
  */
-function decorateHastVideoElement(videoNode: HastNode): void {
-  /** video 节点上的属性容器。 */
-  const properties = videoNode.properties ?? {};
-  /** 现有 className，可能是数组、字符串或缺失。 */
-  const existingClassName = properties.className;
-  /** 规范化后的 className 数组。 */
-  const classList: string[] = Array.isArray(existingClassName)
-    ? existingClassName.map(String)
-    : typeof existingClassName === "string"
-      ? [existingClassName]
-      : [];
-
-  if (!classList.includes(VIDEO_ELEMENT_CLASS_NAME)) {
-    classList.push(VIDEO_ELEMENT_CLASS_NAME);
-  }
-
-  properties.className = classList;
-  videoNode.properties = properties;
+function decorateHastVideoElement(videoNode: Element): void {
+  classnames(videoNode, VIDEO_ELEMENT_CLASS_NAME);
 }
 
 /**
@@ -164,22 +131,18 @@ function decorateHastVideoElement(videoNode: HastNode): void {
  * @param videoNode video 节点。
  * @returns 源 URL，未找到时返回空串。
  */
-function readHastVideoSourceUrl(videoNode: HastNode): string {
-  /** video 节点上的属性容器。 */
-  const properties = videoNode.properties ?? {};
-  if (typeof properties.src === "string") {
-    return properties.src;
+function readHastVideoSourceUrl(videoNode: Element): string {
+  if (typeof videoNode.properties.src === "string") {
+    return videoNode.properties.src;
   }
 
-  if (Array.isArray(videoNode.children)) {
-    for (const childNode of videoNode.children) {
-      if (
-        childNode.type === "element" &&
-        childNode.tagName === "source" &&
-        typeof childNode.properties?.src === "string"
-      ) {
-        return childNode.properties.src as string;
-      }
+  for (const childNode of videoNode.children) {
+    if (
+      childNode.type === "element" &&
+      childNode.tagName === "source" &&
+      typeof childNode.properties.src === "string"
+    ) {
+      return childNode.properties.src;
     }
   }
 
@@ -191,7 +154,7 @@ function readHastVideoSourceUrl(videoNode: HastNode): string {
  * @param sourceUrl 视频源 URL，用于失败态尾部展示。
  * @returns 失败态占位 hast 节点。
  */
-function createVideoFallbackHast(sourceUrl: string): HastNode {
+function createVideoFallbackHast(sourceUrl: string): Element {
   return {
     type: "element",
     tagName: "span",

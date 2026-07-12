@@ -16,7 +16,16 @@ import {
   IMAGE_FRAME_LOADED_CLASS_NAME
 } from "@scribdown/shared";
 
-import { isImageNode, type MarkdownNode } from "../core/ast";
+import type { Image, ImageReference, Paragraph, Root } from "mdast";
+import { SKIP, visit } from "unist-util-visit";
+
+import {
+  isImageNode,
+  type ImageFallback,
+  type ImageFigure,
+  type ImageFrame,
+  type ImageCaption
+} from "../core/ast";
 import { bindMarkdownImageViewer } from "./image-viewer";
 
 // 图片运行时已绑定标记的 dataset 键。
@@ -26,51 +35,37 @@ const IMAGE_HYDRATED_DATA_KEY = "scribdownImageHydrated";
  * remark 插件：把独占段落的图片转换为 figure 结构。
  * @returns Markdown AST 转换器。
  */
-function remarkImageFigures(): (tree: MarkdownNode) => void {
-  return (tree: MarkdownNode) => {
-    transformImageFigures(tree);
+function remarkImageFigures(): (tree: Root) => void {
+  return (tree: Root) => {
+    // 关键步骤：先把独占图片段落整体替换为 figure（跳过内部，避免重复装饰），
+    // 再为剩余的行内图片补统一 class。
+    visit(tree, "paragraph", (node, index, parent) => {
+      if (parent === undefined || index === undefined) {
+        return;
+      }
+
+      // 当前图片段落转换出的 figure 节点。
+      const imageFigureNode = createImageFigureNode(node);
+
+      if (imageFigureNode) {
+        parent.children[index] = imageFigureNode;
+        return SKIP;
+      }
+    });
+
+    visit(tree, isImageNode, (node) => {
+      decorateImageNode(node);
+    });
   };
 }
 
 /**
- * 深度优先遍历，把块级图片段落转换为可样式化的 figure。
- * @param node 当前节点。
- */
-function transformImageFigures(node: MarkdownNode): void {
-  if (!node.children) {
-    return;
-  }
-
-  // 当前节点的子节点数组。
-  const childNodes = node.children;
-  // 子节点索引。
-  for (let childIndex = 0; childIndex < childNodes.length; childIndex += 1) {
-    // 当前子节点。
-    const childNode = childNodes[childIndex];
-    // 当前图片段落转换出的 figure 节点。
-    const imageFigureNode = createImageFigureNode(childNode);
-
-    if (imageFigureNode) {
-      childNodes[childIndex] = imageFigureNode;
-      continue;
-    }
-
-    if (isImageNode(childNode)) {
-      decorateImageNode(childNode);
-      continue;
-    }
-
-    transformImageFigures(childNode);
-  }
-}
-
-/**
  * 尝试把独占图片段落转换为 figure 节点。
- * @param node 待转换的 Markdown 节点。
+ * @param node 待转换的段落节点。
  * @returns 转换后的 figure 节点，不匹配时返回 undefined。
  */
-function createImageFigureNode(node: MarkdownNode): MarkdownNode | undefined {
-  if (node.type !== "paragraph" || !node.children || node.children.length !== 1) {
+function createImageFigureNode(node: Paragraph): ImageFigure | undefined {
+  if (node.children.length !== 1) {
     return undefined;
   }
 
@@ -101,7 +96,7 @@ function createImageFigureNode(node: MarkdownNode): MarkdownNode | undefined {
  * 给图片节点写入统一 class。
  * @param imageNode 图片节点。
  */
-function decorateImageNode(imageNode: MarkdownNode): void {
+function decorateImageNode(imageNode: Image | ImageReference): void {
   imageNode.data = {
     ...imageNode.data,
     hProperties: {
@@ -116,7 +111,7 @@ function decorateImageNode(imageNode: MarkdownNode): void {
  * @param imageNode 图片节点。
  * @returns 图片边框容器节点。
  */
-function createImageFrameNode(imageNode: MarkdownNode): MarkdownNode {
+function createImageFrameNode(imageNode: Image | ImageReference): ImageFrame {
   return {
     type: "imageFrame",
     data: {
@@ -134,9 +129,12 @@ function createImageFrameNode(imageNode: MarkdownNode): MarkdownNode {
  * @param imageNode 图片节点。
  * @returns 图片标题节点列表。
  */
-function createImageCaptionNodes(imageNode: MarkdownNode): MarkdownNode[] {
-  // 图片 title 属性文本，用于生成 figcaption。
-  const imageTitle = typeof imageNode.title === "string" ? imageNode.title.trim() : "";
+function createImageCaptionNodes(imageNode: Image | ImageReference): ImageCaption[] {
+  // 图片 title 属性文本，用于生成 figcaption；引用式图片的 title 在定义节点上，此处无 caption。
+  const imageTitle =
+    imageNode.type === "image" && typeof imageNode.title === "string"
+      ? imageNode.title.trim()
+      : "";
 
   if (imageTitle.length === 0) {
     return [];
@@ -161,11 +159,11 @@ function createImageCaptionNodes(imageNode: MarkdownNode): MarkdownNode[] {
  * @param imageNode 图片节点。
  * @returns 图片失败态占位节点。
  */
-function createImageFallbackNode(imageNode: MarkdownNode): MarkdownNode {
+function createImageFallbackNode(imageNode: Image | ImageReference): ImageFallback {
   // 图片失败态展示的 alt 文本。
   const fallbackText = imageNode.alt?.trim() || "图片加载失败";
-  // 图片失败态展示的来源路径。
-  const fallbackSource = imageNode.url ?? imageNode.identifier ?? "";
+  // 图片失败态展示的来源路径：直接图片取 url，引用式图片取引用标识。
+  const fallbackSource = imageNode.type === "image" ? imageNode.url : imageNode.identifier;
 
   return {
     type: "imageFallback",
