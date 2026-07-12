@@ -117,6 +117,7 @@ export interface VscodePreviewRuntimeBootstrapOptions {
   setPreviewScrollMessageType: string;
   setPreviewCursorMessageType: string;
   clearPreviewCursorMessageType: string;
+  scrollPreviewToAnchorMessageType: string;
   previewReadyMessageType: string;
   previewScrollChangedMessageType: string;
   previewOpenLinkMessageType: string;
@@ -156,6 +157,7 @@ interface NormalizedRuntimeMessage {
   baseHref?: string;
   renderedHtml?: string;
   sourceLine?: number;
+  anchorId?: string;
 }
 
 /**
@@ -516,6 +518,22 @@ export function bootstrapVscodePreviewRuntime(
     if (normalizedMessage.type === options.clearPreviewCursorMessageType) {
       // 关键步骤：光标离开绑定文档，隐藏高亮浮层。
       hideCursorHighlight();
+      return;
+    }
+
+    if (normalizedMessage.type === options.scrollPreviewToAnchorMessageType) {
+      // 待定位的锚点 id。
+      const anchorId = normalizedMessage.anchorId;
+
+      if (!anchorId) {
+        return;
+      }
+
+      // 锚点对应的目标元素（原文与解码兜底双重匹配）。
+      const anchorTargetElement = findAnchorTargetElement(anchorId);
+
+      // 关键步骤：跨文件链接打开新文档后按锚点定位章节；未命中时保持默认位置。
+      anchorTargetElement?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   });
 
@@ -593,12 +611,15 @@ function normalizeRuntimeMessage(message: unknown): NormalizedRuntimeMessage | u
   const renderedHtmlField = messageRecord.renderedHtml;
   // 源码行号字段。
   const sourceLineField = messageRecord.sourceLine;
+  // 锚点 id 字段。
+  const anchorIdField = messageRecord.anchorId;
 
   return {
     type: messageTypeField,
     baseHref: typeof baseHrefField === "string" ? baseHrefField : undefined,
     renderedHtml: typeof renderedHtmlField === "string" ? renderedHtmlField : undefined,
-    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined
+    sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined,
+    anchorId: typeof anchorIdField === "string" ? anchorIdField : undefined
   };
 }
 
