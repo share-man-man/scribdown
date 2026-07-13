@@ -1,5 +1,14 @@
 # @scribdown/markdown-fixture-preview
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [085661e]
+- Updated dependencies [085661e]
+  - @scribdown/markdown-renderer@0.3.0
+  - @scribdown/ui-handdrawn@0.2.1
+
 ## 0.0.2
 
 ### Patch Changes
