@@ -1,5 +1,17 @@
 # @scribdown/markdown-renderer
 
+## 0.3.0
+
+### Minor Changes
+
+- 085661e: 标题锚点 slug 换用 github-slugger，与 GitHub / VS Code 内置预览完全对齐：空格逐个替换为连字符、不再合并（如「聊天 / 新建对话首页」→ `聊天--新建对话首页`），按 GitHub 惯例书写的 `#锚点` 均可命中；重复标题去重与空标题回退行为不变。渲染核心内部同步迁移 unified 官方生态（unist-util-visit、mdast-util-to-string、hast-util-classnames、@types/mdast 官方类型与自定义节点注册），渲染输出不变。
+
+### Patch Changes
+
+- 085661e: 工具栏「更多」菜单的「关于」改为原生链接：VS Code Webview 中经链接拦截器转交扩展进程打开系统浏览器（原 window.open 被沙箱禁用而静默失败），浏览器宿主走原生新标签页；菜单项样式兼容链接形态。
+- Updated dependencies [085661e]
+  - @scribdown/ui-handdrawn@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

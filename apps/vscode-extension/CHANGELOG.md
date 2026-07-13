@@ -1,5 +1,11 @@
 # scribdown-markdown-preview
 
+## 0.3.0
+
+### Minor Changes
+
+- 085661e: 预览内跨文件链接支持锚点定位：点击 `foo.md#章节` 打开目标文件后，预览自动平滑滚动到对应标题；同文件带锚点链接同样生效，中文锚点做原文与解码双重匹配。
+
 ## 0.2.0
 
 ### Minor Changes
