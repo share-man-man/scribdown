@@ -5,7 +5,17 @@
 
 import { SOURCE_LINE_DATA_ATTRIBUTE } from "@scribdown/shared";
 
-import type { Blockquote, Data, List, ListItem, Node, Root, RootContent } from "mdast";
+import type {
+  Blockquote,
+  Data,
+  List,
+  ListItem,
+  Node,
+  Root,
+  RootContent,
+  Table,
+  TableRow
+} from "mdast";
 // 关键步骤：加载 mdast-util-to-hast 的类型副作用，使 Data 拥有 hProperties 增强。
 import type { Properties } from "hast";
 import type {} from "mdast-util-to-hast";
@@ -23,11 +33,19 @@ const SOURCE_LINE_HAST_PROPERTY = SOURCE_LINE_DATA_ATTRIBUTE.replace(
 /**
  * 判断是否为块级容器节点：这些节点的子节点同样是块级节点，需递归下钻标注源码行锚点，
  * 以覆盖列表中的代码块、嵌套引用等场景。
+ * 表格的子节点为表格行（渲染为 <tr>），同样按块级粒度标注，支撑光标同步到行级高亮。
  * @param node 待判断节点。
  * @returns 是否为块级容器节点。
  */
-function isBlockContainerNode(node: RootContent): node is Blockquote | List | ListItem {
-  return node.type === "blockquote" || node.type === "list" || node.type === "listItem";
+function isBlockContainerNode(
+  node: RootContent | TableRow
+): node is Blockquote | List | ListItem | Table {
+  return (
+    node.type === "blockquote" ||
+    node.type === "list" ||
+    node.type === "listItem" ||
+    node.type === "table"
+  );
 }
 
 /**
@@ -75,10 +93,10 @@ function annotateSourceLine(node: Node): void {
 
 /**
  * 递归为块级容器节点内部的子节点标注源码行锚点。
- * 覆盖列表项、嵌套子列表、引用内的代码块与嵌套引用等场景。
+ * 覆盖列表项、嵌套子列表、引用内的代码块与嵌套引用、表格行等场景。
  * @param node 当前块级节点。
  */
-function annotateNestedBlockSourceLines(node: RootContent): void {
+function annotateNestedBlockSourceLines(node: RootContent | TableRow): void {
   // 仅块级容器节点的子节点为块级节点，非容器节点无需下钻。
   if (!isBlockContainerNode(node)) {
     return;

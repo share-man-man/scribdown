@@ -42,15 +42,41 @@ function getOffsetTopInScroller(element: Element, scroller: HTMLElement): number
 }
 
 /**
- * 取元素相对当前滚动容器「内容坐标系」的横向偏移。
- * @param element 目标元素。
- * @param scroller 滚动容器元素。
- * @returns 元素左侧在容器内容坐标系中的像素偏移。
+ * 计算光标高亮浮层应覆盖的视口矩形。
+ * 关键步骤：表格（display:block; overflow-x:auto）等祖先自带横向滚动，
+ * 行元素可能比其可视区更宽或已被滚出，故按祖先可视区逐层横向裁剪，
+ * 避免高亮溢出表格边界或与横向滚动错位。
+ * @param element 高亮目标元素。
+ * @param scroller 正文纵向滚动容器，向上裁剪的终点。
+ * @returns 裁剪后的视口坐标矩形（宽度可能为 0，表示目标已滚出可视区）。
  */
-function getOffsetLeftInScroller(element: Element, scroller: HTMLElement): number {
-  return (
-    element.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft
-  );
+function resolveClampedHighlightRect(element: HTMLElement, scroller: HTMLElement): DOMRect {
+  // 目标元素相对视口的原始矩形。
+  const rect = element.getBoundingClientRect();
+  // 裁剪后的左边界。
+  let left = rect.left;
+  // 裁剪后的右边界。
+  let right = rect.right;
+  // 逐层向上遍历的祖先元素。
+  let ancestor = element.parentElement;
+
+  while (ancestor && ancestor !== scroller) {
+    // 祖先是否为横向滚动容器（内容宽于可视区，且 overflow-x 会裁剪溢出内容）。
+    const isHorizontalScrollAncestor =
+      ancestor.scrollWidth > ancestor.clientWidth &&
+      window.getComputedStyle(ancestor).overflowX !== "visible";
+
+    if (isHorizontalScrollAncestor) {
+      // 祖先可视区相对视口的矩形。
+      const ancestorRect = ancestor.getBoundingClientRect();
+      left = Math.max(left, ancestorRect.left);
+      right = Math.min(right, ancestorRect.right);
+    }
+
+    ancestor = ancestor.parentElement;
+  }
+
+  return new DOMRect(left, rect.top, Math.max(0, right - left), rect.height);
 }
 
 /**
@@ -365,12 +391,14 @@ export function bootstrapVscodePreviewRuntime(
       scroller.appendChild(cursorHighlightOverlay);
     }
 
-    // 目标元素相对视口的矩形（仅取尺寸；定位用容器内容坐标）。
-    const rect = targetElement.getBoundingClientRect();
+    // 目标元素相对视口的矩形，横向按祖先滚动容器（如横向滚动的表格）可视区裁剪。
+    const rect = resolveClampedHighlightRect(targetElement, scroller);
+    // 滚动容器可视区相对视口的矩形，用于把视口坐标换算为容器内容坐标。
+    const scrollerRect = scroller.getBoundingClientRect();
 
     // 浮层使用滚动容器内容坐标定位，随容器滚动自然移动，无需在滚动时更新。
-    cursorHighlightOverlay.style.top = `${getOffsetTopInScroller(targetElement, scroller)}px`;
-    cursorHighlightOverlay.style.left = `${getOffsetLeftInScroller(targetElement, scroller)}px`;
+    cursorHighlightOverlay.style.top = `${rect.top - scrollerRect.top + scroller.scrollTop}px`;
+    cursorHighlightOverlay.style.left = `${rect.left - scrollerRect.left + scroller.scrollLeft}px`;
     cursorHighlightOverlay.style.width = `${rect.width}px`;
     cursorHighlightOverlay.style.height = `${rect.height}px`;
     cursorHighlightOverlay.style.display = "block";
