@@ -219,6 +219,26 @@ describe("renderMarkdown", () => {
     expect(renderedHtml).toContain('<blockquote data-source-line="8">');
   });
 
+  it("annotates table rows with their source line", async () => {
+    // 输入 Markdown 覆盖表头行、分隔行与两行表体的 GFM 表格。
+    const markdownText = [
+      "| 名称 | 说明 |",
+      "| --- | --- |",
+      "| 第一行 | 内容一 |",
+      "| 第二行 | 内容二 |"
+    ].join("\n");
+    // 渲染结果。
+    const renderedHtml = await renderMarkdown(markdownText);
+
+    // 表格整体保留源码行锚点。
+    expect(renderedHtml).toContain('<table data-source-line="1">');
+    // 表头行保留行级源码行锚点。
+    expect(renderedHtml).toContain('<tr data-source-line="1">');
+    // 表体各行保留各自的行级源码行锚点，支撑光标同步高亮到行。
+    expect(renderedHtml).toContain('<tr data-source-line="3">');
+    expect(renderedHtml).toContain('<tr data-source-line="4">');
+  });
+
   it("wraps standalone images in a styled figure when sanitizeHtml is enabled", async () => {
     // 输入 Markdown 覆盖独占图片段落、title caption 与失败态占位内容。
     const markdownText = '![湖边雪山](/mountain.jpg "图片标题")';
