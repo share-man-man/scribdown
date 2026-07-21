@@ -3,7 +3,7 @@
   "displayName": "Scribdown Markdown Preview",
   "description": "Handdrawn-style Markdown preview for VS Code.",
   "publisher": "ShareManMan",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "main": "dist/extension.cjs",
