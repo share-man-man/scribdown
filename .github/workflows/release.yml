@@ -153,42 +153,53 @@ jobs:
           echo "CWS_ACCESS_TOKEN=$token" >> "$GITHUB_ENV"
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-      # 幂等保护：Web Store 草稿已是同版本时跳过（manifest 版本由 vite 构建时取自 package.json）
+      # 幂等保护：已发布或待审版本已是本地版本时跳过（manifest 版本由 vite 构建时取自 package.json）。
+      # V2 用 :fetchStatus 查条目状态，crxVersion 落在 published/submitted 两个 revision 的 distributionChannels 里。
       - name: Check published version
         id: store
         run: |
           local_version=$(node -p "require('./apps/browser-extension/package.json').version")
-          store_version=$(curl -sf "https://www.googleapis.com/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID?projection=DRAFT" \
-            -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" | jq -r '.crxVersion // empty')
-          echo "本地版本: $local_version，商店草稿版本: ${store_version:-<未知>}"
-          echo "skip=$([ "$local_version" = "$store_version" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          item="publishers/$CHROME_PUBLISHER_ID/items/$CHROME_EXTENSION_ID"
+          # 首发条目可能无 published/submitted 记录导致 404，故不加 -f，交给 jq 兜底为“未知”
+          status_json=$(curl -s "https://chromewebstore.googleapis.com/v2/$item:fetchStatus" \
+            -H "Authorization: Bearer $CWS_ACCESS_TOKEN")
+          # 汇总已发布与待审两个 revision 的所有渠道版本号
+          store_versions=$(echo "$status_json" | jq -r '
+            [(.publishedItemRevisionStatus, .submittedItemRevisionStatus) | (.distributionChannels // [])[].crxVersion]
+            | unique | join(",")')
+          # 本地版本命中任一已存在版本即跳过（index 命中返回下标，未命中返回 null）
+          hit=$(echo "$status_json" | jq -r --arg v "$local_version" '
+            [(.publishedItemRevisionStatus, .submittedItemRevisionStatus) | (.distributionChannels // [])[].crxVersion]
+            | index($v)')
+          echo "本地版本: $local_version，商店已有版本: ${store_versions:-<未知>}"
+          echo "skip=$([ "$hit" != "null" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
         env:
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
       - name: Publish Chrome Extension
         if: steps.store.outputs.skip != 'true'
         run: |
           pnpm --filter @scribdown/browser-extension build
           (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
-          # 关键步骤：上传新版本到 Web Store 草稿，校验 uploadState
-          upload=$(curl -sf -X PUT \
+          item="publishers/$CHROME_PUBLISHER_ID/items/$CHROME_EXTENSION_ID"
+          # 关键步骤：V2 媒体上传（POST + 二进制包体），校验 uploadState=SUCCESS
+          upload=$(curl -sf -X POST \
             -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" \
-            -T "$RUNNER_TEMP/chrome-extension.zip" \
-            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID")
+            -H "Content-Type: application/zip" \
+            --data-binary @"$RUNNER_TEMP/chrome-extension.zip" \
+            "https://chromewebstore.googleapis.com/upload/v2/$item:upload")
           echo "上传结果: $upload"
           if [ "$(echo "$upload" | jq -r '.uploadState // empty')" != "SUCCESS" ]; then
             echo "上传失败" && exit 1
           fi
-          # 关键步骤：发布草稿到正式环境，校验 status[0]
+          # 关键步骤：V2 发布（默认 DEFAULT_PUBLISH，审核通过后即上线）。
+          # curl -f 已保证非 2xx 失败；发布后 state 常为待审，打印即可，不据此判失败。
           publish=$(curl -sf -X POST \
             -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" \
-            -H "Content-Length: 0" \
-            "https://www.googleapis.com/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID/publish")
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "https://chromewebstore.googleapis.com/v2/$item:publish")
           echo "发布结果: $publish"
-          if [ "$(echo "$publish" | jq -r '.status[0] // empty')" != "OK" ]; then
-            echo "发布失败" && exit 1
-          fi
         env:
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
