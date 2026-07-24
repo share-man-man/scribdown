@@ -11,7 +11,9 @@ import {
   SOURCE_LINE_ACTIVE_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
-  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME
+  SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
+  setActiveLocaleFromHost,
+  t
 } from "@scribdown/shared";
 
 /** VS Code Webview 预览面板的标题文本，用于 data-preview-title 标识。 */
@@ -262,7 +264,7 @@ class ScribdownPreviewController implements vscode.Disposable {
     const activeDocument = getActiveMarkdownDocument();
 
     if (!activeDocument) {
-      vscode.window.showWarningMessage("请先打开一个 Markdown 文档，再执行 Scribdown 预览。");
+      vscode.window.showWarningMessage(t("vscode.noMarkdownWarning"));
       return;
     }
 
@@ -340,7 +342,10 @@ class ScribdownPreviewController implements vscode.Disposable {
     // 预览样式 URI。
     const previewStylesUri = resolvePreviewStylesUri(panel.webview, this.extensionUri);
     // 预览 runtime URI。
-    const previewRuntimeScriptUri = resolvePreviewRuntimeScriptUri(panel.webview, this.extensionUri);
+    const previewRuntimeScriptUri = resolvePreviewRuntimeScriptUri(
+      panel.webview,
+      this.extensionUri
+    );
 
     panel.webview.html = createPreviewShellHtml(
       panel.webview,
@@ -466,7 +471,7 @@ class ScribdownPreviewController implements vscode.Disposable {
 
       await this.panel.webview.postMessage({
         type: RENDER_CONTENT_MESSAGE_TYPE,
-        renderedHtml: `<h2>渲染失败</h2><pre>${safeErrorMessage}</pre>`,
+        renderedHtml: `<h2>${t("vscode.renderFailed")}</h2><pre>${safeErrorMessage}</pre>`,
         baseHref: ""
       });
     }
@@ -582,10 +587,7 @@ class ScribdownPreviewController implements vscode.Disposable {
    * @param activeEditor 当前激活编辑器，可能为 undefined。
    */
   private handleActiveEditorChange(activeEditor: vscode.TextEditor | undefined): void {
-    if (
-      activeEditor &&
-      activeEditor.document.uri.toString() === this.previewDocumentUriText
-    ) {
+    if (activeEditor && activeEditor.document.uri.toString() === this.previewDocumentUriText) {
       // 切回绑定文档，按顶部可视行重新对齐预览，并按光标位置重新高亮。
       this.postEditorScrollSync(resolveEditorTopLine(activeEditor));
       this.postPreviewCursorSync(resolveCursorSourceLine(activeEditor));
@@ -634,7 +636,7 @@ class ScribdownPreviewController implements vscode.Disposable {
       try {
         await vscode.env.openExternal(vscode.Uri.parse(href, true));
       } catch {
-        vscode.window.showWarningMessage(`无法打开链接：${href}`);
+        vscode.window.showWarningMessage(t("vscode.openLinkFailed", { href }));
       }
       return;
     }
@@ -683,7 +685,7 @@ class ScribdownPreviewController implements vscode.Disposable {
     try {
       await vscode.workspace.fs.stat(targetUri);
     } catch {
-      vscode.window.showWarningMessage(`链接目标不存在：${decodedPath}`);
+      vscode.window.showWarningMessage(t("vscode.linkTargetMissing", { path: decodedPath }));
       return;
     }
 
@@ -792,6 +794,10 @@ class ScribdownPreviewController implements vscode.Disposable {
  * @param context VS Code 扩展上下文。
  */
 export function activate(context: vscode.ExtensionContext): void {
+  // 关键步骤：按 VS Code 界面语言确定宿主侧 renderMarkdown 与警告文案的语言，
+  // 与 webview 注入的语言（createRuntimeBootstrapScript）保持一致。
+  setActiveLocaleFromHost(vscode.env.language);
+
   // 预览控制器实例。
   const previewController = new ScribdownPreviewController(context.extensionUri);
   // 打开预览命令。
@@ -904,7 +910,10 @@ function resolvePreviewLinkTargetUri(
  * @param extensionUri 当前扩展目录 URI。
  * @returns 资源根目录数组。
  */
-function resolveLocalResourceRoots(documentUri: vscode.Uri, extensionUri: vscode.Uri): vscode.Uri[] {
+function resolveLocalResourceRoots(
+  documentUri: vscode.Uri,
+  extensionUri: vscode.Uri
+): vscode.Uri[] {
   // 工作区根目录集合。
   const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
   // 工作区 URI 数组。
@@ -1047,6 +1056,8 @@ ${runtimeBootstrapScript}
 function createRuntimeBootstrapScript(): string {
   // runtime 初始化入参。
   const runtimeBootstrapOptions = {
+    // 关键步骤：把宿主界面语言注入 webview，使工具栏等 webview 内文案与宿主一致。
+    locale: vscode.env.language,
     previewRootElementId: PREVIEW_ROOT_ELEMENT_ID,
     previewBaseElementId: PREVIEW_BASE_ELEMENT_ID,
     previewShellElementId: PREVIEW_SHELL_ELEMENT_ID,
@@ -1191,10 +1202,7 @@ function ensureTrailingSlash(value: string): string {
  * @returns 安全文本。
  */
 function escapeHtmlText(unsafeText: string): string {
-  return unsafeText
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+  return unsafeText.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 /**

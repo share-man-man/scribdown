@@ -1,5 +1,5 @@
 import { ChangeEvent, ReactElement, useEffect, useRef, useState } from "react";
-import { PROJECT_NAME } from "@scribdown/shared";
+import { PROJECT_NAME, t } from "@scribdown/shared";
 import "@scribdown/ui-handdrawn/styles.css";
 import {
   DEFAULT_REFRESH_INTERVAL_SEC,
@@ -60,18 +60,14 @@ export function Popup(): ReactElement {
    */
   const [showRefreshTip, setShowRefreshTip] = useState<boolean>(false);
   /** 当前显示的刷新间隔（秒），与 storage 双向绑定。 */
-  const [intervalSec, setIntervalSec] = useState<number>(
-    DEFAULT_REFRESH_INTERVAL_SEC
-  );
+  const [intervalSec, setIntervalSec] = useState<number>(DEFAULT_REFRESH_INTERVAL_SEC);
   /** 自动刷新开关当前状态。 */
   const [refreshEnabled, setRefreshEnabled] = useState<boolean>(true);
   /**
    * 当前扩展是否被授予「允许访问文件网址」。
    * null 表示尚未读取完成（避免文案在加载瞬间从「未开启」跳到「已开启」）。
    */
-  const [fileAccessAllowed, setFileAccessAllowed] = useState<boolean | null>(
-    null
-  );
+  const [fileAccessAllowed, setFileAccessAllowed] = useState<boolean | null>(null);
   /**
    * 当前展开的说明气泡 id。同时只允许展开一个，避免气泡相互遮挡。
    * - "refresh"：自动刷新开关行的说明
@@ -88,8 +84,7 @@ export function Popup(): ReactElement {
   useEffect(() => {
     if (!openTip) return;
     /** 当前展开气泡对应的锚点引用，用于命中测试。 */
-    const activeAnchorRef =
-      openTip === "refresh" ? refreshTipAnchorRef : intervalTipAnchorRef;
+    const activeAnchorRef = openTip === "refresh" ? refreshTipAnchorRef : intervalTipAnchorRef;
     /**
      * 点击锚定容器外部时收起气泡。
      * @param event 全局 mousedown 事件。
@@ -147,9 +142,7 @@ export function Popup(): ReactElement {
         setEnabled(changes[EXTENSION_ENABLED_STORAGE_KEY].newValue !== false);
       }
       if (REFRESH_ENABLED_STORAGE_KEY in changes) {
-        setRefreshEnabled(
-          changes[REFRESH_ENABLED_STORAGE_KEY].newValue !== false
-        );
+        setRefreshEnabled(changes[REFRESH_ENABLED_STORAGE_KEY].newValue !== false);
       }
       if (REFRESH_INTERVAL_STORAGE_KEY in changes) {
         /** 外部写入的新间隔值。 */
@@ -229,8 +222,8 @@ export function Popup(): ReactElement {
           type="button"
           role="switch"
           aria-checked={enabled}
-          aria-label="启用 Scribdown"
-          title={enabled ? "已启用 Scribdown" : "已关闭 Scribdown"}
+          aria-label={t("popup.enableAria")}
+          title={enabled ? t("popup.enabledTitle") : t("popup.disabledTitle")}
           className={
             enabled
               ? "scribdown-popup__switch scribdown-popup__switch--header scribdown-popup__switch--on"
@@ -244,7 +237,7 @@ export function Popup(): ReactElement {
 
       {!enabled && (
         <p className="scribdown-popup__empty" role="status">
-          已关闭，访问 .md 不再被接管。
+          {t("popup.disabledEmpty")}
         </p>
       )}
 
@@ -252,19 +245,17 @@ export function Popup(): ReactElement {
         <div className="scribdown-popup__banner" role="alert">
           <div className="scribdown-popup__banner-meta">
             <span className="scribdown-popup__banner-title">
-              ⚠️ 「允许访问文件网址」未开启
+              {t("popup.fileAccessBannerTitle")}
             </span>
-            <span className="scribdown-popup__banner-text">
-              本地 .md 文件无法被 Scribdown 接管与自动刷新。打开开关后即可生效。
-            </span>
+            <span className="scribdown-popup__banner-text">{t("popup.fileAccessBannerText")}</span>
           </div>
           <button
             type="button"
             className="scribdown-popup__action"
             onClick={handleOpenFileAccessSettings}
-            aria-label="打开扩展详情页以开启允许访问文件网址"
+            aria-label={t("popup.fileAccessActionAria")}
           >
-            去开启
+            {t("popup.fileAccessAction")}
           </button>
         </div>
       )}
@@ -277,7 +268,7 @@ export function Popup(): ReactElement {
               : "scribdown-popup__group"
           }
           role="group"
-          aria-label="本地文件自动刷新设置"
+          aria-label={t("popup.autoRefreshGroupAria")}
         >
           <div
             className={
@@ -286,29 +277,22 @@ export function Popup(): ReactElement {
                 : "scribdown-popup__toggle"
             }
           >
-            <span
-              className="scribdown-popup__label-with-info"
-              ref={refreshTipAnchorRef}
-            >
-              <span className="scribdown-popup__toggle-label">
-                本地文件自动刷新
-              </span>
+            <span className="scribdown-popup__label-with-info" ref={refreshTipAnchorRef}>
+              <span className="scribdown-popup__toggle-label">{t("popup.autoRefreshLabel")}</span>
               <button
                 type="button"
                 className="scribdown-popup__info"
-                aria-label="查看本地文件自动刷新说明"
+                aria-label={t("popup.autoRefreshInfoAria")}
                 aria-expanded={openTip === "refresh"}
-                onClick={() =>
-                  setOpenTip((current) => (current === "refresh" ? null : "refresh"))
-                }
+                onClick={() => setOpenTip((current) => (current === "refresh" ? null : "refresh"))}
               >
                 ?
               </button>
               {openTip === "refresh" && (
                 <span className="scribdown-popup__info-tip" role="tooltip">
                   {refreshEnabled
-                    ? `已开启：每 ${intervalSec} 秒回拉一次本地 .md 文件`
-                    : "已关闭：本地 .md 更新后需手动刷新页面"}
+                    ? t("popup.autoRefreshOnTip", { seconds: intervalSec })
+                    : t("popup.autoRefreshOffTip")}
                 </span>
               )}
             </span>
@@ -316,7 +300,7 @@ export function Popup(): ReactElement {
               type="button"
               role="switch"
               aria-checked={refreshEnabled}
-              aria-label="本地文件自动刷新"
+              aria-label={t("popup.autoRefreshLabel")}
               className={
                 refreshEnabled
                   ? "scribdown-popup__switch scribdown-popup__switch--on"
@@ -330,33 +314,30 @@ export function Popup(): ReactElement {
 
           {refreshEnabled && (
             <div className="scribdown-popup__field scribdown-popup__field--group-tail">
-              <span
-                className="scribdown-popup__label-with-info"
-                ref={intervalTipAnchorRef}
-              >
+              <span className="scribdown-popup__label-with-info" ref={intervalTipAnchorRef}>
                 <label
                   className="scribdown-popup__field-label"
                   htmlFor="scribdown-refresh-interval"
                 >
-                  刷新间隔
+                  {t("popup.intervalLabel")}
                 </label>
                 <button
                   type="button"
                   className="scribdown-popup__info"
-                  aria-label="查看刷新间隔取值范围"
+                  aria-label={t("popup.intervalInfoAria")}
                   aria-expanded={openTip === "interval"}
                   onClick={() =>
-                    setOpenTip((current) =>
-                      current === "interval" ? null : "interval"
-                    )
+                    setOpenTip((current) => (current === "interval" ? null : "interval"))
                   }
                 >
                   ?
                 </button>
                 {openTip === "interval" && (
                   <span className="scribdown-popup__info-tip" role="tooltip">
-                    取值范围 {MIN_REFRESH_INTERVAL_SEC} – {MAX_REFRESH_INTERVAL_SEC}{" "}
-                    秒
+                    {t("popup.intervalRangeTip", {
+                      min: MIN_REFRESH_INTERVAL_SEC,
+                      max: MAX_REFRESH_INTERVAL_SEC
+                    })}
                   </span>
                 )}
               </span>
@@ -372,7 +353,7 @@ export function Popup(): ReactElement {
                   onChange={handleIntervalChange}
                   className="scribdown-popup__field-number"
                 />
-                <span className="scribdown-popup__field-unit">秒</span>
+                <span className="scribdown-popup__field-unit">{t("popup.intervalUnit")}</span>
               </div>
             </div>
           )}
@@ -381,7 +362,7 @@ export function Popup(): ReactElement {
 
       {showRefreshTip && (
         <p className="scribdown-popup__tip" role="status">
-          切换已保存，刷新当前页面后生效。
+          {t("popup.savedTip")}
         </p>
       )}
     </main>

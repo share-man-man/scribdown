@@ -15,7 +15,8 @@ import {
   CODE_BLOCK_GUTTER_LINE_CLASS_NAME,
   CODE_BLOCK_LANG_CLASS_NAME,
   CODE_BLOCK_LINE_CLASS_NAME,
-  SOURCE_LINE_DATA_ATTRIBUTE
+  SOURCE_LINE_DATA_ATTRIBUTE,
+  t
 } from "@scribdown/shared";
 
 // 代码块空行占位文本，避免空 span 被浏览器完全折叠。
@@ -72,12 +73,6 @@ const CODE_LANGUAGE_DEFAULT_LABEL = "Text";
 
 // 代码块复制按钮已复制状态恢复延迟，单位毫秒。
 const CODE_BLOCK_COPY_RESTORE_DELAY_MS = 1600;
-
-// 代码块复制按钮默认可访问名称。
-const CODE_BLOCK_COPY_ARIA_LABEL = "复制代码";
-
-// 代码块复制按钮已复制可访问名称。
-const CODE_BLOCK_COPY_ARIA_LABEL_COPIED = "已复制";
 
 /**
  * 把渲染后的代码块包装为带语言标签、复制按钮与行号的 chrome 结构。
@@ -321,7 +316,7 @@ function createCodeBlockCopyButton(ownerDocument: Document): HTMLButtonElement {
   const copyButtonElement = ownerDocument.createElement("button");
   copyButtonElement.type = "button";
   copyButtonElement.className = CODE_BLOCK_COPY_CLASS_NAME;
-  copyButtonElement.setAttribute("aria-label", CODE_BLOCK_COPY_ARIA_LABEL);
+  copyButtonElement.setAttribute("aria-label", t("code.copy"));
 
   // 默认 "copy" 状态图标。
   const copyIconElement = ownerDocument.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -411,12 +406,12 @@ async function writeCodeBlockTextToClipboard(codeText: string): Promise<boolean>
 function flashCodeBlockCopyButton(copyButtonElement: HTMLButtonElement): void {
   // 切换 data 属性 + aria-label，CSS 会根据 data 属性切换两张 SVG 图标。
   copyButtonElement.dataset.scribdownCodeCopied = "true";
-  copyButtonElement.setAttribute("aria-label", CODE_BLOCK_COPY_ARIA_LABEL_COPIED);
+  copyButtonElement.setAttribute("aria-label", t("code.copied"));
 
   // 延迟恢复初始状态，给用户一个肉眼可见的反馈窗口。
   window.setTimeout(() => {
     delete copyButtonElement.dataset.scribdownCodeCopied;
-    copyButtonElement.setAttribute("aria-label", CODE_BLOCK_COPY_ARIA_LABEL);
+    copyButtonElement.setAttribute("aria-label", t("code.copy"));
   }, CODE_BLOCK_COPY_RESTORE_DELAY_MS);
 }
 

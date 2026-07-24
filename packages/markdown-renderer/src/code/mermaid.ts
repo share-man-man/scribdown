@@ -17,7 +17,8 @@ import {
   MERMAID_FIGURE_LOADING_CLASS_NAME,
   MERMAID_FULLSCREEN_BUTTON_CLASS_NAME,
   MERMAID_LABEL_CLASS_NAME,
-  SOURCE_LINE_DATA_ATTRIBUTE
+  SOURCE_LINE_DATA_ATTRIBUTE,
+  t
 } from "@scribdown/shared";
 
 import { CODE_BLOCK_HYDRATED_DATA_KEY } from "./code-block-chrome";
@@ -35,17 +36,11 @@ const MERMAID_RENDER_STARTED_DATA_KEY = "scribdownMermaidRenderStarted";
 // Mermaid 源码寄存在 figure 上的 dataset 键，供延后的 live-DOM 渲染读取。
 const MERMAID_SOURCE_DATA_KEY = "scribdownMermaidSourceText";
 
-// Mermaid 失败态默认文案。
-const MERMAID_FALLBACK_DEFAULT_TEXT = "图表渲染失败";
-
 // Mermaid SVG 节点宿主元素 id 前缀，确保多图表 id 唯一。
 const MERMAID_RENDER_ID_PREFIX = "scribdown-mermaid-";
 
 // Mermaid 渲染顺序计数器，配合前缀生成全局唯一 id。
 let mermaidRenderIdCounter = 0;
-
-// Mermaid 全屏按钮可访问名称。
-const MERMAID_FULLSCREEN_BUTTON_ARIA_LABEL = "全屏查看图表";
 
 // 是否允许 mermaid 在 figure 右下角悬浮显示全屏按钮（仅 loaded 态显示）。
 const MERMAID_FULLSCREEN_AVAILABLE_DATA_KEY = "scribdownMermaidFullscreenReady";
@@ -127,9 +122,7 @@ function kickOffPendingMermaidRenders(rootElement: ParentNode): void {
     }
 
     // 画布与 mermaid 源码均从 figure 结构 / dataset 上恢复。
-    const canvasElement = figureElement.querySelector<HTMLElement>(
-      `.${MERMAID_CANVAS_CLASS_NAME}`
-    );
+    const canvasElement = figureElement.querySelector<HTMLElement>(`.${MERMAID_CANVAS_CLASS_NAME}`);
     const mermaidSource = figureElement.dataset[MERMAID_SOURCE_DATA_KEY] ?? "";
 
     if (!canvasElement || mermaidSource.length === 0) {
@@ -185,7 +178,7 @@ function decorateMermaidBlock(preElement: HTMLPreElement, codeElement: HTMLEleme
   const fullscreenButtonElement = ownerDocument.createElement("button");
   fullscreenButtonElement.type = "button";
   fullscreenButtonElement.className = MERMAID_FULLSCREEN_BUTTON_CLASS_NAME;
-  fullscreenButtonElement.setAttribute("aria-label", MERMAID_FULLSCREEN_BUTTON_ARIA_LABEL);
+  fullscreenButtonElement.setAttribute("aria-label", t("mermaid.fullscreenButton"));
   // 渲染过程中先禁用，避免点击空白图表。
   fullscreenButtonElement.disabled = true;
   fullscreenButtonElement.innerHTML = MERMAID_FULLSCREEN_ICON_SVG;
@@ -340,7 +333,7 @@ function showMermaidFallback(
 
   const textElement = ownerDocument.createElement("p");
   textElement.className = MERMAID_FALLBACK_TEXT_CLASS_NAME;
-  textElement.textContent = MERMAID_FALLBACK_DEFAULT_TEXT;
+  textElement.textContent = t("mermaid.renderFailed");
   fallbackElement.append(textElement);
 
   // mermaid 错误对象常带可读 message，附在源码块前给排查使用。

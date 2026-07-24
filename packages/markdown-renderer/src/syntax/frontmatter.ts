@@ -8,7 +8,8 @@ import {
   FRONTMATTER_CLASS_NAME,
   FRONTMATTER_LABEL_CLASS_NAME,
   FRONTMATTER_LIST_CLASS_NAME,
-  FRONTMATTER_LIST_NESTED_CLASS_NAME
+  FRONTMATTER_LIST_NESTED_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import type { Code, Root, Yaml } from "mdast";
@@ -20,9 +21,6 @@ import type {
   FrontmatterMetadata,
   FrontmatterTerm
 } from "../core/ast";
-
-// Frontmatter 标签展示文本。
-const FRONTMATTER_LABEL_TEXT = "元数据";
 
 // Frontmatter 数组值中各标量项的拼接分隔符。
 const FRONTMATTER_ARRAY_SEPARATOR = ", ";
@@ -100,7 +98,7 @@ function createFrontmatterNode(yamlNode: Yaml): FrontmatterMetadata | Code {
               hName: "span",
               hProperties: { className: [FRONTMATTER_LABEL_CLASS_NAME] }
             },
-            children: [{ type: "text", value: FRONTMATTER_LABEL_TEXT }]
+            children: [{ type: "text", value: t("frontmatter.label") }]
           }
         ]
       },
@@ -124,7 +122,10 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
  * @param nested 是否为嵌套层（嵌套层追加修饰类）。
  * @returns dl 键值列表节点。
  */
-function createFrontmatterListNode(record: Record<string, unknown>, nested: boolean): FrontmatterList {
+function createFrontmatterListNode(
+  record: Record<string, unknown>,
+  nested: boolean
+): FrontmatterList {
   // dl 的 className 列表：嵌套层追加修饰类。
   const listClassNames = nested
     ? [FRONTMATTER_LIST_CLASS_NAME, FRONTMATTER_LIST_NESTED_CLASS_NAME]

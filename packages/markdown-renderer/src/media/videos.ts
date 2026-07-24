@@ -12,7 +12,8 @@ import {
   VIDEO_FIGURE_CLASS_NAME,
   VIDEO_FRAME_CLASS_NAME,
   VIDEO_FRAME_FAILED_CLASS_NAME,
-  VIDEO_FRAME_LOADED_CLASS_NAME
+  VIDEO_FRAME_LOADED_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import type { Element, ElementContent, Root } from "hast";
@@ -21,9 +22,6 @@ import { SKIP, visit } from "unist-util-visit";
 
 // 视频运行时已绑定标记的 dataset 键。
 const VIDEO_HYDRATED_DATA_KEY = "scribdownVideoHydrated";
-
-// 视频失败态展示文本。
-const VIDEO_FALLBACK_DEFAULT_TEXT = "视频加载失败";
 
 /**
  * rehype 插件：把渲染后的 <video> 元素包装为 figure 结构，
@@ -82,10 +80,7 @@ function extractStandaloneParagraphVideo(node: Element): Element | undefined {
     return true;
   });
 
-  if (
-    significantChildren.length === 1 &&
-    isHastVideoElement(significantChildren[0])
-  ) {
+  if (significantChildren.length === 1 && isHastVideoElement(significantChildren[0])) {
     return significantChildren[0];
   }
 
@@ -170,7 +165,7 @@ function createVideoFallbackHast(sourceUrl: string): Element {
         type: "element",
         tagName: "span",
         properties: { className: [VIDEO_FALLBACK_TEXT_CLASS_NAME] },
-        children: [{ type: "text", value: VIDEO_FALLBACK_DEFAULT_TEXT }]
+        children: [{ type: "text", value: t("video.loadFailed") }]
       },
       {
         type: "element",
@@ -211,11 +206,9 @@ function bindMarkdownVideoState(videoElement: HTMLVideoElement): void {
   videoElement.addEventListener("error", handleMarkdownVideoError);
 
   // 关键步骤：同时监听内部 <source> 的 error，覆盖多源视频在最后一个源失败后才能确认失败的场景。
-  videoElement
-    .querySelectorAll<HTMLSourceElement>("source")
-    .forEach((sourceElement) => {
-      sourceElement.addEventListener("error", handleMarkdownVideoSourceError);
-    });
+  videoElement.querySelectorAll<HTMLSourceElement>("source").forEach((sourceElement) => {
+    sourceElement.addEventListener("error", handleMarkdownVideoSourceError);
+  });
 }
 
 /**
@@ -249,9 +242,7 @@ function handleMarkdownVideoSourceError(event: Event): void {
   // 触发失败事件的 source 元素。
   const sourceElement = event.currentTarget as HTMLElement;
   // 关联的视频宿主元素。
-  const videoElement = sourceElement.closest<HTMLVideoElement>(
-    `video.${VIDEO_ELEMENT_CLASS_NAME}`
-  );
+  const videoElement = sourceElement.closest<HTMLVideoElement>(`video.${VIDEO_ELEMENT_CLASS_NAME}`);
 
   if (!videoElement) {
     return;
@@ -269,9 +260,7 @@ function handleMarkdownVideoSourceError(event: Event): void {
  */
 function updateMarkdownVideoState(videoElement: HTMLVideoElement): void {
   // 视频外层 frame 元素。
-  const frameElement = videoElement.closest<HTMLElement>(
-    `.${VIDEO_FRAME_CLASS_NAME}`
-  );
+  const frameElement = videoElement.closest<HTMLElement>(`.${VIDEO_FRAME_CLASS_NAME}`);
 
   if (!frameElement) {
     return;
@@ -279,16 +268,12 @@ function updateMarkdownVideoState(videoElement: HTMLVideoElement): void {
 
   // 当前视频是否已确认加载失败：本体 error 非空，或没有可用源。
   const isFailed =
-    videoElement.error !== null ||
-    videoElement.networkState === videoElement.NETWORK_NO_SOURCE;
+    videoElement.error !== null || videoElement.networkState === videoElement.NETWORK_NO_SOURCE;
   // 当前视频是否已确认拿到首帧。
   const isLoaded = videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
 
   frameElement.classList.toggle(VIDEO_FRAME_FAILED_CLASS_NAME, isFailed);
-  frameElement.classList.toggle(
-    VIDEO_FRAME_LOADED_CLASS_NAME,
-    isLoaded && !isFailed
-  );
+  frameElement.classList.toggle(VIDEO_FRAME_LOADED_CLASS_NAME, isLoaded && !isFailed);
 }
 
 /**
@@ -297,9 +282,7 @@ function updateMarkdownVideoState(videoElement: HTMLVideoElement): void {
  */
 function markMarkdownVideoFailed(videoElement: HTMLVideoElement): void {
   // 视频外层 frame 元素。
-  const frameElement = videoElement.closest<HTMLElement>(
-    `.${VIDEO_FRAME_CLASS_NAME}`
-  );
+  const frameElement = videoElement.closest<HTMLElement>(`.${VIDEO_FRAME_CLASS_NAME}`);
 
   if (!frameElement) {
     return;

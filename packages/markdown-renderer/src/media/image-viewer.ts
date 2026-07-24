@@ -16,7 +16,8 @@ import {
   IMAGE_VIEWER_IMAGE_CLASS_NAME,
   IMAGE_VIEWER_VIEWPORT_CLASS_NAME,
   IMAGE_VIEWER_ZOOMED_CLASS_NAME,
-  IMAGE_VIEWER_ZOOM_VALUE_CLASS_NAME
+  IMAGE_VIEWER_ZOOM_VALUE_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import {
@@ -66,13 +67,6 @@ interface MarkdownImageViewerState {
   zoomValue: number;
   zoomValueElement: HTMLElement;
 }
-
-// 图片查看器快捷键提示文本。
-const IMAGE_VIEWER_HINT_TEXT =
-  "快捷键：+/= 放大 · - 缩小 · 0 重置 · Esc 关闭 · 鼠标拖拽可平移 · Ctrl/⌘ + 滚轮缩放";
-
-// 图片查看器兜底可访问名称。
-const IMAGE_VIEWER_FALLBACK_LABEL = "查看全图";
 
 // 每个 document 复用一个图片查看器。
 const imageViewerStateByDocument = new WeakMap<Document, MarkdownImageViewerState>();
@@ -229,24 +223,24 @@ function createMarkdownImageViewerState(ownerDocument: Document): MarkdownImageV
   const controlsElement = ownerDocument.createElement("div");
   // 缩小按钮。
   const zoomOutButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: "缩小图片",
+    ariaLabel: t("image.zoomOut"),
     text: VIEWER_ZOOM_OUT_TEXT
   });
   // 当前缩放比例文本。
   const zoomValueElement = ownerDocument.createElement("span");
   // 放大按钮。
   const zoomInButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: "放大图片",
+    ariaLabel: t("image.zoomIn"),
     text: VIEWER_ZOOM_IN_TEXT
   });
   // 重置缩放按钮。
   const resetButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: "重置缩放",
+    ariaLabel: t("image.zoomReset"),
     text: VIEWER_RESET_TEXT
   });
   // 关闭按钮。
   const closeButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: "关闭全图查看",
+    ariaLabel: t("image.close"),
     className: IMAGE_VIEWER_CLOSE_BUTTON_CLASS_NAME,
     text: VIEWER_CLOSE_TEXT
   });
@@ -285,7 +279,7 @@ function createMarkdownImageViewerState(ownerDocument: Document): MarkdownImageV
   captionGroupElement.className = IMAGE_VIEWER_CAPTION_GROUP_CLASS_NAME;
   captionElement.className = IMAGE_VIEWER_CAPTION_CLASS_NAME;
   hintElement.className = IMAGE_VIEWER_HINT_CLASS_NAME;
-  hintElement.textContent = IMAGE_VIEWER_HINT_TEXT;
+  hintElement.textContent = t("image.hint");
   controlsElement.className = IMAGE_VIEWER_CONTROLS_CLASS_NAME;
   zoomValueElement.className = IMAGE_VIEWER_ZOOM_VALUE_CLASS_NAME;
   viewportElement.className = IMAGE_VIEWER_VIEWPORT_CLASS_NAME;
@@ -828,15 +822,9 @@ function applyMarkdownImageViewerFocalPoint(
  */
 function updateMarkdownImageViewerImageSize(viewerState: MarkdownImageViewerState): void {
   // 视口可用宽度。
-  const viewportWidth = Math.max(
-    viewerState.viewportElement.clientWidth * VIEWER_FIT_RATIO,
-    1
-  );
+  const viewportWidth = Math.max(viewerState.viewportElement.clientWidth * VIEWER_FIT_RATIO, 1);
   // 视口可用高度。
-  const viewportHeight = Math.max(
-    viewerState.viewportElement.clientHeight * VIEWER_FIT_RATIO,
-    1
-  );
+  const viewportHeight = Math.max(viewerState.viewportElement.clientHeight * VIEWER_FIT_RATIO, 1);
   // 图片原始宽度。
   const naturalWidth = Math.max(viewerState.naturalWidth, 1);
   // 图片原始高度。
@@ -915,10 +903,11 @@ function createMarkdownImageViewerAriaLabel(imageElement: HTMLImageElement): str
   const imageAltText = imageElement.alt.trim();
 
   if (imageAltText.length === 0) {
-    return IMAGE_VIEWER_FALLBACK_LABEL;
+    return t("image.viewFull");
   }
 
-  return `${IMAGE_VIEWER_FALLBACK_LABEL}：${imageAltText}`;
+  // 带标题时用整条含分隔符的文案，使全/半角分隔符随语言变化。
+  return t("image.viewFullOf", { alt: imageAltText });
 }
 
 /**

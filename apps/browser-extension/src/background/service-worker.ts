@@ -2,6 +2,8 @@
 // 实际拦截/重定向由 content script 在页面 document_start 时按 document.contentType 决策，
 // 这样无需 webNavigation 权限，也避免 background 做 HEAD 预检带来的双请求开销。
 
+import { t } from "@scribdown/shared";
+import { applyExtensionLocale } from "../config/locale";
 import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
 import {
   BYPASS_ONCE_MESSAGE,
@@ -12,6 +14,9 @@ import {
   getRuntimeMessageUrl
 } from "../messages/runtime";
 
+// 关键步骤：后台启动时按宿主语言确定工具栏图标标题等文案语言。
+applyExtensionLocale();
+
 /** 用户主动选择「查看原始链接」时跳过一次重定向的 URL 集合。 */
 const bypassUrls = new Set<string>();
 
@@ -21,12 +26,8 @@ const DISABLED_BADGE_TEXT = "OFF";
 const DISABLED_BADGE_BACKGROUND = "#c0392b";
 /** 启用态下工具栏标题，沿用扩展名。 */
 const ENABLED_TITLE = "Scribdown";
-/** 关闭态下工具栏标题，明确告知用户当前不接管 .md。 */
-const DISABLED_TITLE = "Scribdown（已关闭）";
 /** 未开启「允许访问文件网址」时的全局徽标文案。 */
 const FILE_ACCESS_BADGE_TEXT = "!";
-/** 未开启「允许访问文件网址」时的 hover 标题，引导用户去 popup 开启。 */
-const FILE_ACCESS_NEEDED_TITLE = "Scribdown · 需开启「允许访问文件网址」";
 
 /**
  * 综合扩展启用状态与「允许访问文件网址」状态刷新工具栏图标。
@@ -51,7 +52,7 @@ async function syncBadgeFromState(): Promise<void> {
     void chrome.action.setBadgeBackgroundColor({
       color: DISABLED_BADGE_BACKGROUND
     });
-    void chrome.action.setTitle({ title: DISABLED_TITLE });
+    void chrome.action.setTitle({ title: t("browser.disabledTitle") });
     return;
   }
 
@@ -62,7 +63,7 @@ async function syncBadgeFromState(): Promise<void> {
     void chrome.action.setBadgeBackgroundColor({
       color: DISABLED_BADGE_BACKGROUND
     });
-    void chrome.action.setTitle({ title: FILE_ACCESS_NEEDED_TITLE });
+    void chrome.action.setTitle({ title: t("browser.fileAccessNeededTitle") });
     return;
   }
 

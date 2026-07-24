@@ -43,10 +43,7 @@ export function clampRefreshIntervalSec(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_REFRESH_INTERVAL_SEC;
   /** 向下取整后的秒数，避免小数引入显示歧义。 */
   const integer = Math.floor(value);
-  return Math.min(
-    MAX_REFRESH_INTERVAL_SEC,
-    Math.max(MIN_REFRESH_INTERVAL_SEC, integer)
-  );
+  return Math.min(MAX_REFRESH_INTERVAL_SEC, Math.max(MIN_REFRESH_INTERVAL_SEC, integer));
 }
 
 /**

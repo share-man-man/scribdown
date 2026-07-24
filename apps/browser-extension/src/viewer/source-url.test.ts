@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { LocaleType, setActiveLocale } from "@scribdown/shared";
 
 import { extractFilename, validateViewerSourceUrl } from "./source-url";
+
+// 固定为简体中文：本文件断言的校验错误文案为中文。
+beforeAll(() => {
+  setActiveLocale(LocaleType.SimplifiedChinese);
+});
 
 describe("source-url", () => {
   it("accepts only http and https source URLs", () => {

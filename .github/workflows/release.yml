@@ -105,6 +105,9 @@ jobs:
     if: needs.release.outputs.browser == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # 关键：允许获取 GitHub OIDC 令牌，供 WIF 无密钥鉴权
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -113,82 +116,65 @@ jobs:
           node-version-file: ".tool-versions"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Service Account 鉴权：用 SA 私钥签发 JWT，换取 chromewebstore 作用域的 access token。
-      # 该 token 供下方查版本 / 上传 / 发布三步复用；写入 GITHUB_ENV 并 add-mask 避免泄露到日志。
-      - name: Acquire Chrome Web Store access token
-        run: |
-          token=$(node --input-type=module -e '
-            import { createSign } from "node:crypto";
-            // 关键步骤：解析 Service Account JSON，取签名邮箱与私钥
-            const sa = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-            const now = Math.floor(Date.now() / 1000);
-            /** base64url 编码 JSON 对象，用于拼接 JWT 段 */
-            const enc = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64url");
-            const header = enc({ alg: "RS256", typ: "JWT" });
-            const claim = enc({
-              iss: sa.client_email,
-              scope: "https://www.googleapis.com/auth/chromewebstore",
-              aud: "https://oauth2.googleapis.com/token",
-              iat: now,
-              exp: now + 3600,
-            });
-            // 关键步骤：用 SA 私钥对 header.claim 做 RS256 签名，组成完整 JWT
-            const signer = createSign("RSA-SHA256");
-            signer.update(header + "." + claim);
-            const jwt = header + "." + claim + "." + signer.sign(sa.private_key).toString("base64url");
-            // 关键步骤：以 jwt-bearer 授权类型换取 access token
-            const res = await fetch("https://oauth2.googleapis.com/token", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: new URLSearchParams({
-                grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-                assertion: jwt,
-              }),
-            });
-            const data = await res.json();
-            if (!res.ok) { console.error(JSON.stringify(data)); process.exit(1); }
-            process.stdout.write(data.access_token);
-          ')
-          echo "::add-mask::$token"
-          echo "CWS_ACCESS_TOKEN=$token" >> "$GITHUB_ENV"
-        env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-      # 幂等保护：Web Store 草稿已是同版本时跳过（manifest 版本由 vite 构建时取自 package.json）
+      # 无密钥鉴权（Workload Identity Federation）：以 GitHub OIDC 令牌换取对 SA 的模拟，
+      # 直接产出 chromewebstore 作用域的 access token，无需在仓库存放任何长期私钥。
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+      # 幂等保护：已发布或待审版本已是本地版本时跳过（manifest 版本由 vite 构建时取自 package.json）。
+      # V2 用 :fetchStatus 查条目状态，crxVersion 落在 published/submitted 两个 revision 的 distributionChannels 里。
       - name: Check published version
         id: store
         run: |
           local_version=$(node -p "require('./apps/browser-extension/package.json').version")
-          store_version=$(curl -sf "https://www.googleapis.com/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID?projection=DRAFT" \
-            -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" | jq -r '.crxVersion // empty')
-          echo "本地版本: $local_version，商店草稿版本: ${store_version:-<未知>}"
-          echo "skip=$([ "$local_version" = "$store_version" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          item="publishers/$CHROME_PUBLISHER_ID/items/$CHROME_EXTENSION_ID"
+          # 首发条目可能无 published/submitted 记录导致 404，故不加 -f，交给 jq 兜底为“未知”
+          status_json=$(curl -s "https://chromewebstore.googleapis.com/v2/$item:fetchStatus" \
+            -H "Authorization: Bearer $CWS_ACCESS_TOKEN")
+          # 汇总已发布与待审两个 revision 的所有渠道版本号
+          store_versions=$(echo "$status_json" | jq -r '
+            [(.publishedItemRevisionStatus, .submittedItemRevisionStatus) | (.distributionChannels // [])[].crxVersion]
+            | unique | join(",")')
+          # 本地版本命中任一已存在版本即跳过（index 命中返回下标，未命中返回 null）
+          hit=$(echo "$status_json" | jq -r --arg v "$local_version" '
+            [(.publishedItemRevisionStatus, .submittedItemRevisionStatus) | (.distributionChannels // [])[].crxVersion]
+            | index($v)')
+          echo "本地版本: $local_version，商店已有版本: ${store_versions:-<未知>}"
+          echo "skip=$([ "$hit" != "null" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
         env:
+          CWS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
       - name: Publish Chrome Extension
         if: steps.store.outputs.skip != 'true'
         run: |
           pnpm --filter @scribdown/browser-extension build
           (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
-          # 关键步骤：上传新版本到 Web Store 草稿，校验 uploadState
-          upload=$(curl -sf -X PUT \
+          item="publishers/$CHROME_PUBLISHER_ID/items/$CHROME_EXTENSION_ID"
+          # 关键步骤：V2 媒体上传（POST + 二进制包体），校验 uploadState=SUCCESS
+          upload=$(curl -sf -X POST \
             -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" \
-            -T "$RUNNER_TEMP/chrome-extension.zip" \
-            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID")
+            -H "Content-Type: application/zip" \
+            --data-binary @"$RUNNER_TEMP/chrome-extension.zip" \
+            "https://chromewebstore.googleapis.com/upload/v2/$item:upload")
           echo "上传结果: $upload"
           if [ "$(echo "$upload" | jq -r '.uploadState // empty')" != "SUCCESS" ]; then
             echo "上传失败" && exit 1
           fi
-          # 关键步骤：发布草稿到正式环境，校验 status[0]
+          # 关键步骤：V2 发布（默认 DEFAULT_PUBLISH，审核通过后即上线）。
+          # curl -f 已保证非 2xx 失败；发布后 state 常为待审，打印即可，不据此判失败。
           publish=$(curl -sf -X POST \
             -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" \
-            -H "Content-Length: 0" \
-            "https://www.googleapis.com/chromewebstore/v1.1/items/$CHROME_EXTENSION_ID/publish")
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "https://chromewebstore.googleapis.com/v2/$item:publish")
           echo "发布结果: $publish"
-          if [ "$(echo "$publish" | jq -r '.status[0] // empty')" != "OK" ]; then
-            echo "发布失败" && exit 1
-          fi
         env:
+          CWS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}

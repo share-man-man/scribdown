@@ -1,7 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { applyExtensionLocale } from "../config/locale";
 import { Popup } from "../popup/Popup";
 import "../popup/popup.css";
+
+// 关键步骤：渲染前按宿主语言确定界面文案语言。
+applyExtensionLocale();
 
 /**
  * 启动扩展 popup 入口。
