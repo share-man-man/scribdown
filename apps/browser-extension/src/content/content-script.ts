@@ -5,9 +5,6 @@ import { CONSUME_BYPASS_MESSAGE, FETCH_FILE_MESSAGE } from "../messages/runtime"
 import { renderMarkdownToDocument } from "../rendering/render-markdown";
 import { startPollingSource } from "./poll-source";
 
-// 关键步骤：接管渲染前按宿主语言确定界面文案语言。
-applyExtensionLocale();
-
 /**
  * 等待 DOM 解析到 body 阶段，便于读取浏览器为纯文本 `.md` 自动包装的 `<pre>` 内容。
  * @returns DOMContentLoaded 触发后 resolve。
@@ -93,7 +90,14 @@ async function redirectToViewer(): Promise<void> {
   window.location.replace(viewerUrl);
 }
 
-(async () => {
+/**
+ * 启动 Markdown content script。
+ * WXT 在开发配置解析时不会执行此函数，避免 Node 环境访问 chrome API。
+ */
+export async function startContentScript(): Promise<void> {
+  // 关键步骤：接管渲染前按宿主语言确定界面文案语言。
+  applyExtensionLocale();
+
   // 关键步骤：尊重 popup 总开关，关闭时让浏览器原样展示，不做任何渲染或重定向。
   /** 从 chrome.storage.local 读到的当前启用状态（未设置视为启用）。 */
   const enabledResult = await chrome.storage.local.get(EXTENSION_ENABLED_STORAGE_KEY);
@@ -109,4 +113,4 @@ async function redirectToViewer(): Promise<void> {
   }
 
   await redirectToViewer();
-})();
+}

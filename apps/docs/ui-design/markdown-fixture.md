@@ -130,7 +130,7 @@ Scribdown
 
 ## 图片示例
 
-![相对路径](../../browser-extension/icons/icon-128.png "相对路径")
+![相对路径](../../browser-extension/public/icons/icon-128.png "相对路径")
 
 正常图片：
 

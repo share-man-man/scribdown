@@ -54,7 +54,7 @@ pnpm run e2e          # 端到端测试
 
 **浏览器插件**
 
-执行 `pnpm run dev` 后，进入 `chrome://extensions`，开启开发者模式，加载 `apps/browser-extension/dist` 目录。每次热更新后需手动点击「刷新」重载插件。
+执行 `pnpm run dev` 后，进入 `chrome://extensions`，开启开发者模式，加载 `apps/browser-extension/.output/chrome-mv3-dev` 目录。WXT 会在源码变化后自动重新构建并重载扩展；也可使用开发模式默认注册的 `Alt+R` 快捷键手动重载。
 
 **VS Code 插件**
 

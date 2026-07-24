@@ -6,3 +6,9 @@ declare module "*?inline" {
   const content: string;
   export default content;
 }
+
+// 声明 ?url 查询的静态资源模块返回构建后的资源 URL。
+declare module "*?url" {
+  const resourceUrl: string;
+  export default resourceUrl;
+}

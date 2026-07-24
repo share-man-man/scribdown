@@ -9,7 +9,7 @@
 | `src/main.tsx` | 应用入口 |
 | `src/App.tsx` | 主页面组件 |
 | `src/styles.css` | 全局样式 |
-| `public/manifest.json` | 插件清单 |
+| `wxt.config.ts` | WXT 配置与扩展清单 |
 
 - 使用 `@scribdown/markdown-renderer` 将 Markdown 渲染为 HTML
 - 使用 `@scribdown/ui-handdrawn` 输出统一手绘卡片风格
