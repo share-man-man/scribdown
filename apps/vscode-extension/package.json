@@ -1,7 +1,7 @@
 {
   "name": "scribdown-markdown-preview",
-  "displayName": "Scribdown Markdown Preview",
-  "description": "Handdrawn-style Markdown preview for VS Code.",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "publisher": "ShareManMan",
   "version": "0.4.0",
   "private": true,
@@ -27,13 +27,15 @@
     "dist/**",
     "assets/**",
     "package.json",
+    "package.nls.json",
+    "package.nls.*.json",
     "LICENSE"
   ],
   "contributes": {
     "commands": [
       {
         "command": "scribdown.openPreview",
-        "title": "Open Scribdown Preview",
+        "title": "%command.openPreview.title%",
         "category": "Scribdown",
         "icon": {
           "light": "assets/icon.svg",

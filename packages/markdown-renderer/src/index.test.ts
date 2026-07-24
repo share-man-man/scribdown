@@ -1,11 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { LocaleType, setActiveLocale } from "@scribdown/shared";
 
 import { renderMarkdown } from "./index";
+
+// 固定为简体中文：本文件断言的 UI chrome 文案（目录 / 元数据等）与中文测试内容配套。
+beforeAll(() => {
+  setActiveLocale(LocaleType.SimplifiedChinese);
+});
 
 describe("renderMarkdown", () => {
   it("replaces standalone TOC marker with heading links", async () => {
     // 输入 Markdown 覆盖目录占位符和两级标题。
-    const markdownText = ["# 文档标题", "", "[TOC]", "", "## 目录说明", "", "### 子章节"].join("\n");
+    const markdownText = ["# 文档标题", "", "[TOC]", "", "## 目录说明", "", "### 子章节"].join(
+      "\n"
+    );
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
     // 分支条目的折叠按钮 HTML（叶子无按钮，分支才有；与标题链接分离）。
@@ -43,7 +51,17 @@ describe("renderMarkdown", () => {
 
   it("nests toc heading levels inside collapsible branches", async () => {
     // 输入 Markdown 覆盖多层标题和同级标题。
-    const markdownText = ["[TOC]", "", "## 父级", "", "### 子级", "", "#### 孙级", "", "## 同级"].join("\n");
+    const markdownText = [
+      "[TOC]",
+      "",
+      "## 父级",
+      "",
+      "### 子级",
+      "",
+      "#### 孙级",
+      "",
+      "## 同级"
+    ].join("\n");
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
     // 可折叠分支数量（以分支条目 class 计数）。
@@ -60,7 +78,9 @@ describe("renderMarkdown", () => {
     expect(renderedHtml).toContain(
       `<a href="#${encodeURIComponent("子级")}" class="scribdown-toc-link">子级</a>`
     );
-    expect(renderedHtml).toContain('data-toc-index="1.1.1" class="scribdown-toc-item scribdown-toc-item--depth-4"');
+    expect(renderedHtml).toContain(
+      'data-toc-index="1.1.1" class="scribdown-toc-item scribdown-toc-item--depth-4"'
+    );
     expect(renderedHtml).toContain(
       `<a href="#${encodeURIComponent("同级")}" class="scribdown-toc-link">同级</a>`
     );
@@ -99,9 +119,13 @@ describe("renderMarkdown", () => {
 
   it("renders term and colon lines as definition lists", async () => {
     // 输入 Markdown 覆盖定义列表扩展语法。
-    const markdownText = ["Markdown", ": 一种轻量级标记语言。", "", "Scribdown", ": 统一 Markdown 渲染体验的项目。"].join(
-      "\n"
-    );
+    const markdownText = [
+      "Markdown",
+      ": 一种轻量级标记语言。",
+      "",
+      "Scribdown",
+      ": 统一 Markdown 渲染体验的项目。"
+    ].join("\n");
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
 
@@ -133,7 +157,9 @@ describe("renderMarkdown", () => {
       '<li data-toc-index="1" class="scribdown-toc-item scribdown-toc-item--depth-2 scribdown-toc-item--branch">'
     );
     expect(renderedHtml).toContain(tocToggleHtml);
-    expect(renderedHtml).toContain('<a href="#safe-heading" class="scribdown-toc-link">Safe Heading</a>');
+    expect(renderedHtml).toContain(
+      '<a href="#safe-heading" class="scribdown-toc-link">Safe Heading</a>'
+    );
     expect(renderedHtml).toContain('<ol class="scribdown-toc-list scribdown-toc-list--nested">');
     expect(renderedHtml).toContain(
       '<a href="#nested-heading" class="scribdown-toc-link">Nested Heading</a>'
@@ -150,9 +176,14 @@ describe("renderMarkdown", () => {
 
   it("tags user-authored <details> with frame classes and keeps them through sanitize", async () => {
     // 用户在 Markdown 中手写的原生折叠块（区别于目录用 <details>）。
-    const markdownText = ["<details>", "<summary>更多</summary>", "", "正文内容", "", "</details>"].join(
-      "\n"
-    );
+    const markdownText = [
+      "<details>",
+      "<summary>更多</summary>",
+      "",
+      "正文内容",
+      "",
+      "</details>"
+    ].join("\n");
     // 渲染结果。
     const renderedHtml = await renderMarkdown(markdownText);
 
@@ -246,12 +277,18 @@ describe("renderMarkdown", () => {
     const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain('<figure class="scribdown-image-figure" data-source-line="1">');
-    expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/mountain.jpg" alt="湖边雪山"');
+    expect(renderedHtml).toContain(
+      '<span class="scribdown-image-frame"><img src="/mountain.jpg" alt="湖边雪山"'
+    );
     expect(renderedHtml).toContain('title="图片标题" class="scribdown-image">');
     expect(renderedHtml).toContain('<span class="scribdown-image-fallback">');
     expect(renderedHtml).toContain('<span class="scribdown-image-fallback-text">湖边雪山</span>');
-    expect(renderedHtml).toContain('<span class="scribdown-image-fallback-source">/mountain.jpg</span>');
-    expect(renderedHtml).toContain('<figcaption class="scribdown-image-caption">图片标题</figcaption>');
+    expect(renderedHtml).toContain(
+      '<span class="scribdown-image-fallback-source">/mountain.jpg</span>'
+    );
+    expect(renderedHtml).toContain(
+      '<figcaption class="scribdown-image-caption">图片标题</figcaption>'
+    );
   });
 
   it("renders yaml frontmatter as a metadata card", async () => {
@@ -316,7 +353,9 @@ describe("renderMarkdown", () => {
     const renderedHtml = await renderMarkdown(markdownText);
 
     expect(renderedHtml).toContain('<figure class="scribdown-image-figure" data-source-line="1">');
-    expect(renderedHtml).toContain('<span class="scribdown-image-frame"><img src="/preview.jpg" alt="手绘风格预览"');
+    expect(renderedHtml).toContain(
+      '<span class="scribdown-image-frame"><img src="/preview.jpg" alt="手绘风格预览"'
+    );
     expect(renderedHtml).toContain('class="scribdown-image"');
     expect(renderedHtml).toContain('<span class="scribdown-image-fallback-source">preview</span>');
   });

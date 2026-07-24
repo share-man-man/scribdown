@@ -1,8 +1,13 @@
+import { t } from "@scribdown/shared";
+import { applyExtensionLocale } from "../config/locale";
 import { MARKDOWN_PLAINTEXT_MIME_TYPES } from "../config/markdown-mime-types";
 import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
 import { BYPASS_ONCE_MESSAGE } from "../messages/runtime";
 import { renderMarkdownToDocument } from "../rendering/render-markdown";
 import { extractFilename, validateViewerSourceUrl } from "./source-url";
+
+// 关键步骤：viewer 逻辑执行前按宿主语言确定界面文案语言。
+applyExtensionLocale();
 
 /**
  * 在当前文档中渲染一个简洁的错误页。
@@ -25,7 +30,7 @@ function renderError(message: string, sourceUrl: string | null): void {
 
   /** 错误页主标题。 */
   const heading = document.createElement("h1");
-  heading.textContent = "Scribdown 无法渲染该文件";
+  heading.textContent = t("viewer.errorHeading");
   heading.style.cssText = "font-size: 20px; margin-bottom: 12px;";
   wrap.appendChild(heading);
 
@@ -39,7 +44,7 @@ function renderError(message: string, sourceUrl: string | null): void {
     /** 跳回原始链接按钮。 */
     const link = document.createElement("a");
     link.href = sourceUrl;
-    link.textContent = "查看原始链接";
+    link.textContent = t("viewer.viewRawLink");
     link.rel = "noopener noreferrer";
     link.style.cssText =
       "display: inline-block; margin-top: 16px; color: #2b63c6; text-decoration: underline;";
@@ -62,14 +67,14 @@ function renderError(message: string, sourceUrl: string | null): void {
   // `<iframe src="chrome-extension://<id>/viewer.html?src=...">` 嵌入我们，
   // 也不让 fetch 真正发起，避免成为「带凭证内网探测」跳板。
   if (window.top !== window.self) {
-    renderError("Scribdown viewer 不允许在 iframe 中加载。", null);
+    renderError(t("viewer.errorIframe"), null);
     return;
   }
 
   /** 从查询串中读取的原始资源 URL。 */
   const sourceUrl = new URLSearchParams(window.location.search).get("src");
   if (!sourceUrl) {
-    renderError("缺少 src 参数。", null);
+    renderError(t("viewer.errorMissingSrc"), null);
     return;
   }
 
@@ -100,7 +105,10 @@ function renderError(message: string, sourceUrl: string | null): void {
   try {
     response = await fetch(sourceUrl, { credentials: "include" });
   } catch (err) {
-    renderError(`请求失败：${err instanceof Error ? err.message : String(err)}`, sourceUrl);
+    renderError(
+      t("viewer.errorRequestFailed", { message: err instanceof Error ? err.message : String(err) }),
+      sourceUrl
+    );
     return;
   }
 
@@ -116,14 +124,19 @@ function renderError(message: string, sourceUrl: string | null): void {
     .trim()
     .toLowerCase();
   if (!MARKDOWN_PLAINTEXT_MIME_TYPES.has(contentType)) {
-    renderError(`响应不是 Markdown 类型（Content-Type: ${contentType || "未声明"}）。`, sourceUrl);
+    renderError(
+      t("viewer.errorNotMarkdown", {
+        contentType: contentType || t("viewer.contentTypeUndeclared")
+      }),
+      sourceUrl
+    );
     return;
   }
 
   /** 拉取到的原始 Markdown 文本。 */
   const rawMarkdown = await response.text();
   if (!rawMarkdown.trim()) {
-    renderError("文件内容为空。", sourceUrl);
+    renderError(t("viewer.errorEmpty"), sourceUrl);
     return;
   }
 

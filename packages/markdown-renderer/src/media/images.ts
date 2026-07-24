@@ -13,7 +13,8 @@ import {
   IMAGE_FIGURE_CLASS_NAME,
   IMAGE_FRAME_CLASS_NAME,
   IMAGE_FRAME_FAILED_CLASS_NAME,
-  IMAGE_FRAME_LOADED_CLASS_NAME
+  IMAGE_FRAME_LOADED_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import type { Image, ImageReference, Paragraph, Root } from "mdast";
@@ -132,9 +133,7 @@ function createImageFrameNode(imageNode: Image | ImageReference): ImageFrame {
 function createImageCaptionNodes(imageNode: Image | ImageReference): ImageCaption[] {
   // 图片 title 属性文本，用于生成 figcaption；引用式图片的 title 在定义节点上，此处无 caption。
   const imageTitle =
-    imageNode.type === "image" && typeof imageNode.title === "string"
-      ? imageNode.title.trim()
-      : "";
+    imageNode.type === "image" && typeof imageNode.title === "string" ? imageNode.title.trim() : "";
 
   if (imageTitle.length === 0) {
     return [];
@@ -161,7 +160,7 @@ function createImageCaptionNodes(imageNode: Image | ImageReference): ImageCaptio
  */
 function createImageFallbackNode(imageNode: Image | ImageReference): ImageFallback {
   // 图片失败态展示的 alt 文本。
-  const fallbackText = imageNode.alt?.trim() || "图片加载失败";
+  const fallbackText = imageNode.alt?.trim() || t("image.loadFailed");
   // 图片失败态展示的来源路径：直接图片取 url，引用式图片取引用标识。
   const fallbackSource = imageNode.type === "image" ? imageNode.url : imageNode.identifier;
 

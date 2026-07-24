@@ -7,7 +7,8 @@ import {
   SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
-  TOC_LINK_CLASS_NAME
+  TOC_LINK_CLASS_NAME,
+  setActiveLocaleFromHost
 } from "@scribdown/shared";
 
 // ─── 滚动容器抽象 ─────────────────────────────────────────────────────────────
@@ -136,6 +137,8 @@ interface VscodeWebviewApi {
  * VS Code Webview 侧运行时入参。
  */
 export interface VscodePreviewRuntimeBootstrapOptions {
+  /** 宿主（VS Code）界面语言标签，用于确定工具栏等 webview 内文案语言。 */
+  locale: string;
   previewRootElementId: string;
   previewBaseElementId: string;
   previewShellElementId: string;
@@ -213,9 +216,7 @@ interface SourceLineAnchorIndex {
  * @param previewRootElement 预览根节点。
  * @returns 锚点索引实例。
  */
-function createSourceLineAnchorIndex(
-  previewRootElement: HTMLElement
-): SourceLineAnchorIndex {
+function createSourceLineAnchorIndex(previewRootElement: HTMLElement): SourceLineAnchorIndex {
   // 已缓存的锚点数组；undefined 表示缓存失效需重新采集。
   let cachedAnchors: SourceLineAnchor[] | undefined;
 
@@ -264,13 +265,14 @@ function hydratePreviewRoot(rootElement: Element): void {
  * 在 VS Code Webview 环境中挂载消息桥与渲染更新逻辑。
  * @param options 运行时初始化参数。
  */
-export function bootstrapVscodePreviewRuntime(
-  options: VscodePreviewRuntimeBootstrapOptions
-): void {
+export function bootstrapVscodePreviewRuntime(options: VscodePreviewRuntimeBootstrapOptions): void {
+  // 关键步骤：按宿主注入的语言确定 webview 内（工具栏 / 代码块等）文案语言，
+  // 与扩展宿主 renderMarkdown 时使用的语言保持一致。
+  setActiveLocaleFromHost(options.locale);
+
   // 全局对象上的 VS Code API 获取函数。
-  const acquireVsCodeApiFunction = (
-    globalThis as { acquireVsCodeApi?: () => VscodeWebviewApi }
-  ).acquireVsCodeApi;
+  const acquireVsCodeApiFunction = (globalThis as { acquireVsCodeApi?: () => VscodeWebviewApi })
+    .acquireVsCodeApi;
 
   if (typeof acquireVsCodeApiFunction !== "function") {
     return;
@@ -582,8 +584,7 @@ export function bootstrapVscodePreviewRuntime(
         const currentScrollTop = resolvePreviewScroller().scrollTop;
         // 当前 scroll 事件是否为程序化滚动自身触发的回声。
         const isProgrammaticEcho =
-          suppressedScrollY !== undefined &&
-          Math.abs(currentScrollTop - suppressedScrollY) < 1;
+          suppressedScrollY !== undefined && Math.abs(currentScrollTop - suppressedScrollY) < 1;
 
         // logPreviewScroll(isProgrammaticEcho ? "programmatic-echo" : "user-scroll", {
         //   scrollY: window.scrollY,
@@ -674,9 +675,7 @@ function applyRenderedContent(
   // 关键步骤：在游离节点上构建并 hydrate 新内容，使代码块等结构与现有 DOM 对齐，
   // morphdom 才能逐节点比对而非按标签差异整块销毁重建。
   /** 用于构建下一次预览快照的游离节点；标签与 previewRootElement 保持一致。 */
-  const incomingRoot = previewRootElement.ownerDocument.createElement(
-    previewRootElement.tagName
-  );
+  const incomingRoot = previewRootElement.ownerDocument.createElement(previewRootElement.tagName);
   incomingRoot.innerHTML = nextRenderedHtml;
   hydratePreviewRoot(incomingRoot);
 

@@ -1,3 +1,5 @@
+import { t } from "@scribdown/shared";
+
 // 只允许这些 scheme 作为 src，挡住 `javascript:` / `data:` 等可执行 URL，
 // 否则后续设置到 <a href="..."> 上会生成可点击的恶意链接。
 const ALLOWED_SRC_SCHEMES = new Set<string>(["http:", "https:"]);
@@ -16,11 +18,11 @@ export function validateViewerSourceUrl(
     if (!ALLOWED_SRC_SCHEMES.has(parsedSrc.protocol)) {
       return {
         ok: false,
-        message: `不支持的协议（${parsedSrc.protocol}），仅允许 http / https。`
+        message: t("viewer.errorUnsupportedProtocol", { protocol: parsedSrc.protocol })
       };
     }
   } catch {
-    return { ok: false, message: "src 参数不是合法的 URL。" };
+    return { ok: false, message: t("viewer.errorInvalidUrl") };
   }
 
   return { ok: true };

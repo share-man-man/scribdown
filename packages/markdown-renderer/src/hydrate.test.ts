@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { LocaleType, setActiveLocale } from "@scribdown/shared";
 
 import { hydrateMarkdown, mountMarkdownToolbar, renderMarkdown } from "./index";
+
+// 固定为简体中文：本文件断言的复制按钮 / 图片查看器等 UI 文案与中文测试内容配套。
+beforeAll(() => {
+  setActiveLocale(LocaleType.SimplifiedChinese);
+});
 
 // 统一清理挂到 body 的容器：断言失败时也不残留 DOM，避免污染后续用例。
 afterEach(() => {
@@ -90,9 +96,7 @@ describe("hydrateMarkdown", () => {
     );
 
     // 分支折叠按钮：点击后条目进入折叠态且 aria-expanded 同步。
-    const toggleElement = container.querySelector<HTMLButtonElement>(
-      "button.scribdown-toc-toggle"
-    );
+    const toggleElement = container.querySelector<HTMLButtonElement>("button.scribdown-toc-toggle");
     expect(toggleElement).not.toBeNull();
     toggleElement?.click();
     const branchItem = toggleElement?.closest("li");

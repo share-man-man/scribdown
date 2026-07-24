@@ -1,11 +1,12 @@
+import { applyExtensionLocale } from "../config/locale";
 import { MARKDOWN_PLAINTEXT_MIME_TYPES } from "../config/markdown-mime-types";
 import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
-import {
-  CONSUME_BYPASS_MESSAGE,
-  FETCH_FILE_MESSAGE
-} from "../messages/runtime";
+import { CONSUME_BYPASS_MESSAGE, FETCH_FILE_MESSAGE } from "../messages/runtime";
 import { renderMarkdownToDocument } from "../rendering/render-markdown";
 import { startPollingSource } from "./poll-source";
+
+// 关键步骤：接管渲染前按宿主语言确定界面文案语言。
+applyExtensionLocale();
 
 /**
  * 等待 DOM 解析到 body 阶段，便于读取浏览器为纯文本 `.md` 自动包装的 `<pre>` 内容。

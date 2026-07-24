@@ -148,11 +148,7 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
   ];
   // figure 元素的属性白名单：放行图片 figure 与视频 figure 的 class。
   const figureAttributes = [
-    ["className", IMAGE_FIGURE_CLASS_NAME, VIDEO_FIGURE_CLASS_NAME] as [
-      string,
-      string,
-      string
-    ]
+    ["className", IMAGE_FIGURE_CLASS_NAME, VIDEO_FIGURE_CLASS_NAME] as [string, string, string]
   ];
   // figcaption 元素的属性白名单。
   const figcaptionAttributes = [["className", IMAGE_CAPTION_CLASS_NAME] as [string, string]];

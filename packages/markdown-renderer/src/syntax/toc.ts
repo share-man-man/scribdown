@@ -16,20 +16,15 @@ import {
   TOC_LIST_NESTED_CLASS_NAME,
   TOC_NAV_CLASS_NAME,
   TOC_SUMMARY_CLASS_NAME,
-  TOC_TOGGLE_CLASS_NAME
+  TOC_TOGGLE_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import GithubSlugger from "github-slugger";
 import type { Link, Paragraph, Root } from "mdast";
 import { visit } from "unist-util-visit";
 
-import {
-  extractNodeText,
-  type Toc,
-  type TocItem,
-  type TocList,
-  type TocToggle
-} from "../core/ast";
+import { extractNodeText, type Toc, type TocItem, type TocList, type TocToggle } from "../core/ast";
 
 /**
  * 目录中的单个标题条目。
@@ -51,20 +46,11 @@ interface TocTreeItem extends TocHeading {
 // [TOC] 占位符匹配规则：仅处理独占一段的目录标记。
 const TOC_MARKER_PATTERN = /^\s*\[toc]\s*$/i;
 
-// 目录分支折叠按钮可访问名称。
-const TOC_TOGGLE_ARIA_LABEL = "展开或折叠子目录";
-
 // 目录折叠按钮已绑定交互的标记 dataset 键，保证 hydrate 幂等。
 const TOC_TOGGLE_HYDRATED_DATA_KEY = "scribdownTocToggleHydrated";
 
 // 目录标题链接已绑定平滑滚动的标记 dataset 键，保证 hydrate 幂等。
 const TOC_LINK_HYDRATED_DATA_KEY = "scribdownTocLinkHydrated";
-
-// 目录可访问名称。
-const TOC_ARIA_LABEL = "目录";
-
-// 目录摘要显示文本。
-const TOC_SUMMARY_TEXT = "目录";
 
 // 空标题生成锚点时使用的前缀。
 const EMPTY_HEADING_SLUG_PREFIX = "section";
@@ -213,7 +199,7 @@ function createTocNode(tocHeadings: TocHeading[], markerNode: Paragraph): Toc {
         children: [
           {
             type: "text",
-            value: TOC_SUMMARY_TEXT
+            value: t("toc.label")
           }
         ]
       },
@@ -222,7 +208,7 @@ function createTocNode(tocHeadings: TocHeading[], markerNode: Paragraph): Toc {
         data: {
           hName: "nav",
           hProperties: {
-            ariaLabel: TOC_ARIA_LABEL,
+            ariaLabel: t("toc.label"),
             className: [TOC_NAV_CLASS_NAME]
           }
         },
@@ -353,7 +339,7 @@ function createTocToggleNode(): TocToggle {
         type: "button",
         className: [TOC_TOGGLE_CLASS_NAME],
         ariaExpanded: "true",
-        ariaLabel: TOC_TOGGLE_ARIA_LABEL
+        ariaLabel: t("toc.toggle")
       }
     },
     children: []
@@ -512,7 +498,7 @@ function collectTocHeadingsFromDom(rootElement: ParentNode): TocHeading[] {
  */
 function createTocNavElement(ownerDocument: Document, tocTreeItems: TocTreeItem[]): HTMLElement {
   const navElement = ownerDocument.createElement("nav");
-  navElement.setAttribute("aria-label", TOC_ARIA_LABEL);
+  navElement.setAttribute("aria-label", t("toc.label"));
   navElement.className = TOC_NAV_CLASS_NAME;
   navElement.appendChild(createTocListElement(ownerDocument, tocTreeItems, false));
   return navElement;
@@ -567,7 +553,7 @@ function createTocListItemElement(ownerDocument: Document, tocItem: TocTreeItem)
     toggleElement.type = "button";
     toggleElement.className = TOC_TOGGLE_CLASS_NAME;
     toggleElement.setAttribute("aria-expanded", "true");
-    toggleElement.setAttribute("aria-label", TOC_TOGGLE_ARIA_LABEL);
+    toggleElement.setAttribute("aria-label", t("toc.toggle"));
     itemElement.appendChild(toggleElement);
   }
 
@@ -626,9 +612,7 @@ function hydrateToc(
   });
 
   // 根节点内所有目录标题跳转链接。
-  const linkElements = rootElement.querySelectorAll<HTMLAnchorElement>(
-    `a.${TOC_LINK_CLASS_NAME}`
-  );
+  const linkElements = rootElement.querySelectorAll<HTMLAnchorElement>(`a.${TOC_LINK_CLASS_NAME}`);
 
   linkElements.forEach((linkElement) => {
     if (linkElement.dataset[TOC_LINK_HYDRATED_DATA_KEY] === "true") {

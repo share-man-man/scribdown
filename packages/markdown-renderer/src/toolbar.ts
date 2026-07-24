@@ -30,7 +30,8 @@ import {
   SCRIBDOWN_TOOLBAR_TOC_PANEL_EMPTY_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_TOC_PANEL_TITLE_CLASS_NAME,
   TOC_LINK_ACTIVE_CLASS_NAME,
-  TOC_LINK_CLASS_NAME
+  TOC_LINK_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import {
@@ -246,14 +247,14 @@ function mountPageToolbar(
 
   /** 抽屉顶部标题文本节点。 */
   const tocTitleText = ownerDocument.createElement("span");
-  tocTitleText.textContent = "目录";
+  tocTitleText.textContent = t("toolbar.toc");
   tocTitle.appendChild(tocTitleText);
 
   /** 抽屉关闭按钮（右上角 ×）。 */
   const tocCloseBtn = ownerDocument.createElement("button");
   tocCloseBtn.type = "button";
   tocCloseBtn.className = SCRIBDOWN_TOOLBAR_TOC_PANEL_CLOSE_CLASS_NAME;
-  tocCloseBtn.setAttribute("aria-label", "关闭目录");
+  tocCloseBtn.setAttribute("aria-label", t("toolbar.tocClose"));
   tocCloseBtn.innerHTML =
     '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
     '<path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
@@ -279,7 +280,7 @@ function mountPageToolbar(
   if (tocHeadings.length === 0) {
     const emptyElement = ownerDocument.createElement("p");
     emptyElement.className = SCRIBDOWN_TOOLBAR_TOC_PANEL_EMPTY_CLASS_NAME;
-    emptyElement.textContent = "暂无标题";
+    emptyElement.textContent = t("toolbar.tocEmpty");
     tocPanel.appendChild(emptyElement);
   } else {
     const tocTree = createTocTree(tocHeadings);
@@ -292,11 +293,11 @@ function mountPageToolbar(
 
   // ── 目录按钮（工具栏第 1 个入口） ──
   /** 目录切换按钮。 */
-  const tocBtn = createPageToolbarBtn(ownerDocument, "目录", TOOLBAR_TOC_ICON_SVG);
+  const tocBtn = createPageToolbarBtn(ownerDocument, t("toolbar.toc"), TOOLBAR_TOC_ICON_SVG);
 
   // ── 更多按钮（工具栏第 2 个入口） ──
   /** 「更多」按钮，点击展开下拉菜单。 */
-  const moreBtn = createPageToolbarBtn(ownerDocument, "更多", TOOLBAR_MORE_ICON_SVG);
+  const moreBtn = createPageToolbarBtn(ownerDocument, t("toolbar.more"), TOOLBAR_MORE_ICON_SVG);
   moreBtn.classList.add(`${SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME}--more`);
   moreBtn.setAttribute("aria-haspopup", "menu");
   moreBtn.setAttribute("aria-expanded", "false");
@@ -331,7 +332,7 @@ function mountPageToolbar(
   widthValueElement.className = SCRIBDOWN_TOOLBAR_MENU_SELECT_VALUE_CLASS_NAME;
   widthValueElement.textContent = TOOLBAR_WIDTH_PRESETS[widthIndex].label;
 
-  widthTrigger.innerHTML = `${TOOLBAR_WIDTH_ICON_SVG}<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME}">页面宽度</span>`;
+  widthTrigger.innerHTML = `${TOOLBAR_WIDTH_ICON_SVG}<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME}">${t("toolbar.pageWidth")}</span>`;
   widthTrigger.appendChild(widthValueElement);
   widthTrigger.insertAdjacentHTML(
     "beforeend",
@@ -403,7 +404,7 @@ function mountPageToolbar(
   backTopItem.type = "button";
   backTopItem.className = SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME;
   backTopItem.setAttribute("role", "menuitem");
-  backTopItem.innerHTML = `${TOOLBAR_BACK_TOP_ICON_SVG}<span>回到顶部</span>`;
+  backTopItem.innerHTML = `${TOOLBAR_BACK_TOP_ICON_SVG}<span>${t("toolbar.backTop")}</span>`;
   backTopItem.addEventListener("click", () => {
     // 关键步骤：正文滚动容器是 .scribdown-content-scroll，优先滚动它回到顶部；
     // 同时兜底滚动 window，兼容仍以整页滚动的宿主（无害的空操作）。
@@ -424,7 +425,7 @@ function mountPageToolbar(
   aboutItem.rel = "noopener noreferrer";
   aboutItem.className = SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME;
   aboutItem.setAttribute("role", "menuitem");
-  aboutItem.innerHTML = `${TOOLBAR_ABOUT_ICON_SVG}<span>关于</span>`;
+  aboutItem.innerHTML = `${TOOLBAR_ABOUT_ICON_SVG}<span>${t("toolbar.about")}</span>`;
   aboutItem.addEventListener("click", () => {
     closeMoreMenu();
   });

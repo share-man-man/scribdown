@@ -15,7 +15,8 @@
     "version-packages": "changeset version",
     "release": "pnpm -r --filter \"./packages/*\" build && changeset publish",
     "clean": "find . \\( -name node_modules -o -name dist -o -name .turbo \\) -type d -prune -exec rm -rf {} +",
-    "build:icons": "bash scripts/build-icons.sh"
+    "build:icons": "bash scripts/build-icons.sh",
+    "sync:i18n": "pnpm --filter @scribdown/shared build && node scripts/sync-i18n-manifests.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",

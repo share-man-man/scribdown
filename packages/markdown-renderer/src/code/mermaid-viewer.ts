@@ -14,7 +14,8 @@ import {
   MERMAID_VIEWER_DRAGGING_CLASS_NAME,
   MERMAID_VIEWER_VIEWPORT_CLASS_NAME,
   MERMAID_VIEWER_ZOOMED_CLASS_NAME,
-  MERMAID_VIEWER_ZOOM_VALUE_CLASS_NAME
+  MERMAID_VIEWER_ZOOM_VALUE_CLASS_NAME,
+  t
 } from "@scribdown/shared";
 
 import {
@@ -185,24 +186,24 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
   const controlsElement = ownerDocument.createElement("div");
   /** 缩小按钮。 */
   const zoomOutButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: "缩小图表",
+    ariaLabel: t("mermaid.zoomOut"),
     text: VIEWER_ZOOM_OUT_TEXT
   });
   /** 缩放比例显示。 */
   const zoomValueElement = ownerDocument.createElement("span");
   /** 放大按钮。 */
   const zoomInButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: "放大图表",
+    ariaLabel: t("mermaid.zoomIn"),
     text: VIEWER_ZOOM_IN_TEXT
   });
   /** 重置按钮。 */
   const resetButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: "重置缩放",
+    ariaLabel: t("mermaid.zoomReset"),
     text: VIEWER_RESET_TEXT
   });
   /** 关闭按钮。 */
   const closeButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: "关闭全屏查看",
+    ariaLabel: t("mermaid.close"),
     className: MERMAID_VIEWER_CLOSE_BUTTON_CLASS_NAME,
     text: VIEWER_CLOSE_TEXT
   });
@@ -236,7 +237,7 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
 
   dialogElement.className = MERMAID_VIEWER_DIALOG_CLASS_NAME;
   dialogElement.setAttribute("aria-modal", "true");
-  dialogElement.setAttribute("aria-label", "全屏查看 Mermaid 图表");
+  dialogElement.setAttribute("aria-label", t("mermaid.fullscreen"));
   dialogElement.setAttribute("tabindex", "-1");
   chromeElement.className = MERMAID_VIEWER_CHROME_CLASS_NAME;
   captionElement.className = MERMAID_VIEWER_CAPTION_CLASS_NAME;
@@ -335,9 +336,7 @@ function requestMarkdownMermaidViewerLayout(viewerState: MarkdownMermaidViewerSt
  * 处理延后的布局计算。
  * @param viewerState 查看器状态。
  */
-function handleMarkdownMermaidViewerDeferredLayout(
-  viewerState: MarkdownMermaidViewerState
-): void {
+function handleMarkdownMermaidViewerDeferredLayout(viewerState: MarkdownMermaidViewerState): void {
   updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue);
 }
 
@@ -696,14 +695,8 @@ function applyMarkdownMermaidViewerFocalPoint(
  * @param viewerState 查看器状态。
  */
 function updateMarkdownMermaidViewerCanvasSize(viewerState: MarkdownMermaidViewerState): void {
-  const viewportWidth = Math.max(
-    viewerState.viewportElement.clientWidth * VIEWER_FIT_RATIO,
-    1
-  );
-  const viewportHeight = Math.max(
-    viewerState.viewportElement.clientHeight * VIEWER_FIT_RATIO,
-    1
-  );
+  const viewportWidth = Math.max(viewerState.viewportElement.clientWidth * VIEWER_FIT_RATIO, 1);
+  const viewportHeight = Math.max(viewerState.viewportElement.clientHeight * VIEWER_FIT_RATIO, 1);
   const naturalWidth = Math.max(viewerState.naturalWidth, 1);
   const naturalHeight = Math.max(viewerState.naturalHeight, 1);
   // fit 缩放：在不放大原图的前提下让整张图适配视口。
