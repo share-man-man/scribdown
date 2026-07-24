@@ -122,8 +122,8 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
           token_format: access_token
           access_token_scopes: https://www.googleapis.com/auth/chromewebstore
       # 幂等保护：已发布或待审版本已是本地版本时跳过（manifest 版本由 vite 构建时取自 package.json）。
@@ -148,8 +148,8 @@ jobs:
           echo "skip=$([ "$hit" != "null" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
         env:
           CWS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
       - name: Publish Chrome Extension
         if: steps.store.outputs.skip != 'true'
         run: |
@@ -176,5 +176,5 @@ jobs:
           echo "发布结果: $publish"
         env:
           CWS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
