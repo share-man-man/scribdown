@@ -1,5 +1,13 @@
 # @scribdown/markdown-fixture-preview
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [f07b8eb]
+  - @scribdown/shared@0.3.0
+  - @scribdown/markdown-renderer@0.4.1
+
 ## 0.0.4
 
 ### Patch Changes
