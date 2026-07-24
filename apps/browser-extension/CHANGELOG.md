@@ -1,5 +1,11 @@
 # @scribdown/browser-extension
 
+## 0.1.4
+
+### Patch Changes
+
+- 7571ec3: 发布流程改用 Google Service Account 鉴权，弃用 OAuth refresh_token。
+
 ## 0.1.3
 
 ### Patch Changes
