@@ -156,15 +156,17 @@ jobs:
           pnpm --filter @scribdown/browser-extension build
           (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
           item="publishers/$CHROME_PUBLISHER_ID/items/$CHROME_EXTENSION_ID"
-          # 关键步骤：V2 媒体上传（POST + 二进制包体），校验 uploadState=SUCCESS
+          # 关键步骤：V2 媒体上传（POST + 二进制包体），校验 uploadState=SUCCEEDED
           upload=$(curl -sf -X POST \
             -H "Authorization: Bearer $CWS_ACCESS_TOKEN" \
             -H "Content-Type: application/zip" \
             --data-binary @"$RUNNER_TEMP/chrome-extension.zip" \
             "https://chromewebstore.googleapis.com/upload/v2/$item:upload")
           echo "上传结果: $upload"
-          if [ "$(echo "$upload" | jq -r '.uploadState // empty')" != "SUCCESS" ]; then
-            echo "上传失败" && exit 1
+          # V2 返回 SUCCEEDED（V1 为 SUCCESS），两者都视为成功以兼容
+          upload_state=$(echo "$upload" | jq -r '.uploadState // empty')
+          if [ "$upload_state" != "SUCCEEDED" ] && [ "$upload_state" != "SUCCESS" ]; then
+            echo "上传失败: ${upload_state:-<未知>}" && exit 1
           fi
           # 关键步骤：V2 发布（默认 DEFAULT_PUBLISH，审核通过后即上线）。
           # curl -f 已保证非 2xx 失败；发布后 state 常为待审，打印即可，不据此判失败。
