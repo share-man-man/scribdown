@@ -1,5 +1,13 @@
 # @scribdown/markdown-renderer
 
+## 0.4.1
+
+### Patch Changes
+
+- f07b8eb: 引入 shared/i18n 统一文案，浏览器插件与 VS Code 插件接入多语言，manifest 文案由 sync:i18n 生成，默认兜底 en。
+- Updated dependencies [f07b8eb]
+  - @scribdown/shared@0.3.0
+
 ## 0.4.0
 
 ### Minor Changes
