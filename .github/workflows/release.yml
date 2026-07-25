@@ -154,7 +154,7 @@ jobs:
         if: steps.store.outputs.skip != 'true'
         run: |
           pnpm --filter @scribdown/browser-extension build
-          (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
+          (cd apps/browser-extension/.output/chrome-mv3 && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
           item="publishers/$CHROME_PUBLISHER_ID/items/$CHROME_EXTENSION_ID"
           # 关键步骤：V2 媒体上传（POST + 二进制包体），校验 uploadState=SUCCEEDED
           upload=$(curl -sf -X POST \
