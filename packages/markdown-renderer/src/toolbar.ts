@@ -1,10 +1,11 @@
 /**
- * 浮动页面工具栏：目录侧栏、「更多」菜单（回到顶部 / 页面宽度 / 关于）
+ * 浮动页面工具栏：目录侧栏、「更多」菜单（回到顶部 / 页面宽度 / 语言 / 关于）
  * 与当前章节 scrollspy 指示器。
  */
 
 import {
   CONTENT_WIDTH_STORAGE_KEY,
+  LocalePreference,
   PROJECT_HOMEPAGE_URL,
   SCRIBDOWN_CONTENT_AREA_CLASS_NAME,
   SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME,
@@ -31,6 +32,7 @@ import {
   SCRIBDOWN_TOOLBAR_TOC_PANEL_TITLE_CLASS_NAME,
   TOC_LINK_ACTIVE_CLASS_NAME,
   TOC_LINK_CLASS_NAME,
+  setActiveLocaleFromPreference,
   t
 } from "@scribdown/shared";
 
@@ -53,6 +55,22 @@ const TOOLBAR_WIDTH_PRESETS: Array<{ label: string; value: string }> = [
 
 // 默认内容宽度。
 const TOOLBAR_DEFAULT_WIDTH = "840px";
+
+/** 工具栏语言切换器支持的偏好与对应文案 key。 */
+const TOOLBAR_LOCALE_OPTIONS: Array<{
+  preference: LocalePreference;
+  labelKey:
+    | "toolbar.languageSystem"
+    | "toolbar.languageEnglish"
+    | "toolbar.languageSimplifiedChinese";
+}> = [
+  { preference: LocalePreference.System, labelKey: "toolbar.languageSystem" },
+  { preference: LocalePreference.English, labelKey: "toolbar.languageEnglish" },
+  {
+    preference: LocalePreference.SimplifiedChinese,
+    labelKey: "toolbar.languageSimplifiedChinese"
+  }
+];
 
 /**
  * 从 localStorage 读取已保存的内容宽度，不可用时返回默认值。
@@ -146,6 +164,14 @@ const TOOLBAR_WIDTH_ICON_SVG =
   "</svg>";
 
 /**
+ * 「语言」菜单项的内嵌 SVG 字符串（文字符号）。
+ */
+const TOOLBAR_LANGUAGE_ICON_SVG =
+  '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  '<path d="M3 4.5h7M6.5 3v1.5c0 3-1.25 5.5-3.5 7.2M4.2 8.5c1.2 1.25 2.75 2.2 4.55 2.75M11.5 5.5h3M13 3.5v2c0 3.1 1 5.5 2.5 7M10.5 12.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+  "</svg>";
+
+/**
  * 「关于」菜单项的内嵌 SVG 字符串（信息图标）。
  */
 const TOOLBAR_ABOUT_ICON_SVG =
@@ -170,11 +196,17 @@ const pageToolbarTeardowns = new WeakMap<Element, () => void>();
  * @param ownerDocument 目标 document。
  * @param container 工具栏与目录抽屉的物理挂载点，同时作为目录采集作用域。
  * @param scrollToHeading 目录跳转到目标标题的滚动实现（由宿主注入）。
+ * @param onLocaleChange 用户切换语言偏好后的宿主通知回调。
+ * @param localePreference 当前保存的语言偏好。
+ * @param hostLocale 宿主原始系统语言标签。
  */
 function mountPageToolbar(
   ownerDocument: Document,
   container: Element,
-  scrollToHeading: (targetElement: HTMLElement) => void
+  scrollToHeading: (targetElement: HTMLElement) => void,
+  onLocaleChange?: (preference: LocalePreference) => void,
+  localePreference: LocalePreference = LocalePreference.System,
+  hostLocale?: string | null
 ): void {
   // 关键步骤：重挂载前先执行上一轮实例的清理，断开 document / window 监听，避免重复绑定。
   pageToolbarTeardowns.get(container)?.();
@@ -391,11 +423,99 @@ function mountPageToolbar(
     widthTrigger.setAttribute("aria-expanded", String(opened));
   });
 
-  /** 关闭「更多」菜单并同步 aria 状态，同时重置嵌套的宽度下拉。 */
+  // 菜单项：语言切换（下拉选择）。
+  /** 语言下拉分组容器（包裹触发行与可折叠的语言列表）。 */
+  const languageGroup = ownerDocument.createElement("div");
+  languageGroup.className = SCRIBDOWN_TOOLBAR_MENU_GROUP_CLASS_NAME;
+
+  /** 语言下拉触发行，右侧展示当前生效语言。 */
+  const languageTrigger = ownerDocument.createElement("button");
+  languageTrigger.type = "button";
+  languageTrigger.className = `${SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME} ${SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME}--select`;
+  languageTrigger.setAttribute("role", "menuitem");
+  languageTrigger.setAttribute("aria-haspopup", "listbox");
+  languageTrigger.setAttribute("aria-expanded", "false");
+
+  /** 当前语言在可见菜单中的显示文本。 */
+  const currentLocaleOption = TOOLBAR_LOCALE_OPTIONS.find(
+    (option) => option.preference === localePreference
+  );
+
+  /** 语言触发行内当前值展示节点。 */
+  const languageValueElement = ownerDocument.createElement("span");
+  languageValueElement.className = SCRIBDOWN_TOOLBAR_MENU_SELECT_VALUE_CLASS_NAME;
+  languageValueElement.textContent = t(
+    currentLocaleOption?.labelKey ?? "toolbar.languageSystem"
+  );
+
+  languageTrigger.innerHTML =
+    `${TOOLBAR_LANGUAGE_ICON_SVG}<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME}">${t("toolbar.language")}</span>`;
+  languageTrigger.appendChild(languageValueElement);
+  languageTrigger.insertAdjacentHTML(
+    "beforeend",
+    `<svg class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_CHEVRON_CLASS_NAME}" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">` +
+      '<path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      "</svg>"
+  );
+  languageGroup.appendChild(languageTrigger);
+
+  /** 语言选项列表（vertical listbox，默认折叠）。 */
+  const languageChoices = ownerDocument.createElement("div");
+  languageChoices.className = SCRIBDOWN_TOOLBAR_MENU_GROUP_CHOICES_CLASS_NAME;
+  languageChoices.setAttribute("role", "listbox");
+
+  TOOLBAR_LOCALE_OPTIONS.forEach((option) => {
+    /** 单个语言选项按钮。 */
+    const subItem = ownerDocument.createElement("button");
+    subItem.type = "button";
+    subItem.className = SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_CLASS_NAME;
+    subItem.setAttribute("role", "option");
+    subItem.setAttribute("aria-selected", String(option.preference === localePreference));
+    subItem.innerHTML =
+      `<span class="${SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_MARK_CLASS_NAME}" aria-hidden="true">` +
+      '<svg width="12" height="12" viewBox="0 0 12 12" fill="none">' +
+      '<path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      "</svg>" +
+      `</span><span class="${SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_LABEL_CLASS_NAME}">${t(option.labelKey)}</span>`;
+    subItem.addEventListener("click", () => {
+      if (option.preference === localePreference) {
+        closeLanguageSelect();
+        return;
+      }
+
+      // 关键步骤：先按统一优先级立即切换运行时文案，再通知宿主异步持久化全局偏好。
+      setActiveLocaleFromPreference(option.preference, hostLocale);
+      onLocaleChange?.(option.preference);
+      mountPageToolbar(
+        ownerDocument,
+        container,
+        scrollToHeading,
+        onLocaleChange,
+        option.preference,
+        hostLocale
+      );
+    });
+    languageChoices.appendChild(subItem);
+  });
+  languageGroup.appendChild(languageChoices);
+
+  /** 关闭语言下拉并同步 aria 状态。 */
+  const closeLanguageSelect = (): void => {
+    languageGroup.classList.remove("is-open");
+    languageTrigger.setAttribute("aria-expanded", "false");
+  };
+
+  languageTrigger.addEventListener("click", () => {
+    const opened = languageGroup.classList.toggle("is-open");
+    languageTrigger.setAttribute("aria-expanded", String(opened));
+  });
+
+  /** 关闭「更多」菜单并同步 aria 状态，同时重置嵌套的宽度与语言下拉。 */
   const closeMoreMenu = (): void => {
     menu.classList.remove("is-open");
     moreBtn.setAttribute("aria-expanded", "false");
     closeWidthSelect();
+    closeLanguageSelect();
   };
 
   // 菜单项：回到顶部（声明顺序晚于 closeMoreMenu，便于在点击回调里关闭整个菜单）。
@@ -430,9 +550,10 @@ function mountPageToolbar(
     closeMoreMenu();
   });
 
-  // 关键步骤：菜单项按可见顺序追加 —— 回到顶部 → 切换页面宽度（下拉）→ 关于。
+  // 关键步骤：菜单项按可见顺序追加 —— 回到顶部 → 页面宽度 → 语言 → 关于。
   menu.appendChild(backTopItem);
   menu.appendChild(widthGroup);
+  menu.appendChild(languageGroup);
   menu.appendChild(aboutItem);
 
   tocBtn.addEventListener("click", (e) => {

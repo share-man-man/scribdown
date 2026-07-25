@@ -37,5 +37,5 @@ jobs:
       - name: Package check (Chrome extension)
         run: |
           pnpm --filter @scribdown/browser-extension build
-          (cd apps/browser-extension/dist && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
+          (cd apps/browser-extension/.output/chrome-mv3 && zip -qr "$RUNNER_TEMP/chrome-extension.zip" .)
           zip -T "$RUNNER_TEMP/chrome-extension.zip"

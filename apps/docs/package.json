@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev --host 127.0.0.1 --port 9174",
-    "build": "vitepress build",
-    "preview": "vitepress preview --host 127.0.0.1 --port 4174",
+    "dev": "rspress dev --host 127.0.0.1 --port 9174",
+    "build": "rspress build",
+    "preview": "rspress preview --host 127.0.0.1 --port 4174",
     "lint": "eslint .",
     "test": "echo 'No unit tests for @scribdown/docs'",
     "typecheck": "echo 'No TypeScript sources to check for @scribdown/docs'"
   },
   "devDependencies": {
-    "vitepress": "^1.6.3"
+    "@rspress/core": "^2.0.18"
   }
 }

@@ -22,6 +22,19 @@ export enum LocaleType {
 export const DEFAULT_LOCALE: LocaleType = LocaleType.English;
 
 /**
+ * 界面语言偏好。`System` 表示未显式选择语言，跟随浏览器或编辑器的系统界面语言。
+ * 宿主负责将该值持久化到自己的全局配置；共享层只负责解析，避免耦合 Web Storage。
+ */
+export enum LocalePreference {
+  /** 跟随宿主系统界面语言。 */
+  System = "system",
+  /** 始终使用英语。 */
+  English = LocaleType.English,
+  /** 始终使用简体中文。 */
+  SimplifiedChinese = LocaleType.SimplifiedChinese
+}
+
+/**
  * 当前支持的全部语言列表（用于校验入参、遍历生成静态文件）。
  */
 export const SUPPORTED_LOCALES: LocaleType[] = [LocaleType.English, LocaleType.SimplifiedChinese];
@@ -86,4 +99,29 @@ export function normalizeLocale(rawLocale: string | null | undefined): LocaleTyp
   }
 
   return DEFAULT_LOCALE;
+}
+
+/**
+ * 解析宿主保存的语言偏好。非法值安全回落到 {@link LocalePreference.System}。
+ * @param rawPreference 宿主配置或存储中读到的原始值。
+ * @returns 合法的语言偏好。
+ */
+export function normalizeLocalePreference(rawPreference: unknown): LocalePreference {
+  return isLocalePreference(rawPreference) ? rawPreference : LocalePreference.System;
+}
+
+/**
+ * 判断值是否为受支持的语言偏好。
+ * @param value 待校验的原始值。
+ * @returns 值为合法 {@link LocalePreference} 时返回 true。
+ */
+export function isLocalePreference(value: unknown): value is LocalePreference {
+  switch (value) {
+    case LocalePreference.English:
+    case LocalePreference.SimplifiedChinese:
+    case LocalePreference.System:
+      return true;
+    default:
+      return false;
+  }
 }

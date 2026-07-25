@@ -6,6 +6,12 @@
 export const EXTENSION_ENABLED_STORAGE_KEY = "scribdown:enabled";
 
 /**
+ * 浏览器扩展全局界面语言偏好在 chrome.storage.local 中的键名。
+ * 该存储由扩展 origin 统一管理，content script、viewer、popup 与后台均可读取同一份选择。
+ */
+export const EXTENSION_LOCALE_PREFERENCE_STORAGE_KEY = "scribdown:localePreference";
+
+/**
  * 「自动刷新开关」状态在 chrome.storage.local 中的键名。
  * 仅作用于 file:// 场景，控制是否周期性回拉本地文件并静默重渲染。
  * 未设置视为启用（默认开）。

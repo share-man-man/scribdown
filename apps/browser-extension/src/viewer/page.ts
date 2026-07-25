@@ -6,9 +6,6 @@ import { BYPASS_ONCE_MESSAGE } from "../messages/runtime";
 import { renderMarkdownToDocument } from "../rendering/render-markdown";
 import { extractFilename, validateViewerSourceUrl } from "./source-url";
 
-// 关键步骤：viewer 逻辑执行前按宿主语言确定界面文案语言。
-applyExtensionLocale();
-
 /**
  * 在当前文档中渲染一个简洁的错误页。
  * @param message 错误说明文本。
@@ -63,6 +60,8 @@ function renderError(message: string, sourceUrl: string | null): void {
 }
 
 (async () => {
+  // 关键步骤：渲染错误页或 Markdown 前先应用扩展全局语言偏好。
+  await applyExtensionLocale();
   // 关键步骤：拒绝在第三方页面 iframe 中渲染。即使别的网站用
   // `<iframe src="chrome-extension://<id>/viewer.html?src=...">` 嵌入我们，
   // 也不让 fetch 真正发起，避免成为「带凭证内网探测」跳板。

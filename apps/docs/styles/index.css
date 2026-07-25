@@ -1,0 +1,251 @@
+/* Scribdown 文档站：将 Rspress 主题变量映射到产品设计 Token。 */
+:root {
+  --scribdown-color-bg: #ebe1c8;
+  --scribdown-color-surface: #f8f0db;
+  --scribdown-color-text-primary: #2f2620;
+  --scribdown-color-text-secondary: #786758;
+  --scribdown-color-accent: #436b5b;
+  --scribdown-color-link: #355a7d;
+  --scribdown-color-mark: #d7ab48;
+  --scribdown-color-border: #c5ad8a;
+  --scribdown-paper-grain: rgba(132, 96, 44, 0.1);
+  --scribdown-paper-fiber: rgba(67, 107, 91, 0.06);
+  --scribdown-shadow-sm: 2px 3px 0 rgba(47, 38, 32, 0.13);
+  --scribdown-shadow-md: 4px 6px 0 rgba(47, 38, 32, 0.18);
+  --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
+  --scribdown-radius-md: 14px 16px 13px 17px;
+  --rp-c-bg: var(--scribdown-color-bg);
+  --rp-c-bg-soft: var(--scribdown-color-surface);
+  --rp-c-bg-mute: color-mix(in srgb, var(--scribdown-color-surface) 70%, var(--scribdown-color-bg));
+  --rp-c-bg-alt: var(--scribdown-color-surface);
+  --rp-c-divider: var(--scribdown-color-border);
+  --rp-c-divider-light: color-mix(in srgb, var(--scribdown-color-border) 60%, var(--scribdown-color-bg));
+  --rp-c-text-0: var(--scribdown-color-text-primary);
+  --rp-c-text-1: var(--scribdown-color-text-primary);
+  --rp-c-text-2: var(--scribdown-color-text-secondary);
+  --rp-c-text-3: color-mix(in srgb, var(--scribdown-color-text-secondary) 70%, var(--scribdown-color-bg));
+  --rp-c-link: var(--scribdown-color-link);
+  --rp-c-brand: var(--scribdown-color-accent);
+  --rp-c-brand-light: color-mix(in srgb, var(--scribdown-color-accent) 82%, white);
+  --rp-c-brand-lighter: color-mix(in srgb, var(--scribdown-color-accent) 16%, transparent);
+  --rp-c-brand-dark: color-mix(in srgb, var(--scribdown-color-accent) 82%, black);
+  --rp-c-brand-darker: color-mix(in srgb, var(--scribdown-color-accent) 70%, black);
+  --rp-c-brand-tint: color-mix(in srgb, var(--scribdown-color-accent) 16%, transparent);
+  --rp-home-hero-secondary-color: var(--scribdown-color-link);
+  --rp-home-hero-title-bg: linear-gradient(120deg, var(--scribdown-color-accent), var(--scribdown-color-link));
+  --rp-home-background-bg:
+    radial-gradient(var(--scribdown-paper-grain) 1px, transparent 1.4px),
+    radial-gradient(var(--scribdown-paper-fiber) 1px, transparent 1.4px),
+    var(--scribdown-color-bg);
+  --rp-home-feature-bg: var(--scribdown-color-surface);
+  --rp-shadow-1: var(--scribdown-shadow-sm);
+  --rp-shadow-2: var(--scribdown-shadow-md);
+  --rp-radius: var(--scribdown-radius-md);
+  --rp-radius-small: var(--scribdown-radius-md);
+  --rp-radius-large: var(--scribdown-radius-md);
+}
+
+html.rp-dark {
+  --scribdown-color-bg: #1e1915;
+  --scribdown-color-surface: #2a241f;
+  --scribdown-color-text-primary: #ebdfcc;
+  --scribdown-color-text-secondary: #ae9b85;
+  --scribdown-color-accent: #7ebbab;
+  --scribdown-color-link: #94b8de;
+  --scribdown-color-mark: #d3aa57;
+  --scribdown-color-border: #5a4a39;
+  --scribdown-paper-grain: rgba(211, 170, 87, 0.1);
+  --scribdown-paper-fiber: rgba(126, 187, 171, 0.07);
+  --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.36);
+  --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.48);
+  --rp-c-bg: var(--scribdown-color-bg);
+  --rp-c-bg-soft: var(--scribdown-color-surface);
+  --rp-c-bg-mute: color-mix(in srgb, var(--scribdown-color-surface) 70%, var(--scribdown-color-bg));
+  --rp-c-bg-alt: var(--scribdown-color-surface);
+  --rp-c-divider: var(--scribdown-color-border);
+  --rp-c-divider-light: color-mix(in srgb, var(--scribdown-color-border) 60%, var(--scribdown-color-bg));
+  --rp-c-text-0: var(--scribdown-color-text-primary);
+  --rp-c-text-1: var(--scribdown-color-text-primary);
+  --rp-c-text-2: var(--scribdown-color-text-secondary);
+  --rp-c-text-3: color-mix(in srgb, var(--scribdown-color-text-secondary) 70%, var(--scribdown-color-bg));
+  --rp-c-link: var(--scribdown-color-link);
+  --rp-c-brand: var(--scribdown-color-accent);
+  --rp-c-brand-light: color-mix(in srgb, var(--scribdown-color-accent) 85%, white);
+  --rp-c-brand-dark: color-mix(in srgb, var(--scribdown-color-accent) 85%, white);
+  --rp-c-brand-darker: color-mix(in srgb, var(--scribdown-color-accent) 70%, white);
+}
+
+body {
+  background-image:
+    radial-gradient(var(--scribdown-paper-grain) 1px, transparent 1.4px),
+    radial-gradient(var(--scribdown-paper-fiber) 1px, transparent 1.4px);
+  background-position: 0 0, 9px 9px;
+  background-size: 18px 18px, 26px 26px;
+}
+
+.rp-home-hero__title,
+.rp-home-hero__subtitle,
+.home-section__title,
+.home-cta h2 {
+  font-family: var(--scribdown-font-heading);
+  letter-spacing: 0.5px;
+}
+
+.rp-home-hero__image-img {
+  border: 1px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-md);
+  box-shadow: var(--scribdown-shadow-md);
+  max-height: 440px;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.rp-home-feature__card,
+.home-showcase__figure,
+.home-cta {
+  border: 1px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-md);
+  background: var(--scribdown-color-surface);
+  box-shadow: var(--scribdown-shadow-sm);
+}
+
+.rp-home-feature__card:hover {
+  border-color: var(--scribdown-color-accent);
+  box-shadow: var(--scribdown-shadow-md);
+  color: inherit;
+  transform: translateY(-3px);
+}
+
+.home-section {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.home-section__title {
+  margin: 0 0 0.5rem;
+  color: var(--scribdown-color-text-primary);
+  font-size: 2.125rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.home-section__subtitle {
+  max-width: 40rem;
+  margin: 0 auto 2.5rem;
+  color: var(--scribdown-color-text-secondary);
+  text-align: center;
+}
+
+.home-showcase {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.home-showcase__figure {
+  margin: 0;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.home-showcase__figure img {
+  display: block;
+  width: 100%;
+  border-radius: var(--scribdown-radius-md);
+}
+
+.home-showcase__points {
+  display: grid;
+  gap: 1.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-showcase__points li {
+  position: relative;
+  padding-left: 1.875rem;
+  color: var(--scribdown-color-text-secondary);
+  line-height: 1.6;
+}
+
+.home-showcase__points li::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--scribdown-color-accent);
+  content: "✎";
+  font-size: 1.125rem;
+}
+
+.home-showcase__points strong {
+  color: var(--scribdown-color-text-primary);
+}
+
+.home-cta {
+  padding: 3rem 1.5rem;
+  background: color-mix(in srgb, var(--scribdown-color-accent) 8%, var(--scribdown-color-surface));
+  text-align: center;
+}
+
+.home-cta h2 {
+  margin: 0 0 0.5rem;
+  color: var(--scribdown-color-text-primary);
+  font-size: 1.875rem;
+}
+
+.home-cta p {
+  margin: 0 0 1.5rem;
+  color: var(--scribdown-color-text-secondary);
+}
+
+.home-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.home-cta__btn {
+  display: inline-block;
+  border: 1px solid var(--scribdown-color-border);
+  border-radius: var(--scribdown-radius-md);
+  padding: 0.625rem 1.375rem;
+  color: var(--scribdown-color-text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-cta__btn--brand {
+  border-color: var(--scribdown-color-accent);
+  background: var(--scribdown-color-accent);
+  color: var(--scribdown-color-surface);
+  box-shadow: var(--scribdown-shadow-sm);
+}
+
+html.rp-dark .home-cta__btn--brand {
+  color: var(--scribdown-color-bg);
+}
+
+.home-cta__btn--alt {
+  background: var(--scribdown-color-surface);
+}
+
+.home-cta__btn:hover {
+  box-shadow: var(--scribdown-shadow-md);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .home-showcase {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .home-section {
+    padding: 3rem 1.25rem;
+  }
+}

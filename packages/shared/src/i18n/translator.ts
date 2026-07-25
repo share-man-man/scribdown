@@ -8,6 +8,7 @@
 import {
   DEFAULT_LOCALE,
   LOCALE_FALLBACKS,
+  LocalePreference,
   LocaleType,
   SUPPORTED_LOCALES,
   normalizeLocale
@@ -42,15 +43,49 @@ export function getActiveLocale(): LocaleType {
 }
 
 /**
+ * 按「显式语言偏好优先，系统语言其次」解析当前应使用的语言。
+ * @param preference 宿主持久化的语言偏好；省略时视为跟随系统。
+ * @param rawHostLocale 宿主原始语言标签（如 `navigator.language`、`vscode.env.language`）。
+ * @returns 实际应生效的受支持语言。
+ */
+export function resolveLocalePreference(
+  preference: LocalePreference | undefined,
+  rawHostLocale: string | null | undefined
+): LocaleType {
+  switch (preference) {
+    case LocalePreference.English:
+      return LocaleType.English;
+    case LocalePreference.SimplifiedChinese:
+      return LocaleType.SimplifiedChinese;
+    case LocalePreference.System:
+    default:
+      return normalizeLocale(rawHostLocale);
+  }
+}
+
+/**
+ * 根据宿主保存的偏好和系统语言更新全局界面语言。
+ * @param preference 宿主持久化的语言偏好；省略时跟随系统。
+ * @param rawHostLocale 宿主原始语言标签。
+ * @returns 实际生效的语言。
+ */
+export function setActiveLocaleFromPreference(
+  preference: LocalePreference | undefined,
+  rawHostLocale: string | null | undefined
+): LocaleType {
+  /** 以统一优先级规则解析得到的语言。 */
+  const resolvedLocale = resolveLocalePreference(preference, rawHostLocale);
+  setActiveLocale(resolvedLocale);
+  return resolvedLocale;
+}
+
+/**
  * 便捷方法：把宿主原始语言标签归一化后设为全局语言。
  * @param rawLocale 宿主原始语言标签（如 `navigator.language`、`vscode.env.language`）。
  * @returns 实际生效的语言。
  */
 export function setActiveLocaleFromHost(rawLocale: string | null | undefined): LocaleType {
-  // 关键步骤：归一化脏标签，再落为全局语言。
-  const resolvedLocale = normalizeLocale(rawLocale);
-  setActiveLocale(resolvedLocale);
-  return resolvedLocale;
+  return setActiveLocaleFromPreference(LocalePreference.System, rawLocale);
 }
 
 /**

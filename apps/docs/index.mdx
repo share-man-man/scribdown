@@ -1,5 +1,5 @@
 ---
-layout: home
+pageType: custom
 
 hero:
   name: Scribdown
@@ -34,18 +34,24 @@ features:
     details: 原始 HTML 经 rehype-sanitize + DOMPurify 双层清洗，外链与不可信资源加载失败时稳定降级，不破坏主内容流。
 ---
 
-<script setup>
-// 关键步骤：原生 HTML 里的绝对路径链接不会被 VitePress 自动加 base 前缀
-// （站点部署在 /scribdown/ 子路径下），需用 withBase 显式拼接。
-import { withBase } from "vitepress";
-</script>
+import {
+  HomeBackground,
+  HomeFeature,
+  HomeFooter,
+  HomeHero,
+} from "@rspress/core/theme";
+import { withBase } from "@rspress/core/runtime";
+
+<HomeBackground />
+<HomeHero />
+<HomeFeature />
 
 <section class="home-section">
   <h2 class="home-section__title">所见即所得的手绘渲染</h2>
   <p class="home-section__subtitle">同一份 Markdown，在 Scribdown 里呈现为纸感、线条与轻盈层级——下面是真实渲染样张。</p>
   <div class="home-showcase">
     <figure class="home-showcase__figure">
-      <img src="/ui-render.png" alt="Scribdown 渲染样张：标题、列表、代码块、表格、图片与图表" />
+      <img src={withBase("/ui-render.png")} alt="Scribdown 渲染样张：标题、列表、代码块、表格、图片与图表" />
     </figure>
     <ul class="home-showcase__points">
       <li><strong>纸感正文：</strong>暖米纸背景配深胡桃墨色文字，长时间阅读更柔和。</li>
@@ -61,9 +67,10 @@ import { withBase } from "vitepress";
     <h2>装上插件，立刻换个心情读文档</h2>
     <p>几分钟完成本地构建与加载，浏览器与 VS Code 都能用上同款手绘渲染。</p>
     <div class="home-cta__actions">
-      <!-- 站点未开启 cleanUrls，显式带 .html 后缀，保证不经客户端路由（如新标签页直开）也能命中静态文件。 -->
-      <a class="home-cta__btn home-cta__btn--brand" :href="withBase('/guide/quick-start.html')">快速上手 →</a>
-      <a class="home-cta__btn home-cta__btn--alt" :href="withBase('/ui-design/overview.html')">了解设计体系</a>
+      <a class="home-cta__btn home-cta__btn--brand" href="./guide/quick-start.html">快速上手 →</a>
+      <a class="home-cta__btn home-cta__btn--alt" href="./ui-design/overview.html">了解设计体系</a>
     </div>
   </div>
 </section>
+
+<HomeFooter />

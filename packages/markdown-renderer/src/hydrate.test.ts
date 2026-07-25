@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { LocaleType, setActiveLocale } from "@scribdown/shared";
+import {
+  getActiveLocale,
+  LocalePreference,
+  LocaleType,
+  setActiveLocale
+} from "@scribdown/shared";
 
 import { hydrateMarkdown, mountMarkdownToolbar, renderMarkdown } from "./index";
 
@@ -12,6 +17,7 @@ beforeAll(() => {
 // 统一清理挂到 body 的容器：断言失败时也不残留 DOM，避免污染后续用例。
 afterEach(() => {
   document.body.innerHTML = "";
+  setActiveLocale(LocaleType.SimplifiedChinese);
 });
 
 /**
@@ -154,5 +160,46 @@ describe("mountMarkdownToolbar", () => {
       removeListenerSpy.mock.calls.filter(([eventName]) => eventName === "click")
     ).toHaveLength(1);
     removeListenerSpy.mockRestore();
+  });
+
+  it("switches the toolbar language from the menu item above About", async () => {
+    // 输入一个标题以完整挂载包含更多菜单的工具栏。
+    const container = document.createElement("div");
+    container.className = "scribdown-markdown";
+    container.innerHTML = await renderMarkdown("## 章节一");
+    document.body.append(container);
+
+    /** 语言切换通知回调，用于验证渲染器把持久化职责交给宿主。 */
+    const onLocaleChange = vi.fn();
+    mountMarkdownToolbar(container, { scrollToHeading: () => {}, onLocaleChange });
+
+    /** 「更多」按钮，展开后才能操作语言切换器。 */
+    const moreButton = container.querySelector<HTMLButtonElement>(
+      ".scribdown-toolbar-btn--more"
+    );
+    moreButton?.click();
+
+    /** 语言下拉触发行，在两个 select 类型菜单项中按可见文案定位。 */
+    const languageTrigger = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".scribdown-toolbar-menu-item--select")
+    ).find((element) => element.textContent?.includes("语言"));
+    languageTrigger?.click();
+
+    /** 英文语言选项。 */
+    const englishOption = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        ".scribdown-toolbar-menu-sub-item[role=option]"
+      )
+    ).find((element) => element.textContent?.includes("English"));
+    englishOption?.click();
+
+    expect(getActiveLocale()).toBe(LocaleType.English);
+    expect(onLocaleChange).toHaveBeenCalledWith(LocalePreference.English);
+    expect(
+      Array.from(container.querySelectorAll<HTMLButtonElement>(".scribdown-toolbar-menu-item--select")).some(
+        (element) => element.textContent?.includes("Language")
+      )
+    ).toBe(true);
+    expect(container.querySelector("a[role=menuitem]")?.textContent).toContain("About");
   });
 });

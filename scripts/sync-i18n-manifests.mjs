@@ -38,7 +38,11 @@ const CHROME_MESSAGE_KEY_MAP = {
 const VSCODE_NLS_KEY_MAP = {
   displayName: "manifest.vscodeDisplayName",
   description: "manifest.vscodeDescription",
-  "command.openPreview.title": "manifest.vscodeCommandTitle"
+  "command.openPreview.title": "manifest.vscodeCommandTitle",
+  "configuration.language.description": "manifest.vscodeLanguageDescription",
+  "configuration.language.system.description": "manifest.vscodeLanguageSystemDescription",
+  "configuration.language.english.description": "manifest.vscodeLanguageEnglishDescription",
+  "configuration.language.simplifiedChinese.description": "manifest.vscodeLanguageSimplifiedChineseDescription"
 };
 
 /** 生成文件的统一头注释键，提示勿手改。 */

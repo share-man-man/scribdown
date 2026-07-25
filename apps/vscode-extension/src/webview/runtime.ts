@@ -8,7 +8,9 @@ import {
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
   TOC_LINK_CLASS_NAME,
-  setActiveLocaleFromHost
+  LocalePreference,
+  isLocalePreference,
+  setActiveLocaleFromPreference
 } from "@scribdown/shared";
 
 // ─── 滚动容器抽象 ─────────────────────────────────────────────────────────────
@@ -137,8 +139,10 @@ interface VscodeWebviewApi {
  * VS Code Webview 侧运行时入参。
  */
 export interface VscodePreviewRuntimeBootstrapOptions {
-  /** 宿主（VS Code）界面语言标签，用于确定工具栏等 webview 内文案语言。 */
+  /** 宿主（VS Code）界面语言标签。 */
   locale: string;
+  /** 宿主全局保存的显式语言偏好。 */
+  localePreference: LocalePreference;
   previewRootElementId: string;
   previewBaseElementId: string;
   previewShellElementId: string;
@@ -150,6 +154,8 @@ export interface VscodePreviewRuntimeBootstrapOptions {
   previewReadyMessageType: string;
   previewScrollChangedMessageType: string;
   previewOpenLinkMessageType: string;
+  previewSetLocalePreferenceMessageType: string;
+  setPreviewLocalePreferenceMessageType: string;
 }
 
 /**
@@ -187,6 +193,7 @@ interface NormalizedRuntimeMessage {
   renderedHtml?: string;
   sourceLine?: number;
   anchorId?: string;
+  localePreference?: LocalePreference;
 }
 
 /**
@@ -266,9 +273,8 @@ function hydratePreviewRoot(rootElement: Element): void {
  * @param options 运行时初始化参数。
  */
 export function bootstrapVscodePreviewRuntime(options: VscodePreviewRuntimeBootstrapOptions): void {
-  // 关键步骤：按宿主注入的语言确定 webview 内（工具栏 / 代码块等）文案语言，
-  // 与扩展宿主 renderMarkdown 时使用的语言保持一致。
-  setActiveLocaleFromHost(options.locale);
+  // 关键步骤：显式偏好优先于 VS Code 系统语言，与扩展宿主 renderMarkdown 的规则一致。
+  setActiveLocaleFromPreference(options.localePreference, options.locale);
 
   // 全局对象上的 VS Code API 获取函数。
   const acquireVsCodeApiFunction = (globalThis as { acquireVsCodeApi?: () => VscodeWebviewApi })
@@ -292,6 +298,17 @@ export function bootstrapVscodePreviewRuntime(options: VscodePreviewRuntimeBoots
   if (!previewRootElement || !previewBaseElement || !previewShellElement) {
     return;
   }
+
+  /**
+   * 把当前工具栏选择交给 VS Code 扩展宿主持久化到用户设置。
+   * @param preference 用户在工具栏中选中的语言偏好。
+   */
+  const handleLocaleChange = (preference: LocalePreference): void => {
+    vscodeApi.postMessage({
+      type: options.previewSetLocalePreferenceMessageType,
+      localePreference: preference
+    });
+  };
 
   // 关键步骤：VS Code Webview 文档承载于 iframe 且设置了 <base href="…vscode-resource…">，
   // 原生点击任何 <a> 都会按 base 解析并触发 iframe 导航：
@@ -498,12 +515,27 @@ export function bootstrapVscodePreviewRuntime(options: VscodePreviewRuntimeBoots
         previewRootElement,
         previewBaseElement,
         previewShellElement,
-        normalizedMessage
+        normalizedMessage,
+        handleLocaleChange,
+        options.localePreference,
+        options.locale
       );
       // 关键步骤：重渲染替换了 DOM，锚点缓存立即失效。
       anchorIndex.invalidate();
       // 旧高亮目标元素已随 DOM 替换失效，置空待下次光标消息重新定位浮层。
       activeHighlightElement = undefined;
+      return;
+    }
+
+    if (normalizedMessage.type === options.setPreviewLocalePreferenceMessageType) {
+      // 关键步骤：设置面板或工具栏写入的新偏好会回传 Webview，使当前预览无需重新打开。
+      setActiveLocaleFromPreference(normalizedMessage.localePreference, options.locale);
+      mountMarkdownToolbar(previewShellElement, {
+        scrollToHeading: scrollHeadingIntoViewSmoothly,
+        onLocaleChange: handleLocaleChange,
+        localePreference: normalizedMessage.localePreference,
+        hostLocale: options.locale
+      });
       return;
     }
 
@@ -642,13 +674,16 @@ function normalizeRuntimeMessage(message: unknown): NormalizedRuntimeMessage | u
   const sourceLineField = messageRecord.sourceLine;
   // 锚点 id 字段。
   const anchorIdField = messageRecord.anchorId;
+  // 语言偏好字段。
+  const localePreferenceField = messageRecord.localePreference;
 
   return {
     type: messageTypeField,
     baseHref: typeof baseHrefField === "string" ? baseHrefField : undefined,
     renderedHtml: typeof renderedHtmlField === "string" ? renderedHtmlField : undefined,
     sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined,
-    anchorId: typeof anchorIdField === "string" ? anchorIdField : undefined
+    anchorId: typeof anchorIdField === "string" ? anchorIdField : undefined,
+    localePreference: isLocalePreference(localePreferenceField) ? localePreferenceField : undefined
   };
 }
 
@@ -658,12 +693,18 @@ function normalizeRuntimeMessage(message: unknown): NormalizedRuntimeMessage | u
  * @param previewBaseElement base 标签节点。
  * @param previewShellElement 满宽外壳节点，作为浮动工具栏与目录侧栏的挂载点。
  * @param message 标准化渲染消息。
+ * @param onLocaleChange 用户切换语言后通知宿主的回调。
+ * @param localePreference 当前保存的语言偏好。
+ * @param hostLocale 宿主原始系统语言标签。
  */
 function applyRenderedContent(
   previewRootElement: HTMLElement,
   previewBaseElement: HTMLBaseElement,
   previewShellElement: HTMLElement,
-  message: NormalizedRuntimeMessage
+  message: NormalizedRuntimeMessage,
+  onLocaleChange: (preference: LocalePreference) => void,
+  localePreference: LocalePreference,
+  hostLocale: string
 ): void {
   // 下一次生效的 base href。
   const nextBaseHref = message.baseHref ?? "";
@@ -691,7 +732,12 @@ function applyRenderedContent(
   // 关键步骤：内容落到 live DOM 后，把浮动工具栏（含按当前标题构建的目录）挂到满宽外壳上。
   // mountMarkdownToolbar 幂等：会先清理旧实例，再依据最新标题重建目录侧栏。
   // 注入宿主自己的平滑滚动实现，使侧栏目录跳转与行内 [TOC] 一致平滑。
-  mountMarkdownToolbar(previewShellElement, { scrollToHeading: scrollHeadingIntoViewSmoothly });
+  mountMarkdownToolbar(previewShellElement, {
+    scrollToHeading: scrollHeadingIntoViewSmoothly,
+    onLocaleChange,
+    localePreference,
+    hostLocale
+  });
 }
 
 /**
