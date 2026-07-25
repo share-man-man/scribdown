@@ -4,6 +4,7 @@
  * 与 mountMarkdownToolbar（浮动工具栏挂载）。
  */
 
+import type { LocalePreference } from "@scribdown/shared";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
@@ -78,6 +79,21 @@ export interface MarkdownInteractionOptions {
    * @param targetElement 目标标题元素。
    */
   scrollToHeading?: (targetElement: HTMLElement) => void;
+  /**
+   * 用户从工具栏切换界面语言偏好后的通知回调。
+   * 宿主可据此同步自己的状态或重新渲染预览；未提供时工具栏会即时重建自身文案。
+   * @param preference 用户选中的语言偏好。
+   */
+  onLocaleChange?: (preference: LocalePreference) => void;
+  /**
+   * 宿主当前保存的语言偏好。缺省时视为跟随系统。
+   * 用于在工具栏中正确标识当前选项。
+   */
+  localePreference?: LocalePreference;
+  /**
+   * 宿主原始系统语言标签。选择「跟随系统」时用它即时刷新工具栏文案。
+   */
+  hostLocale?: string | null;
 }
 
 /**
@@ -109,7 +125,7 @@ export function hydrateMarkdown(
 }
 
 /**
- * 在指定 DOM 容器上挂载 Scribdown 浮动工具栏（回到顶部 / 目录 / 页面宽度切换）。
+ * 在指定 DOM 容器上挂载 Scribdown 浮动工具栏（回到顶部 / 目录 / 页面宽度 / 语言切换）。
  * 工具栏 DOM 会直接 append 到 `container` 内，便于宿主控制生命周期：
  * 移除 / 替换 container 即可一并卸载工具栏，不会污染 `<body>`。
  * 视觉上工具栏使用 `position: fixed`，位置始终相对视口，与挂载点的 CSS 上下文无关。
@@ -133,5 +149,12 @@ export function mountMarkdownToolbar(
   }
   // 关键步骤：恢复上次保存的内容宽度，再挂载工具栏。
   applyContentWidth(ownerDocument, loadContentWidth());
-  mountPageToolbar(ownerDocument, container, options.scrollToHeading ?? defaultScrollToHeading);
+  mountPageToolbar(
+    ownerDocument,
+    container,
+    options.scrollToHeading ?? defaultScrollToHeading,
+    options.onLocaleChange,
+    options.localePreference,
+    options.hostLocale
+  );
 }

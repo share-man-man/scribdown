@@ -18,6 +18,10 @@ const EN_MESSAGES: Messages = {
   "toolbar.more": "More",
   "toolbar.pageWidth": "Page width",
   "toolbar.backTop": "Back to top",
+  "toolbar.language": "Language",
+  "toolbar.languageSystem": "Follow system",
+  "toolbar.languageEnglish": "English",
+  "toolbar.languageSimplifiedChinese": "Simplified Chinese",
   "toolbar.about": "About",
 
   "code.copy": "Copy code",
@@ -92,7 +96,11 @@ const EN_MESSAGES: Messages = {
   "manifest.browserDescription": "Handdrawn markdown rendering experience.",
   "manifest.vscodeDisplayName": "Scribdown Markdown Preview",
   "manifest.vscodeDescription": "Handdrawn-style Markdown preview for VS Code.",
-  "manifest.vscodeCommandTitle": "Open Scribdown Preview"
+  "manifest.vscodeCommandTitle": "Open Scribdown Preview",
+  "manifest.vscodeLanguageDescription": "Choose the language used by Scribdown's interface.",
+  "manifest.vscodeLanguageSystemDescription": "Follow the VS Code display language.",
+  "manifest.vscodeLanguageEnglishDescription": "Use English.",
+  "manifest.vscodeLanguageSimplifiedChineseDescription": "Use Simplified Chinese."
 };
 
 /**
@@ -105,6 +113,10 @@ const ZH_CN_MESSAGES: Messages = {
   "toolbar.more": "更多",
   "toolbar.pageWidth": "页面宽度",
   "toolbar.backTop": "回到顶部",
+  "toolbar.language": "语言",
+  "toolbar.languageSystem": "跟随系统",
+  "toolbar.languageEnglish": "English",
+  "toolbar.languageSimplifiedChinese": "简体中文",
   "toolbar.about": "关于",
 
   "code.copy": "复制代码",
@@ -178,7 +190,11 @@ const ZH_CN_MESSAGES: Messages = {
   "manifest.browserDescription": "手绘风格的 Markdown 渲染体验。",
   "manifest.vscodeDisplayName": "Scribdown Markdown 预览",
   "manifest.vscodeDescription": "VS Code 的手绘风格 Markdown 预览。",
-  "manifest.vscodeCommandTitle": "打开 Scribdown 预览"
+  "manifest.vscodeCommandTitle": "打开 Scribdown 预览",
+  "manifest.vscodeLanguageDescription": "选择 Scribdown 界面使用的语言。",
+  "manifest.vscodeLanguageSystemDescription": "跟随 VS Code 显示语言。",
+  "manifest.vscodeLanguageEnglishDescription": "使用英语。",
+  "manifest.vscodeLanguageSimplifiedChineseDescription": "使用简体中文。"
 };
 
 /**

@@ -2,5 +2,9 @@
   "//": "此文件由 scripts/sync-i18n-manifests.mjs 生成，请勿手改。",
   "displayName": "Scribdown Markdown 预览",
   "description": "VS Code 的手绘风格 Markdown 预览。",
-  "command.openPreview.title": "打开 Scribdown 预览"
+  "command.openPreview.title": "打开 Scribdown 预览",
+  "configuration.language.description": "选择 Scribdown 界面使用的语言。",
+  "configuration.language.system.description": "跟随 VS Code 显示语言。",
+  "configuration.language.english.description": "使用英语。",
+  "configuration.language.simplifiedChinese.description": "使用简体中文。"
 }

@@ -8,6 +8,11 @@ import {
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
   SCRIBDOWN_PAGE_CLASS_NAME
 } from "@scribdown/shared";
+import {
+  getExtensionHostLocale,
+  getExtensionLocalePreference,
+  saveExtensionLocalePreference
+} from "../config/locale";
 import rendererStylesheetPath from "./markdown-renderer.css?url";
 
 /**
@@ -138,6 +143,12 @@ export async function renderMarkdownToDocument(
   }
   // 关键步骤：统一执行图片与代码块的 hydration，保持各宿主行为一致。
   hydrateMarkdown(document.body);
-  // 关键步骤：浏览器宿主下挂载浮动工具栏（回到顶部 / 目录 / 页面宽度）。
-  mountMarkdownToolbar(document.body);
+  // 关键步骤：浏览器宿主下挂载浮动工具栏，并把语言选择保存到扩展全局存储。
+  mountMarkdownToolbar(document.body, {
+    onLocaleChange: (preference) => {
+      void saveExtensionLocalePreference(preference);
+    },
+    localePreference: getExtensionLocalePreference(),
+    hostLocale: getExtensionHostLocale()
+  });
 }

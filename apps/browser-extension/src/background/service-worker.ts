@@ -4,7 +4,10 @@
 
 import { t } from "@scribdown/shared";
 import { applyExtensionLocale } from "../config/locale";
-import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
+import {
+  EXTENSION_ENABLED_STORAGE_KEY,
+  EXTENSION_LOCALE_PREFERENCE_STORAGE_KEY
+} from "../config/storage";
 import {
   BYPASS_ONCE_MESSAGE,
   CONSUME_BYPASS_MESSAGE,
@@ -74,8 +77,8 @@ async function syncBadgeFromState(): Promise<void> {
  * WXT 在开发配置解析时不会执行此函数，避免 Node 环境访问 chrome API。
  */
 export function startServiceWorker(): void {
-  // 关键步骤：后台启动时按宿主语言确定工具栏图标标题等文案语言。
-  applyExtensionLocale();
+  // 关键步骤：后台启动时按扩展全局偏好确定工具栏图标标题等文案语言。
+  void applyExtensionLocale().then(() => syncBadgeFromState());
 
   // 关键步骤：service worker 启动/安装时即同步一次，避免初次安装看到「无状态」图标。
   chrome.runtime.onInstalled.addListener(() => {
@@ -90,8 +93,12 @@ export function startServiceWorker(): void {
   // 监听 storage 变化，popup 切换或其他窗口写入时即时更新图标。
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
-    if (!(EXTENSION_ENABLED_STORAGE_KEY in changes)) return;
-    void syncBadgeFromState();
+    if (
+      EXTENSION_ENABLED_STORAGE_KEY in changes ||
+      EXTENSION_LOCALE_PREFERENCE_STORAGE_KEY in changes
+    ) {
+      void applyExtensionLocale().then(() => syncBadgeFromState());
+    }
   });
 
   // 关键步骤：Chrome 没有提供「允许访问文件网址」状态变化事件；切换 tab 是用户操作里

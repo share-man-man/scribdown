@@ -12,9 +12,13 @@ import {
   SOURCE_LINE_OFFSCREEN_HINT_BOTTOM_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_CLASS_NAME,
   SOURCE_LINE_OFFSCREEN_HINT_TOP_CLASS_NAME,
-  setActiveLocaleFromHost,
+  LocalePreference,
+  isLocalePreference,
+  normalizeLocalePreference,
+  setActiveLocaleFromPreference,
   t
 } from "@scribdown/shared";
+import type { LocaleType } from "@scribdown/shared";
 
 /** VS Code Webview 预览面板的标题文本，用于 data-preview-title 标识。 */
 const PREVIEW_TITLE = "VS Code Preview";
@@ -77,6 +81,11 @@ const PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE = "preview-scroll-changed";
 const PREVIEW_OPEN_LINK_MESSAGE_TYPE = "preview-open-link";
 
 /**
+ * Webview -> Extension 消息类型：用户在工具栏中选择界面语言。
+ */
+const PREVIEW_SET_LOCALE_PREFERENCE_MESSAGE_TYPE = "preview-set-locale-preference";
+
+/**
  * 匹配带 scheme 的链接（如 http:、https:、mailto:），用于区分外部链接与相对路径文档链接。
  */
 const EXTERNAL_LINK_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
@@ -105,6 +114,20 @@ const CLEAR_PREVIEW_CURSOR_MESSAGE_TYPE = "clear-preview-cursor";
  * Extension -> Webview 消息类型：按锚点 id 滚动预览到对应标题（跨文件链接的 #fragment 定位）。
  */
 const SCROLL_PREVIEW_TO_ANCHOR_MESSAGE_TYPE = "scroll-preview-to-anchor";
+
+/**
+ * Extension -> Webview 消息类型：同步最新语言偏好。
+ */
+const SET_PREVIEW_LOCALE_PREFERENCE_MESSAGE_TYPE = "set-preview-locale-preference";
+
+/** VS Code 设置的 Scribdown 配置段名称。 */
+const VSCODE_CONFIGURATION_SECTION = "scribdown";
+
+/** VS Code 设置中的语言偏好字段名称。 */
+const VSCODE_LOCALE_PREFERENCE_CONFIGURATION_KEY = "language";
+
+/** VS Code 设置的完整语言偏好键名。 */
+const VSCODE_LOCALE_PREFERENCE_CONFIGURATION_FULL_KEY = `${VSCODE_CONFIGURATION_SECTION}.${VSCODE_LOCALE_PREFERENCE_CONFIGURATION_KEY}`;
 
 /**
  * 滚动同步驱动方枚举。
@@ -138,6 +161,7 @@ interface PreviewMessagePayload {
   type: string;
   sourceLine?: number;
   href?: string;
+  localePreference?: LocalePreference;
 }
 
 /**
@@ -315,6 +339,17 @@ class ScribdownPreviewController implements vscode.Disposable {
   }
 
   /**
+   * 将当前 VS Code 设置同步到宿主与已打开的 Webview 预览。
+   */
+  public syncLocalePreference(): void {
+    applyVscodeLocale();
+    void this.panel?.webview.postMessage({
+      type: SET_PREVIEW_LOCALE_PREFERENCE_MESSAGE_TYPE,
+      localePreference: getVscodeLocalePreference()
+    });
+  }
+
+  /**
    * 创建预览面板与固定 HTML 外壳。
    * @param document 当前 Markdown 文档。
    * @returns Webview 预览面板。
@@ -397,6 +432,15 @@ class ScribdownPreviewController implements vscode.Disposable {
 
       if (normalizedMessage.type === PREVIEW_OPEN_LINK_MESSAGE_TYPE) {
         void this.handlePreviewLinkOpen(normalizedMessage.href);
+        return;
+      }
+
+      if (normalizedMessage.type === PREVIEW_SET_LOCALE_PREFERENCE_MESSAGE_TYPE) {
+        if (!normalizedMessage.localePreference) {
+          return;
+        }
+
+        void this.saveLocalePreference(normalizedMessage.localePreference);
       }
     });
 
@@ -475,6 +519,18 @@ class ScribdownPreviewController implements vscode.Disposable {
         baseHref: ""
       });
     }
+  }
+
+  /**
+   * 将工具栏选择写入用户级 VS Code 设置，并同步宿主和当前 Webview 的语言状态。
+   * @param preference 用户在工具栏中选择的语言偏好。
+   * @returns 设置写入完成后的 Promise。
+   */
+  private async saveLocalePreference(preference: LocalePreference): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(VSCODE_CONFIGURATION_SECTION)
+      .update(VSCODE_LOCALE_PREFERENCE_CONFIGURATION_KEY, preference, vscode.ConfigurationTarget.Global);
+    this.syncLocalePreference();
   }
 
   /**
@@ -794,9 +850,8 @@ class ScribdownPreviewController implements vscode.Disposable {
  * @param context VS Code 扩展上下文。
  */
 export function activate(context: vscode.ExtensionContext): void {
-  // 关键步骤：按 VS Code 界面语言确定宿主侧 renderMarkdown 与警告文案的语言，
-  // 与 webview 注入的语言（createRuntimeBootstrapScript）保持一致。
-  setActiveLocaleFromHost(vscode.env.language);
+  // 关键步骤：显式用户设置优先；未设置时才跟随 VS Code 界面语言。
+  applyVscodeLocale();
 
   // 预览控制器实例。
   const previewController = new ScribdownPreviewController(context.extensionUri);
@@ -804,8 +859,40 @@ export function activate(context: vscode.ExtensionContext): void {
   const previewCommand = vscode.commands.registerCommand(OPEN_PREVIEW_COMMAND, async () => {
     await previewController.openPreviewForActiveMarkdown();
   });
+  // 外部修改 VS Code 设置时，同步宿主侧后续渲染与提示文案的语言。
+  const localeConfigurationDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration(VSCODE_LOCALE_PREFERENCE_CONFIGURATION_FULL_KEY)) {
+      previewController.syncLocalePreference();
+    }
+  });
 
-  context.subscriptions.push(previewController, previewCommand);
+  context.subscriptions.push(previewController, previewCommand, localeConfigurationDisposable);
+}
+
+/**
+ * 读取 VS Code 用户级语言设置并同步共享运行时语言。
+ * @returns 实际生效的界面语言。
+ */
+function applyVscodeLocale(): LocaleType {
+  /** VS Code 设置中保存的原始偏好值。 */
+  const rawPreference = vscode.workspace
+    .getConfiguration(VSCODE_CONFIGURATION_SECTION)
+    .get<unknown>(VSCODE_LOCALE_PREFERENCE_CONFIGURATION_KEY);
+  /** 经共享规则校验后的语言偏好。 */
+  const preference = normalizeLocalePreference(rawPreference);
+  return setActiveLocaleFromPreference(preference, vscode.env.language);
+}
+
+/**
+ * 读取当前 VS Code 用户级语言偏好，供 Webview 初始化与消息同步使用。
+ * @returns 经校验的语言偏好。
+ */
+function getVscodeLocalePreference(): LocalePreference {
+  /** VS Code 设置中保存的原始偏好值。 */
+  const rawPreference = vscode.workspace
+    .getConfiguration(VSCODE_CONFIGURATION_SECTION)
+    .get<unknown>(VSCODE_LOCALE_PREFERENCE_CONFIGURATION_KEY);
+  return normalizeLocalePreference(rawPreference);
 }
 
 /**
@@ -1056,8 +1143,9 @@ ${runtimeBootstrapScript}
 function createRuntimeBootstrapScript(): string {
   // runtime 初始化入参。
   const runtimeBootstrapOptions = {
-    // 关键步骤：把宿主界面语言注入 webview，使工具栏等 webview 内文案与宿主一致。
+    // 关键步骤：把宿主系统语言和显式设置均注入 webview，保证与扩展侧解析结果一致。
     locale: vscode.env.language,
+    localePreference: getVscodeLocalePreference(),
     previewRootElementId: PREVIEW_ROOT_ELEMENT_ID,
     previewBaseElementId: PREVIEW_BASE_ELEMENT_ID,
     previewShellElementId: PREVIEW_SHELL_ELEMENT_ID,
@@ -1068,7 +1156,9 @@ function createRuntimeBootstrapScript(): string {
     scrollPreviewToAnchorMessageType: SCROLL_PREVIEW_TO_ANCHOR_MESSAGE_TYPE,
     previewReadyMessageType: PREVIEW_READY_MESSAGE_TYPE,
     previewScrollChangedMessageType: PREVIEW_SCROLL_CHANGED_MESSAGE_TYPE,
-    previewOpenLinkMessageType: PREVIEW_OPEN_LINK_MESSAGE_TYPE
+    previewOpenLinkMessageType: PREVIEW_OPEN_LINK_MESSAGE_TYPE,
+    previewSetLocalePreferenceMessageType: PREVIEW_SET_LOCALE_PREFERENCE_MESSAGE_TYPE,
+    setPreviewLocalePreferenceMessageType: SET_PREVIEW_LOCALE_PREFERENCE_MESSAGE_TYPE
   };
   // JSON 序列化后的初始化入参。
   const runtimeBootstrapOptionsText = JSON.stringify(runtimeBootstrapOptions);
@@ -1179,11 +1269,14 @@ function normalizeWebviewMessage(message: unknown): PreviewMessagePayload | unde
   const sourceLineField = messageRecord.sourceLine;
   // 消息链接地址字段。
   const hrefField = messageRecord.href;
+  // 消息语言偏好字段。
+  const localePreferenceField = messageRecord.localePreference;
 
   return {
     type: typeField,
     sourceLine: typeof sourceLineField === "number" ? sourceLineField : undefined,
-    href: typeof hrefField === "string" ? hrefField : undefined
+    href: typeof hrefField === "string" ? hrefField : undefined,
+    localePreference: isLocalePreference(localePreferenceField) ? localePreferenceField : undefined
   };
 }
 

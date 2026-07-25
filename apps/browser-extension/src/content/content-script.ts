@@ -96,7 +96,7 @@ async function redirectToViewer(): Promise<void> {
  */
 export async function startContentScript(): Promise<void> {
   // 关键步骤：接管渲染前按宿主语言确定界面文案语言。
-  applyExtensionLocale();
+  await applyExtensionLocale();
 
   // 关键步骤：尊重 popup 总开关，关闭时让浏览器原样展示，不做任何渲染或重定向。
   /** 从 chrome.storage.local 读到的当前启用状态（未设置视为启用）。 */

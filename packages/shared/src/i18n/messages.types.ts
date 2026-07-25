@@ -22,6 +22,14 @@ export interface Messages {
   "toolbar.pageWidth": string;
   /** 「更多」菜单内「回到顶部」项。 */
   "toolbar.backTop": string;
+  /** 「更多」菜单内「语言」切换触发行。 */
+  "toolbar.language": string;
+  /** 语言切换列表中的跟随系统选项。 */
+  "toolbar.languageSystem": string;
+  /** 语言切换列表中的英文选项。 */
+  "toolbar.languageEnglish": string;
+  /** 语言切换列表中的简体中文选项。 */
+  "toolbar.languageSimplifiedChinese": string;
   /** 「更多」菜单内「关于」项。 */
   "toolbar.about": string;
 
@@ -166,6 +174,14 @@ export interface Messages {
   "manifest.vscodeDescription": string;
   /** VS Code「打开预览」命令标题。 */
   "manifest.vscodeCommandTitle": string;
+  /** VS Code 界面语言设置的说明。 */
+  "manifest.vscodeLanguageDescription": string;
+  /** VS Code 界面语言设置中「跟随系统」选项的说明。 */
+  "manifest.vscodeLanguageSystemDescription": string;
+  /** VS Code 界面语言设置中英语选项的说明。 */
+  "manifest.vscodeLanguageEnglishDescription": string;
+  /** VS Code 界面语言设置中简体中文选项的说明。 */
+  "manifest.vscodeLanguageSimplifiedChineseDescription": string;
 }
 
 /**

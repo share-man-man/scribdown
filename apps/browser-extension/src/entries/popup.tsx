@@ -4,14 +4,14 @@ import { applyExtensionLocale } from "../config/locale";
 import { Popup } from "../popup/Popup";
 import "../popup/popup.css";
 
-// 关键步骤：渲染前按宿主语言确定界面文案语言。
-applyExtensionLocale();
-
 /**
  * 启动扩展 popup 入口。
  * @param rootElementId 根节点 ID。
+ * @returns 启动完成后的 Promise。
  */
-function bootstrapPopup(rootElementId: string): void {
+async function bootstrapPopup(rootElementId: string): Promise<void> {
+  // 关键步骤：渲染前先读取扩展全局语言偏好，避免 popup 首帧使用默认语言闪烁。
+  await applyExtensionLocale();
   /** popup 根节点元素。 */
   const rootElement = document.getElementById(rootElementId);
 
@@ -26,4 +26,4 @@ function bootstrapPopup(rootElementId: string): void {
   );
 }
 
-bootstrapPopup("popup-root");
+void bootstrapPopup("popup-root");
