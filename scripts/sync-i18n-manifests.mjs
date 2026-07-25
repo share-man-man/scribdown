@@ -40,9 +40,19 @@ const VSCODE_NLS_KEY_MAP = {
   description: "manifest.vscodeDescription",
   "command.openPreview.title": "manifest.vscodeCommandTitle",
   "configuration.language.description": "manifest.vscodeLanguageDescription",
-  "configuration.language.system.description": "manifest.vscodeLanguageSystemDescription",
   "configuration.language.english.description": "manifest.vscodeLanguageEnglishDescription",
-  "configuration.language.simplifiedChinese.description": "manifest.vscodeLanguageSimplifiedChineseDescription"
+  "configuration.language.simplifiedChinese.description":
+    "manifest.vscodeLanguageSimplifiedChineseDescription",
+  "configuration.language.traditionalChinese.description":
+    "manifest.vscodeLanguageTraditionalChineseDescription",
+  "configuration.language.japanese.description": "manifest.vscodeLanguageJapaneseDescription",
+  "configuration.language.korean.description": "manifest.vscodeLanguageKoreanDescription",
+  "configuration.language.spanish.description": "manifest.vscodeLanguageSpanishDescription",
+  "configuration.language.french.description": "manifest.vscodeLanguageFrenchDescription",
+  "configuration.language.german.description": "manifest.vscodeLanguageGermanDescription",
+  "configuration.language.brazilianPortuguese.description":
+    "manifest.vscodeLanguageBrazilianPortugueseDescription",
+  "configuration.language.russian.description": "manifest.vscodeLanguageRussianDescription"
 };
 
 /** 生成文件的统一头注释键，提示勿手改。 */

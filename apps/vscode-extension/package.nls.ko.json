@@ -1,0 +1,17 @@
+{
+  "//": "此文件由 scripts/sync-i18n-manifests.mjs 生成，请勿手改。",
+  "displayName": "Scribdown Markdown 미리 보기",
+  "description": "VS Code용 손그림 스타일 Markdown 미리 보기.",
+  "command.openPreview.title": "Scribdown 미리 보기 열기",
+  "configuration.language.description": "Scribdown 인터페이스에 사용할 언어를 선택합니다.",
+  "configuration.language.english.description": "영어를 사용합니다.",
+  "configuration.language.simplifiedChinese.description": "중국어 간체를 사용합니다.",
+  "configuration.language.traditionalChinese.description": "중국어 번체를 사용합니다.",
+  "configuration.language.japanese.description": "일본어를 사용합니다.",
+  "configuration.language.korean.description": "한국어를 사용합니다.",
+  "configuration.language.spanish.description": "스페인어를 사용합니다.",
+  "configuration.language.french.description": "Use French.",
+  "configuration.language.german.description": "Use German.",
+  "configuration.language.brazilianPortuguese.description": "Use Portuguese (Brazil).",
+  "configuration.language.russian.description": "Use Russian."
+}

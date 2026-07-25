@@ -15,8 +15,10 @@ let activeExtensionLocalePreference: LocalePreference = LocalePreference.System;
  */
 export function getExtensionHostLocale(): string | undefined {
   return (
-    (typeof chrome !== "undefined" ? chrome.i18n?.getUILanguage?.() : undefined) ??
-    (typeof navigator !== "undefined" ? navigator.language : undefined)
+    // 关键步骤：优先使用网页上下文的 navigator.language，使 file:// 内容页、扩展 viewer
+    // 与本地 fixture 的自动语言解析一致；chrome.i18n 仅作非浏览器 DOM 上下文的兜底。
+    (typeof navigator !== "undefined" ? navigator.language : undefined) ??
+    (typeof chrome !== "undefined" ? chrome.i18n?.getUILanguage?.() : undefined)
   );
 }
 

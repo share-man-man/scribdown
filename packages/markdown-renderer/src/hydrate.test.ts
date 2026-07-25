@@ -1,11 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import {
-  getActiveLocale,
-  LocalePreference,
-  LocaleType,
-  setActiveLocale
-} from "@scribdown/shared";
+import { getActiveLocale, LocalePreference, LocaleType, setActiveLocale } from "@scribdown/shared";
 
 import { hydrateMarkdown, mountMarkdownToolbar, renderMarkdown } from "./index";
 
@@ -174,9 +169,7 @@ describe("mountMarkdownToolbar", () => {
     mountMarkdownToolbar(container, { scrollToHeading: () => {}, onLocaleChange });
 
     /** 「更多」按钮，展开后才能操作语言切换器。 */
-    const moreButton = container.querySelector<HTMLButtonElement>(
-      ".scribdown-toolbar-btn--more"
-    );
+    const moreButton = container.querySelector<HTMLButtonElement>(".scribdown-toolbar-btn--more");
     moreButton?.click();
 
     /** 语言下拉触发行，在两个 select 类型菜单项中按可见文案定位。 */
@@ -185,20 +178,39 @@ describe("mountMarkdownToolbar", () => {
     ).find((element) => element.textContent?.includes("语言"));
     languageTrigger?.click();
 
+    /** 语言下拉自身包含的选项，排除同一菜单内页面宽度的四个选项。 */
+    const languageOptions = languageTrigger?.parentElement?.querySelectorAll<HTMLButtonElement>(
+      ".scribdown-toolbar-menu-sub-item[role=option]"
+    );
+    expect(
+      languageTrigger?.parentElement?.classList.contains("scribdown-toolbar-menu-group--language")
+    ).toBe(true);
+    expect(languageOptions).toHaveLength(10);
+    expect(Array.from(languageOptions ?? []).map((option) => option.textContent?.trim())).toEqual([
+      "English",
+      "简体中文",
+      "繁體中文",
+      "日本語",
+      "한국어",
+      "Español",
+      "Français",
+      "Deutsch",
+      "Português (Brasil)",
+      "Русский"
+    ]);
+
     /** 英文语言选项。 */
     const englishOption = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(
-        ".scribdown-toolbar-menu-sub-item[role=option]"
-      )
+      container.querySelectorAll<HTMLButtonElement>(".scribdown-toolbar-menu-sub-item[role=option]")
     ).find((element) => element.textContent?.includes("English"));
     englishOption?.click();
 
     expect(getActiveLocale()).toBe(LocaleType.English);
     expect(onLocaleChange).toHaveBeenCalledWith(LocalePreference.English);
     expect(
-      Array.from(container.querySelectorAll<HTMLButtonElement>(".scribdown-toolbar-menu-item--select")).some(
-        (element) => element.textContent?.includes("Language")
-      )
+      Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".scribdown-toolbar-menu-item--select")
+      ).some((element) => element.textContent?.includes("Language"))
     ).toBe(true);
     expect(container.querySelector("a[role=menuitem]")?.textContent).toContain("About");
   });

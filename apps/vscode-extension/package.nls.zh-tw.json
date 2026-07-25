@@ -1,0 +1,17 @@
+{
+  "//": "此文件由 scripts/sync-i18n-manifests.mjs 生成，请勿手改。",
+  "displayName": "Scribdown Markdown 預覽",
+  "description": "VS Code 的手繪風格 Markdown 預覽。",
+  "command.openPreview.title": "開啟 Scribdown 預覽",
+  "configuration.language.description": "選擇 Scribdown 介面使用的語言。",
+  "configuration.language.english.description": "使用英文。",
+  "configuration.language.simplifiedChinese.description": "使用簡體中文。",
+  "configuration.language.traditionalChinese.description": "使用繁體中文。",
+  "configuration.language.japanese.description": "使用日語。",
+  "configuration.language.korean.description": "使用韓語。",
+  "configuration.language.spanish.description": "使用西班牙語。",
+  "configuration.language.french.description": "使用法语。",
+  "configuration.language.german.description": "使用德语。",
+  "configuration.language.brazilianPortuguese.description": "使用巴西葡萄牙语。",
+  "configuration.language.russian.description": "使用俄语。"
+}
