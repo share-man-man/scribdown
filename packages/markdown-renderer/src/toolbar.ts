@@ -5,7 +5,10 @@
 
 import {
   CONTENT_WIDTH_STORAGE_KEY,
+  getActiveLocale,
+  LOCALE_PREFERENCE_OPTIONS,
   LocalePreference,
+  type LocalePreferenceOption,
   PROJECT_HOMEPAGE_URL,
   SCRIBDOWN_CONTENT_AREA_CLASS_NAME,
   SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME,
@@ -56,21 +59,15 @@ const TOOLBAR_WIDTH_PRESETS: Array<{ label: string; value: string }> = [
 // 默认内容宽度。
 const TOOLBAR_DEFAULT_WIDTH = "840px";
 
-/** 工具栏语言切换器支持的偏好与对应文案 key。 */
-const TOOLBAR_LOCALE_OPTIONS: Array<{
-  preference: LocalePreference;
-  labelKey:
-    | "toolbar.languageSystem"
-    | "toolbar.languageEnglish"
-    | "toolbar.languageSimplifiedChinese";
-}> = [
-  { preference: LocalePreference.System, labelKey: "toolbar.languageSystem" },
-  { preference: LocalePreference.English, labelKey: "toolbar.languageEnglish" },
-  {
-    preference: LocalePreference.SimplifiedChinese,
-    labelKey: "toolbar.languageSimplifiedChinese"
-  }
-];
+/**
+ * 获取语言选择器中单个选项的显示文案。
+ * 「跟随系统」随当前界面语言翻译；实际语言名始终显示其原生自称，避免用户在陌生翻译中找不到目标语言。
+ * @param option 语言偏好选项。
+ * @returns 用于语言菜单的可见文本。
+ */
+function getLocaleOptionLabel(option: LocalePreferenceOption | undefined): string {
+  return option?.nativeLabel ?? LOCALE_PREFERENCE_OPTIONS[0].nativeLabel;
+}
 
 /**
  * 从 localStorage 读取已保存的内容宽度，不可用时返回默认值。
@@ -426,7 +423,7 @@ function mountPageToolbar(
   // 菜单项：语言切换（下拉选择）。
   /** 语言下拉分组容器（包裹触发行与可折叠的语言列表）。 */
   const languageGroup = ownerDocument.createElement("div");
-  languageGroup.className = SCRIBDOWN_TOOLBAR_MENU_GROUP_CLASS_NAME;
+  languageGroup.className = `${SCRIBDOWN_TOOLBAR_MENU_GROUP_CLASS_NAME} ${SCRIBDOWN_TOOLBAR_MENU_GROUP_CLASS_NAME}--language`;
 
   /** 语言下拉触发行，右侧展示当前生效语言。 */
   const languageTrigger = ownerDocument.createElement("button");
@@ -437,19 +434,16 @@ function mountPageToolbar(
   languageTrigger.setAttribute("aria-expanded", "false");
 
   /** 当前语言在可见菜单中的显示文本。 */
-  const currentLocaleOption = TOOLBAR_LOCALE_OPTIONS.find(
-    (option) => option.preference === localePreference
-  );
+  const currentLocaleOption =
+    LOCALE_PREFERENCE_OPTIONS.find((option) => option.preference === localePreference) ??
+    LOCALE_PREFERENCE_OPTIONS.find((option) => option.locale === getActiveLocale());
 
   /** 语言触发行内当前值展示节点。 */
   const languageValueElement = ownerDocument.createElement("span");
   languageValueElement.className = SCRIBDOWN_TOOLBAR_MENU_SELECT_VALUE_CLASS_NAME;
-  languageValueElement.textContent = t(
-    currentLocaleOption?.labelKey ?? "toolbar.languageSystem"
-  );
+  languageValueElement.textContent = getLocaleOptionLabel(currentLocaleOption);
 
-  languageTrigger.innerHTML =
-    `${TOOLBAR_LANGUAGE_ICON_SVG}<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME}">${t("toolbar.language")}</span>`;
+  languageTrigger.innerHTML = `${TOOLBAR_LANGUAGE_ICON_SVG}<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME}">${t("toolbar.language")}</span>`;
   languageTrigger.appendChild(languageValueElement);
   languageTrigger.insertAdjacentHTML(
     "beforeend",
@@ -464,7 +458,7 @@ function mountPageToolbar(
   languageChoices.className = SCRIBDOWN_TOOLBAR_MENU_GROUP_CHOICES_CLASS_NAME;
   languageChoices.setAttribute("role", "listbox");
 
-  TOOLBAR_LOCALE_OPTIONS.forEach((option) => {
+  LOCALE_PREFERENCE_OPTIONS.forEach((option) => {
     /** 单个语言选项按钮。 */
     const subItem = ownerDocument.createElement("button");
     subItem.type = "button";
@@ -476,7 +470,7 @@ function mountPageToolbar(
       '<svg width="12" height="12" viewBox="0 0 12 12" fill="none">' +
       '<path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
       "</svg>" +
-      `</span><span class="${SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_LABEL_CLASS_NAME}">${t(option.labelKey)}</span>`;
+      `</span><span class="${SCRIBDOWN_TOOLBAR_MENU_SUB_ITEM_LABEL_CLASS_NAME}">${getLocaleOptionLabel(option)}</span>`;
     subItem.addEventListener("click", () => {
       if (option.preference === localePreference) {
         closeLanguageSelect();

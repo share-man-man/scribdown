@@ -30,6 +30,22 @@ export interface Messages {
   "toolbar.languageEnglish": string;
   /** 语言切换列表中的简体中文选项。 */
   "toolbar.languageSimplifiedChinese": string;
+  /** 语言切换列表中的繁体中文选项。 */
+  "toolbar.languageTraditionalChinese": string;
+  /** 语言切换列表中的日语选项。 */
+  "toolbar.languageJapanese": string;
+  /** 语言切换列表中的韩语选项。 */
+  "toolbar.languageKorean": string;
+  /** 语言切换列表中的西班牙语选项。 */
+  "toolbar.languageSpanish": string;
+  /** 语言切换列表中的法语选项。 */
+  "toolbar.languageFrench": string;
+  /** 语言切换列表中的德语选项。 */
+  "toolbar.languageGerman": string;
+  /** 语言切换列表中的巴西葡萄牙语选项。 */
+  "toolbar.languageBrazilianPortuguese": string;
+  /** 语言切换列表中的俄语选项。 */
+  "toolbar.languageRussian": string;
   /** 「更多」菜单内「关于」项。 */
   "toolbar.about": string;
 
@@ -182,6 +198,22 @@ export interface Messages {
   "manifest.vscodeLanguageEnglishDescription": string;
   /** VS Code 界面语言设置中简体中文选项的说明。 */
   "manifest.vscodeLanguageSimplifiedChineseDescription": string;
+  /** VS Code 界面语言设置中繁体中文选项的说明。 */
+  "manifest.vscodeLanguageTraditionalChineseDescription": string;
+  /** VS Code 界面语言设置中日语选项的说明。 */
+  "manifest.vscodeLanguageJapaneseDescription": string;
+  /** VS Code 界面语言设置中韩语选项的说明。 */
+  "manifest.vscodeLanguageKoreanDescription": string;
+  /** VS Code 界面语言设置中西班牙语选项的说明。 */
+  "manifest.vscodeLanguageSpanishDescription": string;
+  /** VS Code 界面语言设置中法语选项的说明。 */
+  "manifest.vscodeLanguageFrenchDescription": string;
+  /** VS Code 界面语言设置中德语选项的说明。 */
+  "manifest.vscodeLanguageGermanDescription": string;
+  /** VS Code 界面语言设置中巴西葡萄牙语选项的说明。 */
+  "manifest.vscodeLanguageBrazilianPortugueseDescription": string;
+  /** VS Code 界面语言设置中俄语选项的说明。 */
+  "manifest.vscodeLanguageRussianDescription": string;
 }
 
 /**

@@ -4,7 +4,14 @@
   "description": "Handdrawn-style Markdown preview for VS Code.",
   "command.openPreview.title": "Open Scribdown Preview",
   "configuration.language.description": "Choose the language used by Scribdown's interface.",
-  "configuration.language.system.description": "Follow the VS Code display language.",
   "configuration.language.english.description": "Use English.",
-  "configuration.language.simplifiedChinese.description": "Use Simplified Chinese."
+  "configuration.language.simplifiedChinese.description": "Use Simplified Chinese.",
+  "configuration.language.traditionalChinese.description": "Use Traditional Chinese.",
+  "configuration.language.japanese.description": "Use Japanese.",
+  "configuration.language.korean.description": "Use Korean.",
+  "configuration.language.spanish.description": "Use Spanish.",
+  "configuration.language.french.description": "Use French.",
+  "configuration.language.german.description": "Use German.",
+  "configuration.language.brazilianPortuguese.description": "Use Portuguese (Brazil).",
+  "configuration.language.russian.description": "Use Russian."
 }

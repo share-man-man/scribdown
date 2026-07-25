@@ -13,7 +13,23 @@ export enum LocaleType {
   /** 英语（默认兜底语言）。 */
   English = "en",
   /** 简体中文。 */
-  SimplifiedChinese = "zh-CN"
+  SimplifiedChinese = "zh-CN",
+  /** 繁体中文。 */
+  TraditionalChinese = "zh-TW",
+  /** 日语。 */
+  Japanese = "ja",
+  /** 韩语。 */
+  Korean = "ko",
+  /** 西班牙语。 */
+  Spanish = "es",
+  /** 法语。 */
+  French = "fr",
+  /** 德语。 */
+  German = "de",
+  /** 巴西葡萄牙语。 */
+  BrazilianPortuguese = "pt-BR",
+  /** 俄语。 */
+  Russian = "ru"
 }
 
 /**
@@ -31,13 +47,76 @@ export enum LocalePreference {
   /** 始终使用英语。 */
   English = LocaleType.English,
   /** 始终使用简体中文。 */
-  SimplifiedChinese = LocaleType.SimplifiedChinese
+  SimplifiedChinese = LocaleType.SimplifiedChinese,
+  /** 始终使用繁体中文。 */
+  TraditionalChinese = LocaleType.TraditionalChinese,
+  /** 始终使用日语。 */
+  Japanese = LocaleType.Japanese,
+  /** 始终使用韩语。 */
+  Korean = LocaleType.Korean,
+  /** 始终使用西班牙语。 */
+  Spanish = LocaleType.Spanish,
+  /** 始终使用法语。 */
+  French = LocaleType.French,
+  /** 始终使用德语。 */
+  German = LocaleType.German,
+  /** 始终使用巴西葡萄牙语。 */
+  BrazilianPortuguese = LocaleType.BrazilianPortuguese,
+  /** 始终使用俄语。 */
+  Russian = LocaleType.Russian
 }
 
 /**
  * 当前支持的全部语言列表（用于校验入参、遍历生成静态文件）。
  */
-export const SUPPORTED_LOCALES: LocaleType[] = [LocaleType.English, LocaleType.SimplifiedChinese];
+export const SUPPORTED_LOCALES: LocaleType[] = [
+  LocaleType.English,
+  LocaleType.SimplifiedChinese,
+  LocaleType.TraditionalChinese,
+  LocaleType.Japanese,
+  LocaleType.Korean,
+  LocaleType.Spanish,
+  LocaleType.French,
+  LocaleType.German,
+  LocaleType.BrazilianPortuguese,
+  LocaleType.Russian
+];
+
+/** 工具栏与宿主配置共用的可选语言定义。 */
+export interface LocalePreferenceOption {
+  /** 持久化到宿主配置的显式语言偏好。 */
+  preference: Exclude<LocalePreference, LocalePreference.System>;
+  /** 此偏好对应的实际界面语言。 */
+  locale: LocaleType;
+  /** 语言的原生自称，跨界面语言保持一致，便于识别和切换。 */
+  nativeLabel: string;
+}
+
+/** 语言选择器按稳定顺序展示的全部显式语言选项；跟随应用语言是未设置偏好的默认行为。 */
+export const LOCALE_PREFERENCE_OPTIONS: readonly LocalePreferenceOption[] = [
+  { preference: LocalePreference.English, locale: LocaleType.English, nativeLabel: "English" },
+  {
+    preference: LocalePreference.SimplifiedChinese,
+    locale: LocaleType.SimplifiedChinese,
+    nativeLabel: "简体中文"
+  },
+  {
+    preference: LocalePreference.TraditionalChinese,
+    locale: LocaleType.TraditionalChinese,
+    nativeLabel: "繁體中文"
+  },
+  { preference: LocalePreference.Japanese, locale: LocaleType.Japanese, nativeLabel: "日本語" },
+  { preference: LocalePreference.Korean, locale: LocaleType.Korean, nativeLabel: "한국어" },
+  { preference: LocalePreference.Spanish, locale: LocaleType.Spanish, nativeLabel: "Español" },
+  { preference: LocalePreference.French, locale: LocaleType.French, nativeLabel: "Français" },
+  { preference: LocalePreference.German, locale: LocaleType.German, nativeLabel: "Deutsch" },
+  {
+    preference: LocalePreference.BrazilianPortuguese,
+    locale: LocaleType.BrazilianPortuguese,
+    nativeLabel: "Português (Brasil)"
+  },
+  { preference: LocalePreference.Russian, locale: LocaleType.Russian, nativeLabel: "Русский" }
+];
 
 /**
  * 各语言的回落链：命中语言缺失某 key 时，按顺序回落到链上语言，最终止于 {@link DEFAULT_LOCALE}。
@@ -45,7 +124,15 @@ export const SUPPORTED_LOCALES: LocaleType[] = [LocaleType.English, LocaleType.S
  */
 export const LOCALE_FALLBACKS: Record<LocaleType, LocaleType[]> = {
   [LocaleType.English]: [],
-  [LocaleType.SimplifiedChinese]: [LocaleType.English]
+  [LocaleType.SimplifiedChinese]: [LocaleType.English],
+  [LocaleType.TraditionalChinese]: [LocaleType.English],
+  [LocaleType.Japanese]: [LocaleType.English],
+  [LocaleType.Korean]: [LocaleType.English],
+  [LocaleType.Spanish]: [LocaleType.English],
+  [LocaleType.French]: [LocaleType.English],
+  [LocaleType.German]: [LocaleType.English],
+  [LocaleType.BrazilianPortuguese]: [LocaleType.English],
+  [LocaleType.Russian]: [LocaleType.English]
 };
 
 /**
@@ -54,7 +141,15 @@ export const LOCALE_FALLBACKS: Record<LocaleType, LocaleType[]> = {
  */
 export const CHROME_LOCALE_DIRECTORY: Record<LocaleType, string> = {
   [LocaleType.English]: "en",
-  [LocaleType.SimplifiedChinese]: "zh_CN"
+  [LocaleType.SimplifiedChinese]: "zh_CN",
+  [LocaleType.TraditionalChinese]: "zh_TW",
+  [LocaleType.Japanese]: "ja",
+  [LocaleType.Korean]: "ko",
+  [LocaleType.Spanish]: "es",
+  [LocaleType.French]: "fr",
+  [LocaleType.German]: "de",
+  [LocaleType.BrazilianPortuguese]: "pt_BR",
+  [LocaleType.Russian]: "ru"
 };
 
 /**
@@ -63,7 +158,15 @@ export const CHROME_LOCALE_DIRECTORY: Record<LocaleType, string> = {
  */
 export const VSCODE_NLS_SUFFIX: Record<LocaleType, string> = {
   [LocaleType.English]: "",
-  [LocaleType.SimplifiedChinese]: "zh-cn"
+  [LocaleType.SimplifiedChinese]: "zh-cn",
+  [LocaleType.TraditionalChinese]: "zh-tw",
+  [LocaleType.Japanese]: "ja",
+  [LocaleType.Korean]: "ko",
+  [LocaleType.Spanish]: "es",
+  [LocaleType.French]: "fr",
+  [LocaleType.German]: "de",
+  [LocaleType.BrazilianPortuguese]: "pt-br",
+  [LocaleType.Russian]: "ru"
 };
 
 /**
@@ -87,7 +190,19 @@ export function normalizeLocale(rawLocale: string | null | undefined): LocaleTyp
     return exactMatch;
   }
 
-  /** 原始标签的主语言子标签（如 `zh-hans-cn` → `zh`）。 */
+  // 关键步骤：中文同时支持简体与繁体，需在主语言回落前依据 script / region 区分。
+  if (normalizedTag.startsWith("zh-")) {
+    /** 指示繁体中文的 BCP-47 script 或常见地区子标签。 */
+    const traditionalChineseSubtags = ["hant", "tw", "hk", "mo"];
+    /** 分隔后的中文语言子标签。 */
+    const chineseSubtags = normalizedTag.split("-").slice(1);
+    if (chineseSubtags.some((subtag) => traditionalChineseSubtags.includes(subtag))) {
+      return LocaleType.TraditionalChinese;
+    }
+    return LocaleType.SimplifiedChinese;
+  }
+
+  /** 原始标签的主语言子标签（如 `ja-jp` → `ja`）。 */
   const primarySubtag = normalizedTag.split("-")[0];
 
   // 关键步骤：按主语言子标签匹配，命中同语族的首个受支持语言（如各种 zh-* → zh-CN）。
@@ -119,6 +234,14 @@ export function isLocalePreference(value: unknown): value is LocalePreference {
   switch (value) {
     case LocalePreference.English:
     case LocalePreference.SimplifiedChinese:
+    case LocalePreference.TraditionalChinese:
+    case LocalePreference.Japanese:
+    case LocalePreference.Korean:
+    case LocalePreference.Spanish:
+    case LocalePreference.French:
+    case LocalePreference.German:
+    case LocalePreference.BrazilianPortuguese:
+    case LocalePreference.Russian:
     case LocalePreference.System:
       return true;
     default:

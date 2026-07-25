@@ -48,17 +48,30 @@
       "properties": {
         "scribdown.language": {
           "type": "string",
-          "default": "system",
           "enum": [
-            "system",
             "en",
-            "zh-CN"
+            "zh-CN",
+            "zh-TW",
+            "ja",
+            "ko",
+            "es",
+            "fr",
+            "de",
+            "pt-BR",
+            "ru"
           ],
           "markdownDescription": "%configuration.language.description%",
           "enumDescriptions": [
-            "%configuration.language.system.description%",
             "%configuration.language.english.description%",
-            "%configuration.language.simplifiedChinese.description%"
+            "%configuration.language.simplifiedChinese.description%",
+            "%configuration.language.traditionalChinese.description%",
+            "%configuration.language.japanese.description%",
+            "%configuration.language.korean.description%",
+            "%configuration.language.spanish.description%",
+            "%configuration.language.french.description%",
+            "%configuration.language.german.description%",
+            "%configuration.language.brazilianPortuguese.description%",
+            "%configuration.language.russian.description%"
           ],
           "scope": "window"
         }

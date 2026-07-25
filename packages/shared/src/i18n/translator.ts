@@ -57,6 +57,22 @@ export function resolveLocalePreference(
       return LocaleType.English;
     case LocalePreference.SimplifiedChinese:
       return LocaleType.SimplifiedChinese;
+    case LocalePreference.TraditionalChinese:
+      return LocaleType.TraditionalChinese;
+    case LocalePreference.Japanese:
+      return LocaleType.Japanese;
+    case LocalePreference.Korean:
+      return LocaleType.Korean;
+    case LocalePreference.Spanish:
+      return LocaleType.Spanish;
+    case LocalePreference.French:
+      return LocaleType.French;
+    case LocalePreference.German:
+      return LocaleType.German;
+    case LocalePreference.BrazilianPortuguese:
+      return LocaleType.BrazilianPortuguese;
+    case LocalePreference.Russian:
+      return LocaleType.Russian;
     case LocalePreference.System:
     default:
       return normalizeLocale(rawHostLocale);

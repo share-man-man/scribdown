@@ -147,6 +147,8 @@ export function mountMarkdownToolbar(
   if (typeof ownerDocument.defaultView?.scrollTo !== "function") {
     return;
   }
+  /** 宿主未显式注入时，从所属窗口读取语言，保证“跟随应用语言”可恢复初始语言。 */
+  const hostLocale = options.hostLocale ?? ownerDocument.defaultView.navigator.language;
   // 关键步骤：恢复上次保存的内容宽度，再挂载工具栏。
   applyContentWidth(ownerDocument, loadContentWidth());
   mountPageToolbar(
@@ -155,6 +157,6 @@ export function mountMarkdownToolbar(
     options.scrollToHeading ?? defaultScrollToHeading,
     options.onLocaleChange,
     options.localePreference,
-    options.hostLocale
+    hostLocale
   );
 }
