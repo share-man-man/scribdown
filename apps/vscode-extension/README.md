@@ -2,6 +2,14 @@
 
 为 VS Code 提供手绘风格的 Markdown 预览，与 Scribdown 浏览器插件复用同一套渲染核心，多端阅读体验一致。
 
+快速链接：[进入 Scribdown 文档站](https://share-man-man.github.io/scribdown/)
+
+## 预览截图
+
+Scribdown 在 VS Code 中展示 Markdown 内容的效果：
+
+![VS Code 中的 Scribdown Markdown Preview](../docs/public/ui-render.png)
+
 ## 功能特性
 
 - **手绘风格渲染**：纸感、草图感的排版与轻量动画，区别于默认预览的扁平样式。

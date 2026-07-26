@@ -75,7 +75,7 @@
     var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
   background-position:
     left top,
-    50% bottom,
+    80% bottom,
     left 40%,
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
@@ -111,7 +111,7 @@
   border-radius: inherit;
   pointer-events: none;
   background-image: var(--scribdown-code-block-rect-shadow);
-  background-position: center;
+  background-position: left top;
   background-repeat: repeat-x;
   background-size: auto 100%;
 }
@@ -135,7 +135,7 @@
   background-image: var(--scribdown-frame-edge-horizontal);
   background-repeat: repeat-x;
   background-size: var(--scribdown-frame-edge-tile-horizontal);
-  background-position: left bottom;
+  background-position: 40% bottom;
 }
 
 @supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
@@ -148,7 +148,7 @@
       var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
     -webkit-mask-position:
       left top,
-      50% bottom,
+      80% bottom,
       left 40%,
       right top;
     -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
@@ -163,7 +163,7 @@
       var(--scribdown-frame-edge-vertical), var(--scribdown-frame-edge-vertical);
     mask-position:
       left top,
-      50% bottom,
+      80% bottom,
       left 40%,
       right top;
     mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
@@ -180,12 +180,12 @@
     background-color: var(--scribdown-code-block-chrome-shadow-fill);
     background-image: none;
     -webkit-mask-image: var(--scribdown-code-block-rect-shadow);
-    -webkit-mask-position: center;
+    -webkit-mask-position: left top;
     -webkit-mask-repeat: repeat-x;
     -webkit-mask-size: auto 100%;
     -webkit-mask-mode: alpha;
     mask-image: var(--scribdown-code-block-rect-shadow);
-    mask-position: center;
+    mask-position: left top;
     mask-repeat: repeat-x;
     mask-size: auto 100%;
     mask-mode: alpha;
@@ -197,12 +197,12 @@
     -webkit-mask-image: var(--scribdown-frame-edge-horizontal);
     -webkit-mask-repeat: repeat-x;
     -webkit-mask-size: var(--scribdown-frame-edge-tile-horizontal);
-    -webkit-mask-position: left bottom;
+    -webkit-mask-position: 40% bottom;
     -webkit-mask-mode: alpha;
     mask-image: var(--scribdown-frame-edge-horizontal);
     mask-repeat: repeat-x;
     mask-size: var(--scribdown-frame-edge-tile-horizontal);
-    mask-position: left bottom;
+    mask-position: 40% bottom;
     mask-mode: alpha;
   }
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# 由 design/logo/logo.svg 派生各扩展所需的图标产物，作为唯一图标源。
-# 浏览器插件需要 16/32/48/128 多尺寸 PNG；VS Code 需要 128 PNG（Marketplace）和原始 SVG（命令图标）。
+# 由 design/ 下的设计源派生各应用所需的静态资源，避免维护重复副本。
+# 浏览器插件需要 16/32/48/128 多尺寸 PNG；VS Code 需要 128 PNG（Marketplace）和原始 SVG（命令图标）；
+# 文档站需要可直接发布的 logo SVG 与 UI 设计预览 PNG。
 # 使用 rsvg-convert (librsvg) 做 SVG→PNG 渲染，默认保留透明背景；
 # qlmanage 会强制合成白底，不满足透明需求。
 
@@ -9,9 +10,15 @@ set -euo pipefail
 # 关键步骤：将相对路径锚定到仓库根目录，避免在子目录执行时找不到资源。
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_SVG="$ROOT_DIR/design/logo/logo.svg"
+SOURCE_RENDERING="$ROOT_DIR/design/source/renderings.png"
 
 if [[ ! -f "$SOURCE_SVG" ]]; then
   echo "[build-icons] 找不到源 SVG: $SOURCE_SVG" >&2
+  exit 1
+fi
+
+if [[ ! -f "$SOURCE_RENDERING" ]]; then
+  echo "[build-icons] 找不到设计预览源 PNG: $SOURCE_RENDERING" >&2
   exit 1
 fi
 
@@ -39,13 +46,15 @@ else
   exit 1
 fi
 
-# 浏览器扩展工具栏 + manifest icons 字段所需的尺寸集合。
+# 浏览器扩展工具栏 + manifest icons 字段所需的尺寸集合；WXT 会从 public/ 原样复制这些资源。
 BROWSER_SIZES=(16 32 48 128)
-BROWSER_OUT="$ROOT_DIR/apps/browser-extension/icons"
+BROWSER_OUT="$ROOT_DIR/apps/browser-extension/public/icons"
 # VS Code Marketplace 推荐 128×128 PNG；命令图标使用 SVG 即可由 VS Code 自适应缩放。
 VSCODE_OUT="$ROOT_DIR/apps/vscode-extension/assets"
+# 文档站的 public 目录会在构建时原样复制到静态站点，因此同步设计源到此目录。
+DOCS_OUT="$ROOT_DIR/apps/docs/public"
 
-mkdir -p "$BROWSER_OUT" "$VSCODE_OUT"
+mkdir -p "$BROWSER_OUT" "$VSCODE_OUT" "$DOCS_OUT"
 
 for size in "${BROWSER_SIZES[@]}"; do
   render_png "$size" "$BROWSER_OUT/icon-$size.png"
@@ -57,7 +66,13 @@ render_png 128 "$VSCODE_OUT/icon.png"
 # 原始 SVG 复制到 vscode-extension 资源目录，用于命令栏图标（VS Code 支持 SVG）。
 cp "$SOURCE_SVG" "$VSCODE_OUT/icon.svg"
 
+# 文档站使用同一份 logo 与设计预览，避免它们在 design/ 与 apps/docs/ 间手动同步。
+cp "$SOURCE_SVG" "$DOCS_OUT/logo.svg"
+cp "$SOURCE_RENDERING" "$DOCS_OUT/ui-design.png"
+
 echo "[build-icons] 已更新："
 echo "  - $BROWSER_OUT/icon-{${BROWSER_SIZES[*]// /,}}.png"
 echo "  - $VSCODE_OUT/icon.png"
 echo "  - $VSCODE_OUT/icon.svg"
+echo "  - $DOCS_OUT/logo.svg"
+echo "  - $DOCS_OUT/ui-design.png"
