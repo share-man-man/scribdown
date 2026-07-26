@@ -2,6 +2,14 @@
 
 Scribdown 提供统一的 Markdown 渲染体验，可同时作为浏览器插件与 VS Code 插件运行，复用同一套渲染核心与视觉组件。
 
+快速链接：[进入文档站](https://share-man-man.github.io/scribdown/)
+
+## 界面截图
+
+Scribdown 的手绘风格 Markdown 渲染效果：
+
+![Scribdown Markdown 渲染效果](./apps/docs/public/ui-render.png)
+
 - **多端一致**：浏览器插件与 VS Code 插件共用渲染核心与视觉组件。
 - **安全默认**：原始 HTML 经 `rehype-sanitize` + `DOMPurify` 双层清洗。
 
@@ -29,6 +37,6 @@ packages/    markdown-renderer（渲染核心）、ui-handdrawn（视觉组件�
 
 | 类型 | 入口 | 说明 |
 | --- | --- | --- |
-| 文档站 | [`apps/docs`](./apps/docs) | 产品介绍、快速上手、设计体系与开发文档（VitePress，`pnpm --filter @scribdown/docs dev`） |
+| 文档站 | [在线访问](https://share-man-man.github.io/scribdown/) · [`apps/docs`](./apps/docs) | 产品介绍、快速上手、设计体系与开发文档（Rspress，`pnpm --filter @scribdown/docs dev`） |
 | 设计资产 | [`design/README.md`](./design/README.md) | Pencil 源文件、导出图与设计资产说明 |
 | 开发 Wiki | [`wiki/Home.md`](./wiki/Home.md) | 架构、模块、发布流程等内部文档 |
