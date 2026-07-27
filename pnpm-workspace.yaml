@@ -4,3 +4,5 @@ packages:
   - "tools/*"
 allowBuilds:
   esbuild: true
+  # 该间接依赖不需要本地构建产物，显式禁用其安装脚本以兼容 pnpm 11 的构建授权机制。
+  spawn-sync: false

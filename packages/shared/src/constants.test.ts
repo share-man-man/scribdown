@@ -16,6 +16,6 @@ describe("shared constants", () => {
    * 校验固定 Node LTS 版本。
    */
   it("should keep fixed node lts version", () => {
-    expect(NODE_LTS_VERSION).toBe("24.15.0");
+    expect(NODE_LTS_VERSION).toBe("24.18.0");
   });
 });

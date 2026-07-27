@@ -29,7 +29,7 @@ jobs:
       - uses: pnpm/action-setup@v4 # 依据 package.json 的 packageManager 字段定版
       - uses: actions/setup-node@v4
         with:
-          node-version-file: ".tool-versions" # 复用仓库 Node 版本基线（24.15.0）
+          node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # packages/* 为 JIT 内部包，无需预构建，docs 构建直接消费其源码
