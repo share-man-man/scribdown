@@ -4,13 +4,14 @@
 
 | 工具 | 版本 |
 | --- | --- |
-| Node.js | `24.15.0` |
-| pnpm | `10.33.0` |
-| asdf | `>= 0.14.0`（可选，用于统一工具链版本） |
+| Node.js | `24.18.0` |
+| pnpm | `11.4.0` |
+| mise | 最新稳定版（读取仓库的 `mise.toml`） |
 
 ## 安装依赖
 
 ```bash
+mise install
 pnpm install
 ```
 

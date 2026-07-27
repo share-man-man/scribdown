@@ -25,8 +25,8 @@ Scribdown 提供统一的 Markdown 渲染体验，覆盖浏览器插件与 VS Co
 
 ## 环境基线
 
-- Node.js：`24.15.0`（`.tool-versions`）
-- pnpm：`10.33.0`
+- Node.js：`24.18.0`（`mise.toml`）
+- pnpm：`11.4.0`
 
 ## 常用命令
 

@@ -18,7 +18,8 @@ Scribdown 的手绘风格 Markdown 渲染效果：
 ## 快速上手
 
 ```bash
-pnpm install   # 安装依赖（Node 24.15.0 / pnpm 10.33.0，见 .tool-versions）
+mise install   # 安装固定工具链（Node 24.18.0 / pnpm 11.4.0）
+pnpm install   # 安装依赖
 pnpm dev       # 并行启动所有 apps dev
 ```
 

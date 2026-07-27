@@ -13,7 +13,7 @@ export const PROJECT_HOMEPAGE_URL = "https://share-man-man.github.io/scribdown/"
 /**
  * 当前项目固定 Node.js LTS 版本。
  */
-export const NODE_LTS_VERSION = "24.15.0";
+export const NODE_LTS_VERSION = "24.18.0";
 
 /**
  * 当前项目支持的平台列表。

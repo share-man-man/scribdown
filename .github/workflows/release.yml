@@ -32,7 +32,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: ".tool-versions"
+          node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
           registry-url: "https://registry.npmjs.org" # 写入 .npmrc，供 npm 发布鉴权
       - run: pnpm install --frozen-lockfile
@@ -81,7 +81,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: ".tool-versions"
+          node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # 幂等保护：Marketplace 已存在同版本时跳过，避免历史误发布导致重复发布报错
@@ -113,7 +113,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: ".tool-versions"
+          node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # 无密钥鉴权（Workload Identity Federation）：以 GitHub OIDC 令牌换取对 SA 的模拟，
