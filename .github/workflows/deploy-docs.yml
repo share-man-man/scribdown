@@ -25,9 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4 # 依据 package.json 的 packageManager 字段定版
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6 # 依据 package.json 的 packageManager 字段定版
+      - uses: actions/setup-node@v5
         with:
           node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm

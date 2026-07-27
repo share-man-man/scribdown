@@ -23,14 +23,14 @@ jobs:
       vscode: ${{ steps.apps.outputs.vscode }}
       browser: ${{ steps.apps.outputs.browser }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # 需要历史，供下方 git diff 检测 app 版本变化
           # 关键步骤：用 PAT 而非默认 GITHUB_TOKEN 推送 changeset-release 分支，
           # 默认 token 创建/更新的 Version PR 不会自动触发 CI（防递归保护），每轮都需手动批准。
           token: ${{ secrets.RELEASE_PAT }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
         with:
           node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
@@ -77,9 +77,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
         with:
           node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
@@ -109,9 +109,9 @@ jobs:
       contents: read
       id-token: write # 关键：允许获取 GitHub OIDC 令牌，供 WIF 无密钥鉴权
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
         with:
           node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
