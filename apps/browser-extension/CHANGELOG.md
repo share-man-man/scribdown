@@ -1,5 +1,22 @@
 # @scribdown/browser-extension
 
+## 0.3.0
+
+### Minor Changes
+
+- 1757947: Scribdown 界面新增繁体中文、日语、韩语、西班牙语、法语、德语、巴西葡萄牙语与俄语支持。语言选择器仅展示显式语言，未设置偏好时自动跟随宿主应用语言；同时修复多语言列表的视口适配、光标状态与开合动画。
+- 194b3b4: 浏览器插件迁移至 WXT 构建体系，并支持按网站分别保存界面语言偏好。VS Code 预览新增语言设置；共享 i18n 与 Markdown 工具栏新增语言偏好解析、切换及宿主同步接口。
+
+### Patch Changes
+
+- Updated dependencies [1757947]
+- Updated dependencies [194b3b4]
+- Updated dependencies [35e7035]
+- Updated dependencies [646e7ca]
+  - @scribdown/shared@0.4.0
+  - @scribdown/markdown-renderer@0.5.0
+  - @scribdown/ui-handdrawn@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes
