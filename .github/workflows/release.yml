@@ -95,7 +95,7 @@ jobs:
             echo "Marketplace 已存在 $ext_id v$local_version，跳过发布"
             exit 0
           fi
-          pnpm dlx @vscode/vsce publish --no-dependencies
+          pnpm run publish:vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
