@@ -98,7 +98,8 @@
     "vscode:prepublish": "pnpm run build",
     "dev": "tsup --watch",
     "build": "tsup",
-    "package:vsix": "pnpm dlx @vscode/vsce package --no-dependencies --out scribdown-markdown-preview.vsix",
+    "package:vsix": "node ../../scripts/vsce.mjs package --out scribdown-markdown-preview.vsix",
+    "publish:vsix": "node ../../scripts/vsce.mjs publish",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
