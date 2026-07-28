@@ -1,60 +1,125 @@
-/* ─── Token 定义 ───────────────────────────────────────────────────── */
-/* 浅色主题：参考素描本米白纸张与水彩颜料色相。
+/* ─── 调色板原始值 ─────────────────────────────────────────────────
+   浅色与暗色两套色值在此各定义一次，下方的「语义 Token」只做 var() 映射。
+   宿主切换主题时不会出现色值副本，改一处即两套主题同步生效。
+
+   浅色主题：参考素描本米白纸张与水彩颜料色相。
    长时间阅读偏好：暖色偏移降低蓝光眩光、文字采用深沉柏木色而非纯黑、
-   重点色保持低饱和的"褪色颜料"质感、纸面与卡面亮度差拉开以便内容浮起。 */
+   重点色保持低饱和的"褪色颜料"质感、纸面与卡面亮度差拉开以便内容浮起。
+
+   暗色主题："夜读台灯下的旧纸册"：
+   纸面为接近黑的暖褐底，墨色反相为米白；颜料色以"粉笔/水彩"的提亮版本出现，
+   保持与浅色主题一致的色相与语义。
+
+   注：blockquote 系列是从其他 Token 派生的 color-mix 结果，两套主题的配比不同，
+   故同样分别定义；它们在被引用的那个映射块里求值，取到的必然是同主题的基准色。 */
 :root {
   /* 暖米纸：略冷于旧版的牛皮黄，减轻长时间阅读的"陈旧报纸"感。 */
-  --scribdown-color-bg: #ebe1c8;
+  --scribdown-palette-light-bg: #ebe1c8;
   /* 内容纸面：进一步提亮但保持暖调，与底色形成清晰层次。 */
-  --scribdown-color-surface: #f8f0db;
+  --scribdown-palette-light-surface: #f8f0db;
   /* 主文字：深胡桃色沉淀墨，对比 surface ≈12:1，足够锐利又不刺眼。 */
-  --scribdown-color-text-primary: #2f2620;
+  --scribdown-palette-light-text-primary: #2f2620;
   /* 次文字：泛黄旧墨色。 */
-  --scribdown-color-text-secondary: #786758;
+  --scribdown-palette-light-text-secondary: #786758;
   /* 主题色：松林青苔——明度居中、与文字蓝相区分。 */
-  --scribdown-color-accent: #436b5b;
+  --scribdown-palette-light-accent: #436b5b;
   /* 链接色：靛青水墨蓝，去掉过往略带紫感的偏色。 */
-  --scribdown-color-link: #355a7d;
+  --scribdown-palette-light-link: #355a7d;
   /* 已访问链接：晾干后的紫罗兰，色相比未访问偏暖。 */
-  --scribdown-color-link-visited: #6a527b;
+  --scribdown-palette-light-link-visited: #6a527b;
   /* 高亮笔色：姜黄荧光，保留涂抹的颜料质地。 */
-  --scribdown-color-mark: #d7ab48;
+  --scribdown-palette-light-mark: #d7ab48;
   /* 边线：铅笔石墨与纸张混合后的暖灰。 */
-  --scribdown-color-border: #c5ad8a;
+  --scribdown-palette-light-border: #c5ad8a;
   /* 危险色：陶土红，去除生硬的猩红，落在书法朱砂。 */
-  --scribdown-color-danger: #a8504a;
+  --scribdown-palette-light-danger: #a8504a;
   /* 警告色：烧赭石。 */
-  --scribdown-color-warning: #8d6432;
+  --scribdown-palette-light-warning: #8d6432;
   /* 代码块墨色：板岩紫，与正文棕色明显区分但不抢眼。 */
-  --scribdown-color-code-ink: #5e5483;
-  --scribdown-color-blockquote-bg: color-mix(
+  --scribdown-palette-light-code-ink: #5e5483;
+  --scribdown-palette-light-blockquote-bg: color-mix(
     in srgb,
     var(--scribdown-color-border) 18%,
     var(--scribdown-color-surface)
   );
-  --scribdown-color-blockquote-text: color-mix(
+  --scribdown-palette-light-blockquote-text: color-mix(
     in srgb,
     var(--scribdown-color-text-secondary) 88%,
     var(--scribdown-color-surface)
   );
-  --scribdown-color-blockquote-link: color-mix(
+  --scribdown-palette-light-blockquote-link: color-mix(
     in srgb,
     var(--scribdown-color-link) 86%,
     var(--scribdown-color-text-primary)
   );
-  --scribdown-color-blockquote-link-visited: color-mix(
+  --scribdown-palette-light-blockquote-link-visited: color-mix(
     in srgb,
     var(--scribdown-color-link-visited) 86%,
     var(--scribdown-color-text-primary)
   );
   /* 纸面颗粒：低饱和的褐色噪点，呼应"米黄毛边纸"。 */
-  --scribdown-paper-grain: rgba(132, 96, 44, 0.10);
+  --scribdown-palette-light-paper-grain: rgba(132, 96, 44, 0.10);
   /* 纸面纤维：浅青苔色丝纹，与 accent 同源。 */
-  --scribdown-paper-fiber: rgba(67, 107, 91, 0.06);
+  --scribdown-palette-light-paper-fiber: rgba(67, 107, 91, 0.06);
   /* 偏移阴影：保留手绘的"墨晕"感，避免过黑。 */
-  --scribdown-shadow-sm: 2px 3px 0 rgba(47, 38, 32, 0.13);
-  --scribdown-shadow-md: 4px 6px 0 rgba(47, 38, 32, 0.18);
+  --scribdown-palette-light-shadow-sm: 2px 3px 0 rgba(47, 38, 32, 0.13);
+  --scribdown-palette-light-shadow-md: 4px 6px 0 rgba(47, 38, 32, 0.18);
 
+  /* 夜间纸面底：暖褐近黑，避免冷调灰带来的"屏幕感"。 */
+  --scribdown-palette-dark-bg: #1e1915;
+  /* 卡面：底色之上 +6% 明度，让代码块/引用清晰浮起。 */
+  --scribdown-palette-dark-surface: #2a241f;
+  /* 主文字：温润米白粉笔。 */
+  --scribdown-palette-dark-text-primary: #ebdfcc;
+  /* 次文字：旧字迹褪色。 */
+  --scribdown-palette-dark-text-secondary: #ae9b85;
+  /* 主题色：粉笔薄荷青，亮度提到暗底易读区间。 */
+  --scribdown-palette-dark-accent: #7ebbab;
+  /* 链接色：粉笔水蓝。 */
+  --scribdown-palette-dark-link: #94b8de;
+  /* 已访问链接：粉笔薰衣草。 */
+  --scribdown-palette-dark-link-visited: #b39bcd;
+  /* 高亮色：暖琥珀粉笔。 */
+  --scribdown-palette-dark-mark: #d3aa57;
+  /* 边线：暗青铜，与底色同色相一脉。 */
+  --scribdown-palette-dark-border: #5a4a39;
+  /* 危险色：暗红粉笔。 */
+  --scribdown-palette-dark-danger: #db847a;
+  /* 警告色：黄铜粉笔。 */
+  --scribdown-palette-dark-warning: #d3a45f;
+  /* 代码块墨色：紫罗兰粉笔。 */
+  --scribdown-palette-dark-code-ink: #beacdc;
+  --scribdown-palette-dark-blockquote-bg: color-mix(
+    in srgb,
+    var(--scribdown-color-border) 28%,
+    var(--scribdown-color-surface)
+  );
+  --scribdown-palette-dark-blockquote-text: color-mix(
+    in srgb,
+    var(--scribdown-color-text-secondary) 90%,
+    var(--scribdown-color-bg)
+  );
+  --scribdown-palette-dark-blockquote-link: color-mix(
+    in srgb,
+    var(--scribdown-color-link) 88%,
+    var(--scribdown-color-text-primary)
+  );
+  --scribdown-palette-dark-blockquote-link-visited: color-mix(
+    in srgb,
+    var(--scribdown-color-link-visited) 88%,
+    var(--scribdown-color-text-primary)
+  );
+  /* 夜间纸面颗粒：暖琥珀微噪。 */
+  --scribdown-palette-dark-paper-grain: rgba(211, 170, 87, 0.10);
+  /* 夜间纸面纤维：薄荷青丝纹。 */
+  --scribdown-palette-dark-paper-fiber: rgba(126, 187, 171, 0.07);
+  /* 阴影更深以拉开层次。 */
+  --scribdown-palette-dark-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.36);
+  --scribdown-palette-dark-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.48);
+}
+
+/* ─── 与主题无关的 Token ──────────────────────────────────────────── */
+:root {
   --scribdown-font-body: "Source Serif 4", "Noto Serif SC", serif;
   --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
   --scribdown-font-code: "JetBrains Mono", "Fira Code", monospace;
@@ -80,61 +145,82 @@
   --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
 }
 
-/* 暗色主题："夜读台灯下的旧纸册"：
-   纸面为接近黑的暖褐底，墨色反相为米白；颜料色以"粉笔/水彩"的提亮版本出现，
-   保持与浅色主题一致的色相与语义。 */
+/* ─── 语义 Token ← 浅色 ────────────────────────────────────────────
+   默认主题。宿主给根元素显式加 .scribdown-theme-light 时，
+   该选择器的更高优先级会盖过下方「跟随系统」的暗色映射，实现强制浅色。 */
+:root,
+:root.scribdown-theme-light {
+  --scribdown-color-bg: var(--scribdown-palette-light-bg);
+  --scribdown-color-surface: var(--scribdown-palette-light-surface);
+  --scribdown-color-text-primary: var(--scribdown-palette-light-text-primary);
+  --scribdown-color-text-secondary: var(--scribdown-palette-light-text-secondary);
+  --scribdown-color-accent: var(--scribdown-palette-light-accent);
+  --scribdown-color-link: var(--scribdown-palette-light-link);
+  --scribdown-color-link-visited: var(--scribdown-palette-light-link-visited);
+  --scribdown-color-mark: var(--scribdown-palette-light-mark);
+  --scribdown-color-border: var(--scribdown-palette-light-border);
+  --scribdown-color-danger: var(--scribdown-palette-light-danger);
+  --scribdown-color-warning: var(--scribdown-palette-light-warning);
+  --scribdown-color-code-ink: var(--scribdown-palette-light-code-ink);
+  --scribdown-color-blockquote-bg: var(--scribdown-palette-light-blockquote-bg);
+  --scribdown-color-blockquote-text: var(--scribdown-palette-light-blockquote-text);
+  --scribdown-color-blockquote-link: var(--scribdown-palette-light-blockquote-link);
+  --scribdown-color-blockquote-link-visited: var(--scribdown-palette-light-blockquote-link-visited);
+  --scribdown-paper-grain: var(--scribdown-palette-light-paper-grain);
+  --scribdown-paper-fiber: var(--scribdown-palette-light-paper-fiber);
+  --scribdown-shadow-sm: var(--scribdown-palette-light-shadow-sm);
+  --scribdown-shadow-md: var(--scribdown-palette-light-shadow-md);
+}
+
+/* ─── 语义 Token ← 暗色（跟随系统偏好）───────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root {
-    /* 夜间纸面底：暖褐近黑，避免冷调灰带来的"屏幕感"。 */
-    --scribdown-color-bg: #1e1915;
-    /* 卡面：底色之上 +6% 明度，让代码块/引用清晰浮起。 */
-    --scribdown-color-surface: #2a241f;
-    /* 主文字：温润米白粉笔。 */
-    --scribdown-color-text-primary: #ebdfcc;
-    /* 次文字：旧字迹褪色。 */
-    --scribdown-color-text-secondary: #ae9b85;
-    /* 主题色：粉笔薄荷青，亮度提到暗底易读区间。 */
-    --scribdown-color-accent: #7ebbab;
-    /* 链接色：粉笔水蓝。 */
-    --scribdown-color-link: #94b8de;
-    /* 已访问链接：粉笔薰衣草。 */
-    --scribdown-color-link-visited: #b39bcd;
-    /* 高亮色：暖琥珀粉笔。 */
-    --scribdown-color-mark: #d3aa57;
-    /* 边线：暗青铜，与底色同色相一脉。 */
-    --scribdown-color-border: #5a4a39;
-    /* 危险色：暗红粉笔。 */
-    --scribdown-color-danger: #db847a;
-    /* 警告色：黄铜粉笔。 */
-    --scribdown-color-warning: #d3a45f;
-    /* 代码块墨色：紫罗兰粉笔。 */
-    --scribdown-color-code-ink: #beacdc;
-    --scribdown-color-blockquote-bg: color-mix(
-      in srgb,
-      var(--scribdown-color-border) 28%,
-      var(--scribdown-color-surface)
-    );
-    --scribdown-color-blockquote-text: color-mix(
-      in srgb,
-      var(--scribdown-color-text-secondary) 90%,
-      var(--scribdown-color-bg)
-    );
-    --scribdown-color-blockquote-link: color-mix(
-      in srgb,
-      var(--scribdown-color-link) 88%,
-      var(--scribdown-color-text-primary)
-    );
-    --scribdown-color-blockquote-link-visited: color-mix(
-      in srgb,
-      var(--scribdown-color-link-visited) 88%,
-      var(--scribdown-color-text-primary)
-    );
-    /* 夜间纸面颗粒：暖琥珀微噪。 */
-    --scribdown-paper-grain: rgba(211, 170, 87, 0.10);
-    /* 夜间纸面纤维：薄荷青丝纹。 */
-    --scribdown-paper-fiber: rgba(126, 187, 171, 0.07);
-    /* 阴影更深以拉开层次。 */
-    --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.36);
-    --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.48);
+    --scribdown-color-bg: var(--scribdown-palette-dark-bg);
+    --scribdown-color-surface: var(--scribdown-palette-dark-surface);
+    --scribdown-color-text-primary: var(--scribdown-palette-dark-text-primary);
+    --scribdown-color-text-secondary: var(--scribdown-palette-dark-text-secondary);
+    --scribdown-color-accent: var(--scribdown-palette-dark-accent);
+    --scribdown-color-link: var(--scribdown-palette-dark-link);
+    --scribdown-color-link-visited: var(--scribdown-palette-dark-link-visited);
+    --scribdown-color-mark: var(--scribdown-palette-dark-mark);
+    --scribdown-color-border: var(--scribdown-palette-dark-border);
+    --scribdown-color-danger: var(--scribdown-palette-dark-danger);
+    --scribdown-color-warning: var(--scribdown-palette-dark-warning);
+    --scribdown-color-code-ink: var(--scribdown-palette-dark-code-ink);
+    --scribdown-color-blockquote-bg: var(--scribdown-palette-dark-blockquote-bg);
+    --scribdown-color-blockquote-text: var(--scribdown-palette-dark-blockquote-text);
+    --scribdown-color-blockquote-link: var(--scribdown-palette-dark-blockquote-link);
+    --scribdown-color-blockquote-link-visited: var(--scribdown-palette-dark-blockquote-link-visited);
+    --scribdown-paper-grain: var(--scribdown-palette-dark-paper-grain);
+    --scribdown-paper-fiber: var(--scribdown-palette-dark-paper-fiber);
+    --scribdown-shadow-sm: var(--scribdown-palette-dark-shadow-sm);
+    --scribdown-shadow-md: var(--scribdown-palette-dark-shadow-md);
   }
+}
+
+/* ─── 语义 Token ← 暗色（宿主显式指定）─────────────────────────────
+   宿主自带主题开关（如文档站的明暗切换、VS Code 主题）时，把 .scribdown-theme-dark
+   加到根元素上即可强制暗色；优先级高于上面的系统偏好映射，不受 OS 设置影响。
+   与「跟随系统」共用同一套调色板变量，色值仍只有一份。 */
+:root.scribdown-theme-dark {
+  --scribdown-color-bg: var(--scribdown-palette-dark-bg);
+  --scribdown-color-surface: var(--scribdown-palette-dark-surface);
+  --scribdown-color-text-primary: var(--scribdown-palette-dark-text-primary);
+  --scribdown-color-text-secondary: var(--scribdown-palette-dark-text-secondary);
+  --scribdown-color-accent: var(--scribdown-palette-dark-accent);
+  --scribdown-color-link: var(--scribdown-palette-dark-link);
+  --scribdown-color-link-visited: var(--scribdown-palette-dark-link-visited);
+  --scribdown-color-mark: var(--scribdown-palette-dark-mark);
+  --scribdown-color-border: var(--scribdown-palette-dark-border);
+  --scribdown-color-danger: var(--scribdown-palette-dark-danger);
+  --scribdown-color-warning: var(--scribdown-palette-dark-warning);
+  --scribdown-color-code-ink: var(--scribdown-palette-dark-code-ink);
+  --scribdown-color-blockquote-bg: var(--scribdown-palette-dark-blockquote-bg);
+  --scribdown-color-blockquote-text: var(--scribdown-palette-dark-blockquote-text);
+  --scribdown-color-blockquote-link: var(--scribdown-palette-dark-blockquote-link);
+  --scribdown-color-blockquote-link-visited: var(--scribdown-palette-dark-blockquote-link-visited);
+  --scribdown-paper-grain: var(--scribdown-palette-dark-paper-grain);
+  --scribdown-paper-fiber: var(--scribdown-palette-dark-paper-fiber);
+  --scribdown-shadow-sm: var(--scribdown-palette-dark-shadow-sm);
+  --scribdown-shadow-md: var(--scribdown-palette-dark-shadow-md);
 }

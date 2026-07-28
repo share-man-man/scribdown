@@ -4,8 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      # 文档站为纯静态内容，不消费 packages/* 运行时产物，故不监听 packages 变更
+      # 渲染预览页直接消费 packages/* 的源码，故渲染器 / 视觉包变更也需要重新部署
       - "apps/docs/**"
+      - "packages/**"
       - ".github/workflows/deploy-docs.yml"
   workflow_dispatch: # 允许在 Actions 页面手动触发
 

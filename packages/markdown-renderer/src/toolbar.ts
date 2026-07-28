@@ -194,13 +194,25 @@ function createPageToolbarBtn(
 }
 
 /**
- * 工具栏目录按钮的内嵌 SVG 字符串。
+ * 工具栏目录按钮「收起态」的内嵌 SVG 字符串（列表三横线，点击展开侧栏）。
  */
 const TOOLBAR_TOC_ICON_SVG =
   '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
   '<line x1="3" y1="5" x2="15" y2="5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
   '<line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
   '<line x1="3" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+  "</svg>";
+
+/**
+ * 工具栏目录按钮「展开态」的内嵌 SVG 字符串。
+ * 与收起态同为三横线基底，中间线让位给一个左向箭头 —— 目录侧栏在左，箭头方向即「点击后收起的去向」。
+ */
+const TOOLBAR_TOC_OPEN_ICON_SVG =
+  '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  '<line x1="3" y1="5" x2="15" y2="5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+  '<line x1="3" y1="9" x2="9" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+  '<line x1="3" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+  '<path d="M15 6.8L12.4 9L15 11.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
   "</svg>";
 
 /**
@@ -369,6 +381,12 @@ function mountPageToolbar(
     '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
     '<path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
     "</svg>";
+  // ── 目录按钮（工具栏第 1 个入口） ──
+  // 关键步骤：按钮需在 setTocOpen 之前创建 —— 侧栏开合时要同步刷新按钮的图标 / 高亮 / 无障碍状态。
+  /** 目录切换按钮，初始为收起态。 */
+  const tocBtn = createPageToolbarBtn(ownerDocument, t("toolbar.toc"), TOOLBAR_TOC_ICON_SVG);
+  tocBtn.setAttribute("aria-expanded", "false");
+
   /**
    * 切换目录侧栏的展开态：margin-left 由 CSS 配合 `.is-open` 在 flex 流中切换收起/展开。
    * @param open 是否打开侧栏。
@@ -377,6 +395,12 @@ function mountPageToolbar(
     tocPanel.classList.toggle("is-open", open);
     // 关键步骤：手柄只在展开态占位 / 可交互，收起时同步塌陷，避免正文左侧留下空条。
     tocResizer.classList.toggle("is-open", open);
+    // 关键步骤：按钮同步呈现开合态 —— 图标换成带左向箭头的收起图标，
+    // aria-expanded 驱动 CSS 高亮（与「更多」按钮共用同一条状态样式），
+    // aria-label 同时是 tooltip 文案，展开后提示「关闭目录」。
+    tocBtn.innerHTML = open ? TOOLBAR_TOC_OPEN_ICON_SVG : TOOLBAR_TOC_ICON_SVG;
+    tocBtn.setAttribute("aria-expanded", String(open));
+    tocBtn.setAttribute("aria-label", open ? t("toolbar.tocClose") : t("toolbar.toc"));
   };
 
   tocCloseBtn.addEventListener("click", (e) => {
@@ -517,10 +541,6 @@ function mountPageToolbar(
   teardownCallbacks.push(() => {
     ownerWindow?.removeEventListener("resize", handleTocHostResize);
   });
-
-  // ── 目录按钮（工具栏第 1 个入口） ──
-  /** 目录切换按钮。 */
-  const tocBtn = createPageToolbarBtn(ownerDocument, t("toolbar.toc"), TOOLBAR_TOC_ICON_SVG);
 
   // ── 更多按钮（工具栏第 2 个入口） ──
   /** 「更多」按钮，点击展开下拉菜单。 */

@@ -109,6 +109,19 @@ export const SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME =
 export const SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME = "scribdown-toolbar-current";
 
 /**
+ * 强制暗色主题 class：加到文档根元素（`<html>`）上，优先级高于系统的
+ * `prefers-color-scheme`，供自带主题开关的宿主（文档站、VS Code）显式指定主题。
+ * 未加任何主题 class 时默认跟随系统偏好。
+ */
+export const SCRIBDOWN_THEME_DARK_CLASS_NAME = "scribdown-theme-dark";
+
+/**
+ * 强制浅色主题 class：与 {@link SCRIBDOWN_THEME_DARK_CLASS_NAME} 相对，
+ * 用于在系统处于暗色时仍把渲染结果锁定为浅色。
+ */
+export const SCRIBDOWN_THEME_LIGHT_CLASS_NAME = "scribdown-theme-light";
+
+/**
  * 工具栏挂载时附加到 container 上的 class，把 container 标记为 TOC + 正文的 flex 容器。
  */
 export const SCRIBDOWN_TOC_HOST_CLASS_NAME = "scribdown-toc-host";

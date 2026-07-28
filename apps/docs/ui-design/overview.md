@@ -10,7 +10,7 @@
 | 查颜色、字体、间距、动效 | [Token 系统](./tokens.md) |
 | 查组件职责与交互规则 | [组件规范](./components.md) |
 | 按规范出图 | [Pencil 执行规范](./pencil-guide.md) |
-| 使用统一正文样例 | [Markdown 样例](./markdown-fixture.md) |
+| 使用统一正文样例 | [渲染预览](./render-preview) |
 
 ## 一句话定义
 
@@ -26,7 +26,7 @@ Scribdown 的 UI 目标是：**用克制的手绘感提升 Markdown 阅读体验
 
 ## 视觉基线
 
-本节记录基于 [Markdown 样例](./markdown-fixture.md) 生成的 Image2.0 示例图，用作浅色主题预览画板的方向参考。后续 Pencil 出图和 UI 实现应提取其中的风格原则，不要求逐像素复刻。
+本节记录基于标准 Markdown 样例（见[渲染预览](./render-preview)）生成的 Image2.0 示例图，用作浅色主题预览画板的方向参考。后续 Pencil 出图和 UI 实现应提取其中的风格原则，不要求逐像素复刻。
 
 ![Image2.0 渲染预览参考图](/ui-design.png)
 
@@ -54,6 +54,6 @@ Scribdown 的 UI 目标是：**用克制的手绘感提升 Markdown 阅读体验
 - [Token 系统](./tokens.md)
 - [组件规范](./components.md)
 - [Pencil 执行规范](./pencil-guide.md)
-- [Markdown 样例](./markdown-fixture.md)
+- [渲染预览](./render-preview)
 - [指南](../guide/introduction.md)
 - [开发文档](../dev/architecture.md)

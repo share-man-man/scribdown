@@ -39,9 +39,9 @@
 
 **操作**
 
-- `HeadingRenderer`：展示 h1–h6 六个变体，字体使用 `--scribdown-font-heading`，字号 / 行高 / 字重严格对应 Typography 表；标注各级上方留白（h1 → `--scribdown-space-8`（`64px`），h2 → `--scribdown-space-7`（`48px`），h3–h6 → `--scribdown-space-5`（`24px`））与统一下方留白 `--scribdown-space-4`（`16px`）
+- `HeadingRenderer`：展示 h1–h6 六个变体，字体使用 `--scribdown-font-heading`，字号 / 行高 / 字重严格对应[排版表](./tokens.md#排版)；六级标题共用同一组留白 —— 上方 `--scribdown-space-4`（`16px`）、下方 `--scribdown-space-1`（`4px`），层级差异只靠字号与字重表达，不靠留白阶梯
 - 锚点入口：标题悬停时左侧出现低调 `#` 图标，颜色 `--scribdown-color-text-secondary`，含 focus-visible 态，使用 `absolute` 定位不影响标题对齐
-- `ParagraphRenderer`：展示正文段落，标注行高 `1.75`、段间距 `--scribdown-space-5`（`24px`）；在同一段落内同时出现 `emphasis`（斜体）、`strong`（加粗）、`delete`（删除线）、`mark`（高亮）、`break`（显式换行），直观呈现全部行内标记的排版效果
+- `ParagraphRenderer`：展示正文段落，标注行高 `1.65`、段间距 `--scribdown-space-3`（`12px`）；在同一段落内同时出现 `emphasis`（斜体）、`strong`（加粗）、`delete`（删除线）、`mark`（高亮）、`break`（显式换行），直观呈现全部行内标记的排版效果
 
 **完成标志**
 
@@ -57,9 +57,8 @@
 
 - 创建可复用的 `DocumentShell` 组件，背景使用 `--scribdown-color-bg`
 - 浅色主题叠加低噪声纸感纹理和轻量纸张外框；纹理只放在页面背景层，内容块内部保持平整以保证代码、表格和图表可读
-- 正文文本列最大宽度 `840px`，左右内边距最少 `--scribdown-space-7`（`48px`）
-- 顶部留白 `--scribdown-space-8`（`64px`），底部留白 `96px`
-- 出一个 Typography 展示子画板：从 `h1` 到 `h6`、`body-md`、`body-sm` 按垂直顺序排列，标注字号、行高、字重，作为后续画板正文的视觉参照
+- 正文文本列最大宽度 `840px`（对应工具栏「页面宽度」的默认档），内边距 `--scribdown-space-3`（`12px`）
+- 出一个 Typography 展示子画板：从 `h1` 到 `h6` 再到正文按垂直顺序排列，标注字号、行高、字重，作为后续画板正文的视觉参照
 
 **完成标志**
 
@@ -144,15 +143,15 @@
 
 **操作**
 
-- 结构：`Overlay（rgba(45,36,31,0.72)）+ TopBar + ContentStage`
+- 结构：`Overlay + TopBar + ContentStage`；遮罩色不是独立 Token，取 `--scribdown-color-text-primary` 的 78% 半透明（`color-mix(in srgb, var(--scribdown-color-text-primary) 78%, transparent)`），随主题自动反相
 - TopBar 从左到右：内容标题、类型标签、关闭按钮（含 focus-visible 态，轮廓颜色 `--scribdown-color-text-primary`）
-- ContentStage 四周至少保留 `32px` 安全留白，浮层圆角 `--scribdown-radius-lg`
+- ContentStage 四周至少保留 `32px` 安全留白，浮层圆角 `--scribdown-radius-sm`（`8px 10px 9px 11px`）
 - 准备三个变体：承载图片 / 承载 Mermaid / 承载视频
 
 **完成标志**
 
 - 三个变体 TopBar 结构相同，内容随类型变化
-- 遮罩色正确，浮层圆角使用 `--scribdown-radius-lg`
+- 遮罩色正确，浮层圆角使用 `--scribdown-radius-sm`
 
 ---
 
@@ -206,7 +205,7 @@ Frame (1440px, layout: vertical, gap: space-4, padding: space-4)
 **操作**
 
 - 使用 `DocumentShell` 组件作为内容容器
-- 使用 [./markdown-fixture.md](./markdown-fixture.md) 中的标准 Markdown 样例填充正文，至少包含以下 8 类元素中的 6 类：标题、段落、列表、引用、代码块、链接、行内代码、图片
+- 使用标准 Markdown 样例（见[渲染预览](./render-preview)）填充正文，至少包含以下 8 类元素中的 6 类：标题、段落、列表、引用、代码块、链接、行内代码、图片
 - 确保 fixture 中的三类失败态在画板中可见：图片失败态（`broken-image-404.png`）、Mermaid 错误态（`invalid mermaid syntax`）、HTML 降级占位（`<script>` 被过滤）
 - 构图参考 Image2.0 示例图，第一屏需要同时露出主标题、引用块和正文开头
 - h2 标题使用手写风格标题与短横线涂抹感分隔，颜色必须来自 Token 派生值
@@ -250,7 +249,7 @@ Frame (1440px, layout: vertical, gap: space-4, padding: space-4)
 
 **操作**
 
-- 使用同一份标准 Markdown 样例（见 [./markdown-fixture.md](./markdown-fixture.md)）
+- 使用同一份标准 Markdown 样例（见[渲染预览](./render-preview)）
 - 背景比 Browser 版更克制，减少纹理强度，适配宿主主题对比度
 
 **完成标志**
@@ -341,7 +340,7 @@ Frame (1440px, layout: vertical, gap: space-4, padding: space-4)
 - [ ] 纸感、手绘感与可读性并存，装饰未压过正文
 - [ ] 浅色主题 Preview 画板已对照 [./overview.md#视觉基线](./overview.md#视觉基线) 检查页面壳层、标题、媒体块和失败态
 - [ ] Browser 与 VS Code 使用相同渲染组件，壳层差异不影响正文规则
-- [ ] 标准 Markdown 样例（见 [./markdown-fixture.md](./markdown-fixture.md)）覆盖所有节点类型，含失败态（图片加载失败、Mermaid 语法错误、HTML 降级占位）和引用式链接 / 图片
+- [ ] 标准 Markdown 样例（见[渲染预览](./render-preview)）覆盖所有节点类型，含失败态（图片加载失败、Mermaid 语法错误、HTML 降级占位）和引用式链接 / 图片
 - [ ] Mermaid、图片、视频的全屏交互完整表达
 - [ ] State 画板语义色正确，未混入正文内容，Loading 骨架结构完整
 - [ ] 全部 18 个视觉组件中，适用交互的组件均展示了 `focus-visible` 态

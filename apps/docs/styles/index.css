@@ -1,19 +1,9 @@
-/* Scribdown 文档站：将 Rspress 主题变量映射到产品设计 Token。 */
+/* Scribdown 文档站：将 Rspress 主题变量映射到产品设计 Token。
+   关键步骤：设计 Token 一律从 @scribdown/ui-handdrawn 引入，站点内不再复制色值；
+   明暗切换由 ThemeSync 组件把 Rspress 的 rp-dark 同步成 token 包的 scribdown-theme-* class。 */
+@import "@scribdown/ui-handdrawn/styles/tokens.css";
+
 :root {
-  --scribdown-color-bg: #ebe1c8;
-  --scribdown-color-surface: #f8f0db;
-  --scribdown-color-text-primary: #2f2620;
-  --scribdown-color-text-secondary: #786758;
-  --scribdown-color-accent: #436b5b;
-  --scribdown-color-link: #355a7d;
-  --scribdown-color-mark: #d7ab48;
-  --scribdown-color-border: #c5ad8a;
-  --scribdown-paper-grain: rgba(132, 96, 44, 0.1);
-  --scribdown-paper-fiber: rgba(67, 107, 91, 0.06);
-  --scribdown-shadow-sm: 2px 3px 0 rgba(47, 38, 32, 0.13);
-  --scribdown-shadow-md: 4px 6px 0 rgba(47, 38, 32, 0.18);
-  --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
-  --scribdown-radius-md: 14px 16px 13px 17px;
   --rp-c-bg: var(--scribdown-color-bg);
   --rp-c-bg-soft: var(--scribdown-color-surface);
   --rp-c-bg-mute: color-mix(in srgb, var(--scribdown-color-surface) 70%, var(--scribdown-color-bg));
@@ -45,19 +35,9 @@
   --rp-radius-large: var(--scribdown-radius-md);
 }
 
+/* 暗色下只重算 Rspress 自己的变量；scribdown 语义 Token 已由 token 包的
+   .scribdown-theme-dark 切换完成，此处不再重复定义任何色值。 */
 html.rp-dark {
-  --scribdown-color-bg: #1e1915;
-  --scribdown-color-surface: #2a241f;
-  --scribdown-color-text-primary: #ebdfcc;
-  --scribdown-color-text-secondary: #ae9b85;
-  --scribdown-color-accent: #7ebbab;
-  --scribdown-color-link: #94b8de;
-  --scribdown-color-mark: #d3aa57;
-  --scribdown-color-border: #5a4a39;
-  --scribdown-paper-grain: rgba(211, 170, 87, 0.1);
-  --scribdown-paper-fiber: rgba(126, 187, 171, 0.07);
-  --scribdown-shadow-sm: 2px 3px 0 rgba(0, 0, 0, 0.36);
-  --scribdown-shadow-md: 4px 6px 0 rgba(0, 0, 0, 0.48);
   --rp-c-bg: var(--scribdown-color-bg);
   --rp-c-bg-soft: var(--scribdown-color-surface);
   --rp-c-bg-mute: color-mix(in srgb, var(--scribdown-color-surface) 70%, var(--scribdown-color-bg));
@@ -248,4 +228,38 @@ html.rp-dark .home-cta__btn--brand {
   .home-section {
     padding: 3rem 1.25rem;
   }
+}
+
+/* ─── 渲染预览页（pageType: blank）───────────────────────────────── */
+/* 渲染器自带 100vh 的 flex 布局根与固定工具栏，本页只补返回入口与加载占位。 */
+.render-preview__back {
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* 关键步骤：高于目录侧栏（9001）与工具栏（9000），侧栏展开时仍可点击返回。 */
+  z-index: 9002;
+  padding: 4px 12px;
+  border: 1.5px solid var(--scribdown-color-border);
+  /* 贴左上角，仅右下角需要圆角收口。 */
+  border-top: 0;
+  border-left: 0;
+  border-bottom-right-radius: var(--scribdown-radius-md);
+  background: var(--scribdown-color-surface);
+  color: var(--scribdown-color-text-secondary);
+  font-family: var(--scribdown-font-body);
+  font-size: 12px;
+  text-decoration: none;
+  box-shadow: var(--scribdown-shadow-sm);
+}
+
+.render-preview__back:hover {
+  color: var(--scribdown-color-accent);
+}
+
+.render-preview__status {
+  margin: 0;
+  padding: 25vh 1.5rem 0;
+  color: var(--scribdown-color-text-secondary);
+  font-family: var(--scribdown-font-body);
+  text-align: center;
 }

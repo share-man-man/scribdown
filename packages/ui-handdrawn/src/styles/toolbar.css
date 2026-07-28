@@ -144,10 +144,24 @@
   opacity: 1;
 }
 
-/* 「更多」按钮展开态：保持轻量描边，避免被 hover 态覆盖。 */
-.scribdown-toolbar-btn--more[aria-expanded="true"] {
+/* 工具栏按钮展开态（目录侧栏 / 更多菜单共用）：底色加深 + 强调色，
+   与 hover 态区分开，让「当前已展开」在按钮上可见。 */
+.scribdown-toolbar-btn[aria-expanded="true"] {
   background: color-mix(in srgb, var(--scribdown-color-bg) 90%, transparent);
   color: var(--scribdown-color-accent);
+}
+
+/* 关键步骤：展开态下方一小段强调色下划线，作为颜色之外的第二重状态提示（色觉障碍友好）。 */
+.scribdown-toolbar-btn[aria-expanded="true"]::before {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 12px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: var(--scribdown-color-accent);
+  border-radius: 999px;
 }
 
 /* ─── 更多下拉菜单 ──────────────────────────────────────────────── */
