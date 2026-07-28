@@ -392,7 +392,8 @@
 .scribdown-toc-host {
   display: flex;
   align-items: stretch;
-  /* TOC 宽度提到容器层，供 TOC 自身定宽 / 折叠位移共用。 */
+  /* TOC 宽度提到容器层，供 TOC 自身定宽 / 折叠位移共用；
+     用户拖拽调宽后由 toolbar.ts 以内联样式覆盖本默认值。 */
   --scribdown-toc-width: min(280px, 70vw);
   /* 关键步骤：定高铺满视口；overflow:hidden 让整页不滚动，
      折叠态 TOC（负 margin）也被裁切，滚动全部下沉到 content-scroll。 */
@@ -424,12 +425,18 @@
   overflow: auto;
 }
 
-/* 目录侧栏：flex item 贴最左，固定宽度；默认 margin-left 负值收进容器左外，is-open 归零滑入。 */
+/* 拖拽调宽期间：屏蔽正文文本选中并全局统一光标，避免拖动时误选内容 / 光标闪烁。 */
+.scribdown-toc-host.is-toc-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* 目录侧栏：flex item 贴最左，固定宽度；默认 margin-left 负值收进容器左外，is-open 归零滑入。
+   宽度变量由 .scribdown-toc-host 提供（用户拖拽后为内联覆盖值），此处仅做 fallback 兜底。 */
 .scribdown-toolbar-toc-panel {
-  --scribdown-toc-width: min(280px, 70vw);
   flex-shrink: 0;
   box-sizing: border-box;
-  width: var(--scribdown-toc-width);
+  width: var(--scribdown-toc-width, min(280px, 70vw));
   /* 关键步骤：填满外层容器高度（flex stretch 对齐 + 显式 100% 兜底），
      内部支持横向 + 纵向滚动，超长 / 超宽目录条目在面板内自滚。 */
   height: 100%;
@@ -444,13 +451,58 @@
   padding: var(--scribdown-space-4);
   /* 关键步骤：margin-left 负值占据负向布局空间收起，正文 flex:1 自然占满全宽；
      切到 0 时正文让出 var(--scribdown-toc-width)，整体平滑过渡。 */
-  margin-left: calc(-1 * var(--scribdown-toc-width));
+  margin-left: calc(-1 * var(--scribdown-toc-width, min(280px, 70vw)));
   transition: margin-left var(--scribdown-duration-base) var(--scribdown-easing-standard);
   z-index: 9001;
 }
 
 .scribdown-toolbar-toc-panel.is-open {
   margin-left: 0;
+}
+
+/* ─── 目录调宽手柄 ─────────────────────────────────────────────
+   夹在目录侧栏与正文之间的 flex item：收起态宽度为 0（随侧栏一起塌陷，正文不留空条），
+   展开态占 6px 命中区，内部 ::after 画一条居中细线，hover / 拖拽时点亮为主题强调色。 */
+.scribdown-toc-resizer {
+  position: relative;
+  flex: 0 0 auto;
+  width: 0;
+  /* 关键步骤：与侧栏 margin-left 同一时长的过渡，开合时手柄与侧栏同步进出。 */
+  transition: width var(--scribdown-duration-base) var(--scribdown-easing-standard);
+  overflow: hidden;
+  cursor: col-resize;
+  /* 收起态不可交互 / 不可聚焦命中，展开时再恢复。 */
+  pointer-events: none;
+  /* 关键步骤：拖拽为横向手势，禁用触摸端的默认横向平移，避免与页面滚动争抢。 */
+  touch-action: none;
+  z-index: 9001;
+}
+
+.scribdown-toc-resizer.is-open {
+  width: 6px;
+  pointer-events: auto;
+}
+
+.scribdown-toc-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: transparent;
+  transition: background var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+.scribdown-toc-resizer:hover::after,
+.scribdown-toc-resizer:focus-visible::after,
+.scribdown-toc-resizer.is-dragging::after {
+  background: var(--scribdown-color-accent);
+}
+
+.scribdown-toc-resizer:focus-visible {
+  outline: none;
 }
 
 /* ─── 通用细滚动条（主题色，opt-in）────────────────────────────────
