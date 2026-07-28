@@ -114,6 +114,21 @@ export const SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME = "scribdown-toolbar-current";
 export const SCRIBDOWN_TOC_HOST_CLASS_NAME = "scribdown-toc-host";
 
 /**
+ * 目录侧栏与正文之间的拖拽调宽手柄 class（flex 流中位于 TOC 与正文之间的独立 item）。
+ */
+export const SCRIBDOWN_TOC_RESIZER_CLASS_NAME = "scribdown-toc-resizer";
+
+/**
+ * 拖拽调整目录宽度期间附加到 toc-host 上的 class，用于屏蔽正文文本选中并统一光标。
+ */
+export const SCRIBDOWN_TOC_RESIZING_CLASS_NAME = "is-toc-resizing";
+
+/**
+ * 目录侧栏宽度的 CSS 自定义属性名：声明在 toc-host 上，由 TOC 自身定宽与折叠位移共用。
+ */
+export const TOC_WIDTH_CSS_VAR = "--scribdown-toc-width";
+
+/**
  * 工具栏挂载时用于包裹 container 已有内容的 wrapper class，作为 flex 流中的正文 item，与 TOC 横向并列。
  * 自身 flex:1 填满 TOC 之外的剩余宽度，并作为内部滚动层的定位上下文（position:relative）。
  */
@@ -218,3 +233,28 @@ export const SCRIBDOWN_TOOLBAR_CURRENT_TEXT_CLASS_NAME =
  * localStorage 中保存页面内容宽度的 key。
  */
 export const CONTENT_WIDTH_STORAGE_KEY = "scribdown-content-width";
+
+/**
+ * localStorage 中保存目录侧栏宽度（纯数字，单位 px）的 key。
+ */
+export const TOC_WIDTH_STORAGE_KEY = "scribdown-toc-width";
+
+/**
+ * 目录侧栏默认宽度（px），与 CSS 中 `min(280px, 70vw)` 的上限保持一致。
+ */
+export const TOC_WIDTH_DEFAULT_PX = 280;
+
+/**
+ * 目录侧栏可拖拽的最小宽度（px），低于此值目录条目已无法阅读。
+ */
+export const TOC_WIDTH_MIN_PX = 180;
+
+/**
+ * 目录侧栏可拖拽的最大宽度（px），另外还受「不超过宿主宽度 70%」约束。
+ */
+export const TOC_WIDTH_MAX_PX = 640;
+
+/**
+ * 目录侧栏宽度相对宿主容器宽度的占比上限，避免窄屏下目录挤没正文。
+ */
+export const TOC_WIDTH_MAX_HOST_RATIO = 0.7;

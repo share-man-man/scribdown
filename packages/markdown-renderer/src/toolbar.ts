@@ -15,6 +15,8 @@ import {
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
   SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME,
   SCRIBDOWN_TOC_HOST_CLASS_NAME,
+  SCRIBDOWN_TOC_RESIZER_CLASS_NAME,
+  SCRIBDOWN_TOC_RESIZING_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_BTN_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_CLASS_NAME,
   SCRIBDOWN_TOOLBAR_CURRENT_CLASS_NAME,
@@ -35,6 +37,12 @@ import {
   SCRIBDOWN_TOOLBAR_TOC_PANEL_TITLE_CLASS_NAME,
   TOC_LINK_ACTIVE_CLASS_NAME,
   TOC_LINK_CLASS_NAME,
+  TOC_WIDTH_CSS_VAR,
+  TOC_WIDTH_DEFAULT_PX,
+  TOC_WIDTH_MAX_HOST_RATIO,
+  TOC_WIDTH_MAX_PX,
+  TOC_WIDTH_MIN_PX,
+  TOC_WIDTH_STORAGE_KEY,
   setActiveLocaleFromPreference,
   t
 } from "@scribdown/shared";
@@ -100,6 +108,69 @@ function saveContentWidth(value: string): void {
  */
 function applyContentWidth(ownerDocument: Document, value: string): void {
   ownerDocument.documentElement.style.setProperty("--scribdown-content-width", value);
+}
+
+/** 键盘调整目录宽度时单次方向键的步进（px）。 */
+const TOC_RESIZE_KEYBOARD_STEP_PX = 16;
+
+/**
+ * 把目录宽度夹到合法区间：不小于 {@link TOC_WIDTH_MIN_PX}，
+ * 且不超过 {@link TOC_WIDTH_MAX_PX} 与「宿主宽度 * {@link TOC_WIDTH_MAX_HOST_RATIO}」中的较小者。
+ * 宿主宽度为 0（尚未布局 / 测试环境）时只按绝对上下限夹取。
+ * @param width 期望宽度（px）。
+ * @param hostWidth 目录宿主容器的可见宽度（px）。
+ * @returns 夹取后的宽度（px）。
+ */
+function clampTocWidth(width: number, hostWidth: number): number {
+  /** 本次生效的宽度上限：绝对上限与宿主占比上限取小。 */
+  const maxWidth =
+    hostWidth > 0
+      ? Math.min(TOC_WIDTH_MAX_PX, Math.round(hostWidth * TOC_WIDTH_MAX_HOST_RATIO))
+      : TOC_WIDTH_MAX_PX;
+  // 宿主极窄时占比上限可能低于最小宽度，先保证不小于最小宽度。
+  return Math.round(
+    Math.min(Math.max(width, TOC_WIDTH_MIN_PX), Math.max(maxWidth, TOC_WIDTH_MIN_PX))
+  );
+}
+
+/**
+ * 从 localStorage 读取已保存的目录宽度，缺失 / 非法时返回默认宽度。
+ * @returns 目录宽度（px）。
+ */
+function loadTocWidth(): number {
+  try {
+    /** localStorage 中保存的原始宽度字符串。 */
+    const raw = localStorage.getItem(TOC_WIDTH_STORAGE_KEY);
+    if (!raw) {
+      return TOC_WIDTH_DEFAULT_PX;
+    }
+    /** 解析后的数值宽度。 */
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : TOC_WIDTH_DEFAULT_PX;
+  } catch {
+    return TOC_WIDTH_DEFAULT_PX;
+  }
+}
+
+/**
+ * 将目录宽度写入 localStorage。
+ * @param width 目录宽度（px）。
+ */
+function saveTocWidth(width: number): void {
+  try {
+    localStorage.setItem(TOC_WIDTH_STORAGE_KEY, String(width));
+  } catch {
+    // localStorage 不可用时静默跳过。
+  }
+}
+
+/**
+ * 把目录宽度写到 toc-host 的 CSS 自定义属性上，侧栏定宽与折叠位移共用该变量。
+ * @param hostElement 目录宿主容器（.scribdown-toc-host）。
+ * @param width 目录宽度（px）。
+ */
+function applyTocWidth(hostElement: HTMLElement, width: number): void {
+  hostElement.style.setProperty(TOC_WIDTH_CSS_VAR, `${width}px`);
 }
 
 /**
@@ -215,6 +286,7 @@ function mountPageToolbar(
   // 移除 container 作用域内的旧实例，避免重渲染后重复挂载。
   container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_CLASS_NAME}`)?.remove();
   container.querySelector(`:scope > .${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME}`)?.remove();
+  container.querySelector(`:scope > .${SCRIBDOWN_TOC_RESIZER_CLASS_NAME}`)?.remove();
 
   // 关键步骤：把 container 已有内容包进 .scribdown-content-area > .scribdown-content-scroll，
   // 形成统一布局：container 是 flex 容器（TOC + 正文横向并列），content-area flex:1 占满剩余宽度，
@@ -271,6 +343,15 @@ function mountPageToolbar(
   // 关键步骤：目录侧栏与正文滚动层共用同一套细滚动条样式，显式 opt-in 引入。
   tocPanel.className = `${SCRIBDOWN_TOOLBAR_TOC_PANEL_CLASS_NAME} ${SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME}`;
 
+  /** 目录与正文之间的拖拽调宽手柄（flex 流中的独立 item，随侧栏一起展开 / 收起）。 */
+  const tocResizer = ownerDocument.createElement("div");
+  tocResizer.className = SCRIBDOWN_TOC_RESIZER_CLASS_NAME;
+  // 关键步骤：以 separator 语义暴露给辅助技术，并支持键盘左右方向键微调宽度。
+  tocResizer.setAttribute("role", "separator");
+  tocResizer.setAttribute("aria-orientation", "vertical");
+  tocResizer.setAttribute("aria-label", t("toolbar.tocResize"));
+  tocResizer.tabIndex = 0;
+
   const tocTitle = ownerDocument.createElement("div");
   tocTitle.className = SCRIBDOWN_TOOLBAR_TOC_PANEL_TITLE_CLASS_NAME;
 
@@ -294,6 +375,8 @@ function mountPageToolbar(
    */
   const setTocOpen = (open: boolean): void => {
     tocPanel.classList.toggle("is-open", open);
+    // 关键步骤：手柄只在展开态占位 / 可交互，收起时同步塌陷，避免正文左侧留下空条。
+    tocResizer.classList.toggle("is-open", open);
   };
 
   tocCloseBtn.addEventListener("click", (e) => {
@@ -319,6 +402,121 @@ function mountPageToolbar(
     tocPanel.appendChild(tocNavElement);
     hydrateToc(tocNavElement, scrollToHeading);
   }
+
+  // ── 目录宽度拖拽 ──
+  // 关键步骤：宽度写在 toc-host 的 CSS 变量上（侧栏定宽与折叠位移共用同一个变量），
+  // 用户拖拽结果持久化到 localStorage；窗口尺寸变化时按「宿主宽度占比上限」重新夹取，
+  // 但用户意图宽度（preferredTocWidth）保持不变，窗口变宽后可自动恢复。
+  /** 目录宿主容器（即 container，已挂上 .scribdown-toc-host）。 */
+  const tocHostElement = container as HTMLElement;
+
+  /** 用户意图宽度（px），未经宿主占比上限夹取，作为窗口缩放后的恢复基准。 */
+  let preferredTocWidth = clampTocWidth(loadTocWidth(), 0);
+
+  /**
+   * 按当前宿主宽度夹取并应用目录宽度，同时同步无障碍取值。
+   * @returns 实际生效的宽度（px）。
+   */
+  const syncTocWidth = (): number => {
+    /** 本次实际生效的宽度（px）。 */
+    const appliedWidth = clampTocWidth(preferredTocWidth, tocHostElement.clientWidth);
+    applyTocWidth(tocHostElement, appliedWidth);
+    tocResizer.setAttribute("aria-valuenow", String(appliedWidth));
+    return appliedWidth;
+  };
+
+  /**
+   * 更新用户意图宽度并立即生效。
+   * @param nextWidth 期望宽度（px）。
+   * @param persist 是否写入 localStorage（拖拽过程中传 false，结束时统一持久化）。
+   * @returns 实际生效的宽度（px）。
+   */
+  const setTocWidth = (nextWidth: number, persist: boolean): number => {
+    preferredTocWidth = clampTocWidth(nextWidth, tocHostElement.clientWidth);
+    if (persist) {
+      saveTocWidth(preferredTocWidth);
+    }
+    return syncTocWidth();
+  };
+
+  tocResizer.setAttribute("aria-valuemin", String(TOC_WIDTH_MIN_PX));
+  tocResizer.setAttribute("aria-valuemax", String(TOC_WIDTH_MAX_PX));
+  syncTocWidth();
+
+  /** 当前拖拽的 pointerId；-1 表示未处于拖拽中。 */
+  let tocDragPointerId = -1;
+  /** 拖拽起始点的视口横坐标（px）。 */
+  let tocDragStartX = 0;
+  /** 拖拽起始时的目录实际宽度（px）。 */
+  let tocDragStartWidth = 0;
+
+  /** 结束拖拽：清除拖拽态并持久化最终宽度。 */
+  const endTocDrag = (): void => {
+    if (tocDragPointerId === -1) {
+      return;
+    }
+    tocDragPointerId = -1;
+    tocResizer.classList.remove("is-dragging");
+    tocHostElement.classList.remove(SCRIBDOWN_TOC_RESIZING_CLASS_NAME);
+    saveTocWidth(preferredTocWidth);
+  };
+
+  tocResizer.addEventListener("pointerdown", (event) => {
+    // 仅响应主键（鼠标左键 / 触摸 / 笔）拖拽。
+    if (event.button !== 0) {
+      return;
+    }
+    tocDragPointerId = event.pointerId;
+    tocDragStartX = event.clientX;
+    tocDragStartWidth = syncTocWidth();
+    tocResizer.classList.add("is-dragging");
+    // 关键步骤：拖拽期间给宿主加类屏蔽正文文本选中，避免拖动时误选内容。
+    tocHostElement.classList.add(SCRIBDOWN_TOC_RESIZING_CLASS_NAME);
+    // 关键步骤：捕获指针，后续 move / up 即便移出手柄也仍派发到本元素，无需挂 document 监听。
+    tocResizer.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  });
+
+  tocResizer.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== tocDragPointerId) {
+      return;
+    }
+    event.preventDefault();
+    // 目录在左侧，指针右移即变宽，直接按位移增量计算。
+    setTocWidth(tocDragStartWidth + (event.clientX - tocDragStartX), false);
+  });
+
+  tocResizer.addEventListener("pointerup", endTocDrag);
+  tocResizer.addEventListener("pointercancel", endTocDrag);
+  tocResizer.addEventListener("lostpointercapture", endTocDrag);
+
+  // 双击手柄恢复默认宽度。
+  tocResizer.addEventListener("dblclick", () => {
+    setTocWidth(TOC_WIDTH_DEFAULT_PX, true);
+  });
+
+  tocResizer.addEventListener("keydown", (event) => {
+    // 关键步骤：可聚焦的 separator 需自行处理方向键调节；Home 恢复默认宽度。
+    if (event.key === "ArrowLeft") {
+      setTocWidth(preferredTocWidth - TOC_RESIZE_KEYBOARD_STEP_PX, true);
+    } else if (event.key === "ArrowRight") {
+      setTocWidth(preferredTocWidth + TOC_RESIZE_KEYBOARD_STEP_PX, true);
+    } else if (event.key === "Home") {
+      setTocWidth(TOC_WIDTH_DEFAULT_PX, true);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  });
+
+  /** 窗口尺寸变化时按新的宿主宽度重新夹取（用户意图宽度保持不变）。 */
+  const handleTocHostResize = (): void => {
+    syncTocWidth();
+  };
+  ownerWindow?.addEventListener("resize", handleTocHostResize, { passive: true });
+  teardownCallbacks.push(() => {
+    ownerWindow?.removeEventListener("resize", handleTocHostResize);
+  });
 
   // ── 目录按钮（工具栏第 1 个入口） ──
   /** 目录切换按钮。 */
@@ -759,6 +957,8 @@ function mountPageToolbar(
   // tocPanel 是 flex item，必须插在 contentArea 之前才能视觉上位于正文左侧。
   container.appendChild(toolbar);
   container.insertBefore(tocPanel, contentArea);
+  // 关键步骤：调宽手柄夹在目录侧栏与正文之间，作为 flex 流中的独立 item。
+  container.insertBefore(tocResizer, contentArea);
 
   // 关键步骤：登记本轮实例的统一清理函数，供下次重挂载前断开全部全局监听。
   pageToolbarTeardowns.set(container, () => {

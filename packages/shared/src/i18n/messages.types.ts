@@ -16,6 +16,8 @@ export interface Messages {
   "toolbar.tocClose": string;
   /** 目录为空时的占位文案。 */
   "toolbar.tocEmpty": string;
+  /** 目录侧栏右侧拖拽调宽手柄的 aria-label。 */
+  "toolbar.tocResize": string;
   /** 工具栏「更多」按钮。 */
   "toolbar.more": string;
   /** 「更多」菜单内「页面宽度」触发行文案。 */
