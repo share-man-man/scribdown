@@ -1,6 +1,22 @@
-import { defineConfig } from "@rspress/core";
+import { defineConfig, type UserConfig } from "@rspress/core";
 
-export default defineConfig({
+/** 主题同步组件路径：把 Rspress 的 rp-dark 同步成 Scribdown 的主题 class。 */
+const themeSyncComponentPath = new URL("./components/ThemeSync.tsx", import.meta.url).pathname;
+
+/**
+ * 站点配置类型。
+ * @rspress/core 2.0.18 里 `i18nSource` 的值类型 `I18nTextValue` 把 `zh` / `en` 声明为必填，
+ * 但运行时是按站点 `lang` 精确取键的 —— 本站 `lang` 为 `zh-CN`，只需 `zh-CN` 一个键即可生效
+ * （已验证：页面显示的是本文件的「本页内容」「搜索文档」，而非内置 zh 翻译的「目录」「搜索」）。
+ * 故在此放宽该字段的键约束，避免为满足类型而写入两份用不上的兜底文案。
+ */
+type ScribdownDocsConfig = Omit<UserConfig, "i18nSource"> & {
+  /** 主题 UI 文案覆盖：外层键为文案 ID，内层键为语言标签。 */
+  i18nSource?: Record<string, Record<string, string>>;
+};
+
+/** 文档站配置；以变量形式声明后再交给 defineConfig，沿用补齐后的类型做检查。 */
+const docsConfig: ScribdownDocsConfig = {
   root: ".",
   outDir: "dist",
   title: "Scribdown",
@@ -11,13 +27,24 @@ export default defineConfig({
   route: {
     cleanUrls: true,
     // 文档根目录即当前应用目录，排除站点配置本身，避免它被识别成路由页面。
+    // components/** 是页面组件源码、public/** 是静态资源（含渲染预览用的 Markdown fixture），
+    // 两者都不应被当成文档页生成路由。
     exclude: [
       "rspress.config.ts",
       "dist/**",
       ".rspress/**",
       "styles/**",
+      "components/**",
+      "public/**",
     ],
   },
+  // 关键步骤：以全局 UI 组件形式挂载主题同步，使明暗切换对文档正文与渲染预览页同时生效。
+  plugins: [
+    {
+      name: "scribdown-theme-sync",
+      globalUIComponents: [themeSyncComponentPath],
+    },
+  ],
   globalStyles: new URL("./styles/index.css", import.meta.url).pathname,
   i18nSource: {
     languagesText: { "zh-CN": "语言" },
@@ -92,7 +119,7 @@ export default defineConfig({
           text: "设计执行",
           items: [
             { text: "Pencil 执行规范", link: "/ui-design/pencil-guide" },
-            { text: "Markdown 样例", link: "/ui-design/markdown-fixture" },
+            { text: "渲染预览", link: "/ui-design/render-preview" },
           ],
         },
       ],
@@ -117,4 +144,6 @@ export default defineConfig({
       message: "Scribdown — 手绘风格的 Markdown 渲染器",
     },
   },
-});
+};
+
+export default defineConfig(docsConfig);

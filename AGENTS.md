@@ -10,8 +10,7 @@ Scribdown 提供统一的 Markdown 渲染体验，覆盖浏览器插件与 VS Co
 .
 ├── apps/
 │   ├── browser-extension/        # 浏览器插件（React + Vite）
-│   ├── docs/                     # VitePress 文档站点
-│   ├── markdown-fixture-preview/ # 渲染预览沙盒
+│   ├── docs/                     # Rspress 文档站点（含渲染预览页）
 │   └── vscode-extension/         # VS Code 预览插件
 ├── packages/
 │   ├── markdown-renderer/        # Markdown → HTML 渲染核心
@@ -31,14 +30,12 @@ Scribdown 提供统一的 Markdown 渲染体验，覆盖浏览器插件与 VS Co
 ## 常用命令
 
 ```bash
-pnpm run dev            # 一键启动（packages watch + apps dev）
-pnpm run dev:packages   # 仅 packages/tools watch
-pnpm run dev:apps       # 仅 apps dev
+pnpm run dev            # 并行启动所有 apps dev
 pnpm run build          # 全工作区构建
 pnpm run e2e            # Playwright E2E（首次需 pnpm exec playwright install）
 ```
 
-> **首次 `dev` 前**需先 `pnpm run build`，让各 `packages/*` 生成 `dist`。其余脚本（`lint` / `format` / `typecheck` / `test` / `clean` / `changeset` / `version-packages` / `release`）见根 `package.json`。
+> `packages/*` 为 Just-in-Time 内部包，`exports` 直接指向 `src` 的 TS/CSS 源码，无构建步骤；`dev` 可直接启动，无需先 `build`。其余脚本（`lint` / `format` / `typecheck` / `test` / `clean` / `changeset` / `version-packages` / `release`）见根 `package.json`。
 
 ## 架构约束
 
@@ -49,4 +46,8 @@ pnpm run e2e            # Playwright E2E（首次需 pnpm exec playwright instal
 
 ## UI 验证约定
 
-改动可能影响渲染效果时，进入 http://127.0.0.1:9175，如果没有启动，则在根目录执行 `pnpm run dev` 启动验证。
+改动可能影响渲染效果时，进入文档站的渲染预览页 http://127.0.0.1:9174/scribdown/ui-design/render-preview，
+如果没有启动，则在根目录执行 `pnpm run dev` 启动验证。
+
+> 该页用真实渲染器（`@scribdown/markdown-renderer`）渲染 `apps/docs/public/fixtures/markdown-fixture.md`，
+> 与浏览器插件 / VS Code Webview 走同一条渲染链路；改动 `packages/*` 源码后由 dev server 直接热更新。

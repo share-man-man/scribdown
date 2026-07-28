@@ -17,4 +17,4 @@
 - 视觉基线：[../apps/docs/ui-design/overview.md#视觉基线](../apps/docs/ui-design/overview.md#视觉基线)
 - 组件规范：[../apps/docs/ui-design/components.md](../apps/docs/ui-design/components.md)
 - Pencil 执行规范：[../apps/docs/ui-design/pencil-guide.md](../apps/docs/ui-design/pencil-guide.md)
-- Markdown 样例：[../apps/docs/ui-design/markdown-fixture.md](../apps/docs/ui-design/markdown-fixture.md)
+- Markdown 样例：[../apps/docs/public/fixtures/markdown-fixture.md](../apps/docs/public/fixtures/markdown-fixture.md)
