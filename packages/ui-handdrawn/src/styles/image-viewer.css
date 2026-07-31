@@ -1,5 +1,11 @@
 /* ImageViewer：运行时注入的全图查看层，支持按钮和快捷键缩放。 */
 .scribdown-image-viewer {
+  /* 与 Mermaid 共用控件样式，仅由宿主决定全屏按钮尺寸。 */
+  --scribdown-viewer-control-size: 36px;
+  --scribdown-viewer-control-font-size: 16px;
+  --scribdown-viewer-zoom-value-min-width: 56px;
+  --scribdown-viewer-zoom-value-font-size: 14px;
+
   width: 100vw;
   max-width: none;
   height: 100dvh;
@@ -84,67 +90,12 @@
   gap: var(--scribdown-space-2);
 }
 
-.scribdown-image-viewer__button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 72%, transparent);
-  border-radius: 8px 10px 9px 11px;
-  background: color-mix(
-    in srgb,
-    var(--scribdown-color-surface) 88%,
-    var(--scribdown-color-mark) 12%
-  );
-  box-shadow: var(--scribdown-shadow-sm);
-  color: var(--scribdown-color-text-primary);
-  cursor: pointer;
-  font-family: var(--scribdown-font-code);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.scribdown-image-viewer__button:hover {
-  background: color-mix(
-    in srgb,
-    var(--scribdown-color-surface) 78%,
-    var(--scribdown-color-mark) 22%
-  );
-}
-
-.scribdown-image-viewer__button:focus-visible {
-  outline: 2px solid var(--scribdown-color-accent);
-  outline-offset: 3px;
-}
-
-.scribdown-image-viewer__button:disabled {
-  box-shadow: none;
-  cursor: default;
-  opacity: 0.46;
-}
-
 .scribdown-image-viewer__button--close {
   background: color-mix(
     in srgb,
     var(--scribdown-color-surface) 82%,
     var(--scribdown-color-danger) 18%
   );
-}
-
-.scribdown-image-viewer__zoom-value {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  height: 36px;
-  color: var(--scribdown-color-text-primary);
-  font-family: var(--scribdown-font-code);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .scribdown-image-viewer__viewport {
@@ -197,9 +148,8 @@
     width: 100%;
   }
 
-  .scribdown-image-viewer__button {
-    width: 34px;
-    height: 34px;
+  .scribdown-image-viewer {
+    --scribdown-viewer-control-size: 34px;
   }
 
   .scribdown-image-viewer__hint {

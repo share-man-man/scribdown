@@ -18,8 +18,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--scribdown-space-2);
   padding: 6px 12px;
-  background: color-mix(in srgb, var(--scribdown-color-surface) 90%, var(--scribdown-color-border) 10%);
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 90%,
+    var(--scribdown-color-border) 10%
+  );
   border-bottom: 1px dashed color-mix(in srgb, var(--scribdown-color-border) 60%, transparent);
 }
 
@@ -32,11 +37,25 @@
   text-transform: uppercase;
 }
 
+.scribdown-markdown .scribdown-mermaid__controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.scribdown-markdown .scribdown-mermaid__controls::-webkit-scrollbar {
+  display: none;
+}
+
 .scribdown-markdown .scribdown-mermaid__body {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: safe center;
+  justify-content: safe center;
   /* 给 body 一个确定高度，使内部 canvas 的 height:100% 能解析，
      从而让 SVG 的 max-height:100% 触发等比缩放，避免极端长宽比图表被压成一条。 */
   height: clamp(280px, 50vh, 480px);
@@ -48,47 +67,13 @@
   background-size:
     32px 29px,
     auto;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
-/* 右下角悬浮全屏按钮：默认轻量呈现，hover 后增强对比。 */
+/* 全屏按钮沿用工具按钮尺寸，图标跟随 currentColor。 */
 .scribdown-markdown .scribdown-mermaid__fullscreen {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 70%, transparent);
-  border-radius: 8px 10px 9px 11px;
-  background: color-mix(in srgb, var(--scribdown-color-surface) 92%, transparent);
-  color: var(--scribdown-color-text-primary);
-  cursor: pointer;
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--scribdown-color-border) 40%, transparent);
-  opacity: 0.75;
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease;
-}
-
-.scribdown-markdown .scribdown-mermaid__fullscreen:hover {
-  opacity: 1;
-  transform: translateY(-1px);
-  background: color-mix(in srgb, var(--scribdown-color-surface) 80%, var(--scribdown-color-mark) 20%);
-}
-
-.scribdown-markdown .scribdown-mermaid__fullscreen:focus-visible {
-  outline: 2px solid var(--scribdown-color-accent);
-  outline-offset: 2px;
-}
-
-.scribdown-markdown .scribdown-mermaid__fullscreen:disabled {
-  cursor: default;
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0.82;
 }
 
 .scribdown-markdown .scribdown-mermaid__fullscreen svg {
@@ -96,22 +81,32 @@
 }
 
 .scribdown-markdown .scribdown-mermaid__canvas {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+  display: block;
+  flex: 0 0 auto;
+  user-select: text;
 }
 
-/* SVG 用 max-width/max-height 100% + auto 让浏览器按 viewBox 等比缩放，
-   总有一边贴合 canvas 边缘，保证整图可见；细节由右下角全屏查看器提供。 */
+/* SVG 尺寸由运行时 canvas 统一控制，选择模式下保留文本选择能力。 */
 .scribdown-markdown .scribdown-mermaid__canvas svg {
   display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.scribdown-markdown .scribdown-mermaid--drag-mode .scribdown-mermaid__body {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.scribdown-markdown .scribdown-mermaid--dragging .scribdown-mermaid__body {
+  cursor: grabbing;
+}
+
+.scribdown-markdown .scribdown-mermaid--dragging .scribdown-mermaid__canvas {
+  pointer-events: none;
 }
 
 /* Loading 态：画布尚未填充 SVG 时的占位脉冲。 */
@@ -119,14 +114,13 @@
   width: 100%;
   min-height: 180px;
   border-radius: 6px;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      color-mix(in srgb, var(--scribdown-color-border) 22%, transparent),
-      color-mix(in srgb, var(--scribdown-color-border) 22%, transparent) 8px,
-      transparent 8px,
-      transparent 16px
-    );
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--scribdown-color-border) 22%, transparent),
+    color-mix(in srgb, var(--scribdown-color-border) 22%, transparent) 8px,
+    transparent 8px,
+    transparent 16px
+  );
   opacity: 0.6;
   animation: scribdown-mermaid-loading 1.6s linear infinite;
 }
@@ -165,7 +159,11 @@
   width: 52px;
   height: 52px;
   border: 2px solid var(--scribdown-color-text-primary);
-  background: color-mix(in srgb, var(--scribdown-color-surface) 80%, var(--scribdown-color-warning) 12%);
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 80%,
+    var(--scribdown-color-warning) 12%
+  );
   transform: rotate(-2deg);
 }
 
@@ -203,7 +201,11 @@
   max-width: 100%;
   margin: 0;
   padding: 8px 12px;
-  background: color-mix(in srgb, var(--scribdown-color-surface) 86%, var(--scribdown-color-border) 14%);
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 86%,
+    var(--scribdown-color-border) 14%
+  );
   border-radius: 6px;
   color: var(--scribdown-color-text-secondary);
   font-family: var(--scribdown-font-code);
@@ -216,6 +218,12 @@
 
 /* MermaidViewer：mermaid 全屏查看器，与图片查看器并列，整体风格保持一致。 */
 .scribdown-mermaid-viewer {
+  /* 与行内 Mermaid 共用控件样式，仅通过变量放大全屏触控尺寸。 */
+  --scribdown-viewer-control-size: 36px;
+  --scribdown-viewer-control-font-size: 16px;
+  --scribdown-viewer-zoom-value-min-width: 56px;
+  --scribdown-viewer-zoom-value-font-size: 14px;
+
   width: 100vw;
   max-width: none;
   height: 100dvh;
@@ -284,67 +292,12 @@
   gap: var(--scribdown-space-2);
 }
 
-.scribdown-mermaid-viewer__button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 72%, transparent);
-  border-radius: 8px 10px 9px 11px;
-  background: color-mix(
-    in srgb,
-    var(--scribdown-color-surface) 88%,
-    var(--scribdown-color-mark) 12%
-  );
-  box-shadow: var(--scribdown-shadow-sm);
-  color: var(--scribdown-color-text-primary);
-  cursor: pointer;
-  font-family: var(--scribdown-font-code);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.scribdown-mermaid-viewer__button:hover {
-  background: color-mix(
-    in srgb,
-    var(--scribdown-color-surface) 78%,
-    var(--scribdown-color-mark) 22%
-  );
-}
-
-.scribdown-mermaid-viewer__button:focus-visible {
-  outline: 2px solid var(--scribdown-color-accent);
-  outline-offset: 3px;
-}
-
-.scribdown-mermaid-viewer__button:disabled {
-  box-shadow: none;
-  cursor: default;
-  opacity: 0.46;
-}
-
 .scribdown-mermaid-viewer__button--close {
   background: color-mix(
     in srgb,
     var(--scribdown-color-surface) 82%,
     var(--scribdown-color-danger) 18%
   );
-}
-
-.scribdown-mermaid-viewer__zoom-value {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  height: 36px;
-  color: var(--scribdown-color-text-primary);
-  font-family: var(--scribdown-font-code);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .scribdown-mermaid-viewer__viewport {
@@ -356,17 +309,18 @@
   padding: var(--scribdown-space-5);
   overflow: auto;
   overscroll-behavior: contain;
-  touch-action: none;
+  touch-action: auto;
 }
 
-.scribdown-mermaid-viewer--zoomed .scribdown-mermaid-viewer__viewport {
+.scribdown-mermaid-viewer--drag-mode .scribdown-mermaid-viewer__viewport {
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
-.scribdown-mermaid-viewer--zoomed.scribdown-mermaid-viewer--dragging
+.scribdown-mermaid-viewer--drag-mode.scribdown-mermaid-viewer--dragging
   .scribdown-mermaid-viewer__viewport {
   cursor: grabbing;
-  user-select: none;
 }
 
 .scribdown-mermaid-viewer__canvas {
@@ -375,6 +329,10 @@
   background: var(--scribdown-color-surface);
   border-radius: 6px 7px 5px 6px;
   box-shadow: 6px 8px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 26%, transparent);
+  user-select: text;
+}
+
+.scribdown-mermaid-viewer--drag-mode .scribdown-mermaid-viewer__canvas {
   user-select: none;
 }
 
@@ -394,9 +352,8 @@
     width: 100%;
   }
 
-  .scribdown-mermaid-viewer__button {
-    width: 34px;
-    height: 34px;
+  .scribdown-mermaid-viewer {
+    --scribdown-viewer-control-size: 34px;
   }
 
   .scribdown-mermaid-viewer__viewport {

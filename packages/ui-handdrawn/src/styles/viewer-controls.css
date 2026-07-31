@@ -1,0 +1,96 @@
+/* 图片 / Mermaid 查看器共用的顶部按钮与缩放按钮组。 */
+.scribdown-viewer-control-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--scribdown-viewer-control-size, 28px);
+  height: var(--scribdown-viewer-control-size, 28px);
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 58%, transparent);
+  border-radius: 7px 9px 8px 10px;
+  background: color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-color-border) 32%, transparent);
+  color: var(--scribdown-color-text-primary);
+  cursor: pointer;
+  font-family: var(--scribdown-font-code);
+  font-size: var(--scribdown-viewer-control-font-size, 13px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scribdown-viewer-control-button svg {
+  pointer-events: none;
+}
+
+.scribdown-viewer-control-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 76%,
+    var(--scribdown-color-mark) 24%
+  );
+}
+
+.scribdown-viewer-control-button:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 2px;
+}
+
+.scribdown-viewer-control-button:disabled {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.42;
+}
+
+.scribdown-viewer-zoom-group {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--scribdown-color-border) 64%, transparent);
+  border-radius: 8px 10px 9px 11px;
+  background: color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-color-border) 32%, transparent);
+}
+
+.scribdown-viewer-zoom-group .scribdown-viewer-control-button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.scribdown-viewer-zoom-group .scribdown-viewer-control-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 76%,
+    var(--scribdown-color-mark) 24%
+  );
+}
+
+.scribdown-viewer-zoom-group .scribdown-viewer-control-button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline-offset: -2px;
+}
+
+.scribdown-viewer-zoom-value {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--scribdown-viewer-zoom-value-min-width, 42px);
+  height: var(--scribdown-viewer-control-size, 28px);
+  border-right: 1px solid color-mix(in srgb, var(--scribdown-color-border) 48%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--scribdown-color-border) 48%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 94%,
+    var(--scribdown-color-border) 6%
+  );
+  color: color-mix(in srgb, var(--scribdown-color-text-primary) 78%, transparent);
+  font-family: var(--scribdown-font-code);
+  font-size: var(--scribdown-viewer-zoom-value-font-size, 12px);
+  font-weight: 700;
+}
