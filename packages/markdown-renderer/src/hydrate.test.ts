@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { getActiveLocale, LocalePreference, LocaleType, setActiveLocale } from "@scribdown/shared";
 
 import { hydrateMarkdown, mountMarkdownToolbar, renderMarkdown } from "./index";
+import { serializeMarkdownTableAsTsv } from "./syntax/tables";
 
 // 固定为简体中文：本文件断言的复制按钮 / 图片查看器等 UI 文案与中文测试内容配套。
 beforeAll(() => {
@@ -85,6 +86,52 @@ describe("hydrateMarkdown", () => {
     // detached 容器上不启动真实渲染（等待进入 live DOM 后再触发）。
     expect(figureElement?.dataset.scribdownMermaidRenderStarted).toBeUndefined();
     expect(container.querySelector("pre > code.language-mermaid")).toBeNull();
+
+    // 非全屏工具组包含模式、缩放、复制与全屏入口；加载阶段仅源码复制可用。
+    const controlsElement = figureElement?.querySelector(".scribdown-mermaid__controls");
+    expect(controlsElement).not.toBeNull();
+    expect(
+      controlsElement
+        ?.querySelector("button[aria-label='切换为拖拽模式']")
+        ?.hasAttribute("disabled")
+    ).toBe(true);
+    // 缩小、比例和放大应组成一个具备语义的连体按钮组。
+    const zoomGroupElement = controlsElement?.querySelector(
+      "[role='group'].scribdown-mermaid__zoom-group"
+    );
+    expect(zoomGroupElement).not.toBeNull();
+    expect(controlsElement?.querySelector("button[aria-label='缩小图表']")).not.toBeNull();
+    expect(zoomGroupElement?.querySelector(".scribdown-mermaid__zoom-value")?.textContent).toBe(
+      "100%"
+    );
+    expect(zoomGroupElement?.querySelector("button[aria-label='放大图表']")).not.toBeNull();
+    expect(controlsElement?.querySelector("button[aria-label='重置缩放'] svg")).not.toBeNull();
+    expect(controlsElement?.querySelector("button[aria-label='复制内容']")).not.toBeNull();
+    expect(controlsElement?.querySelector("button[aria-label='全屏查看图表']")).not.toBeNull();
+  });
+
+  it("wraps tables with a copy button and serializes cell text as TSV", async () => {
+    // 输入 Markdown 覆盖表头与两行数据。
+    const container = await renderAndHydrate(
+      ["| 名称 | 状态 |", "| --- | --- |", "| Mermaid | ready |", "| Table | stable |"].join("\n")
+    );
+
+    // 表格被包进交互壳层，并提供本地化复制入口。
+    const wrapperElement = container.querySelector(".scribdown-table");
+    const tableElement = wrapperElement?.querySelector<HTMLTableElement>(":scope > table");
+    const copyButtonElement = wrapperElement?.querySelector<HTMLButtonElement>(
+      "button.scribdown-table__copy"
+    );
+    expect(wrapperElement).not.toBeNull();
+    expect(copyButtonElement?.getAttribute("aria-label")).toBe("复制表格");
+    expect(tableElement ? serializeMarkdownTableAsTsv(tableElement) : "").toBe(
+      ["名称\t状态", "Mermaid\tready", "Table\tstable"].join("\n")
+    );
+
+    // 重复 hydrate 不产生嵌套壳层或重复按钮。
+    hydrateMarkdown(container, { scrollToHeading: () => {} });
+    expect(container.querySelectorAll(".scribdown-table")).toHaveLength(1);
+    expect(container.querySelectorAll("button.scribdown-table__copy")).toHaveLength(1);
   });
 
   it("binds toc toggle collapse and injected heading scroll", async () => {

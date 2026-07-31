@@ -204,6 +204,23 @@ export const VIDEO_FALLBACK_TEXT_CLASS_NAME = "scribdown-video-fallback-text";
  */
 export const VIDEO_FALLBACK_SOURCE_CLASS_NAME = "scribdown-video-fallback-source";
 
+// ─── 媒体查看器共用控件 ───
+
+/**
+ * 图片 / Mermaid 查看器共用按钮类名。
+ */
+export const VIEWER_CONTROL_BUTTON_CLASS_NAME = "scribdown-viewer-control-button";
+
+/**
+ * 图片 / Mermaid 查看器共用缩放按钮组类名。
+ */
+export const VIEWER_ZOOM_GROUP_CLASS_NAME = "scribdown-viewer-zoom-group";
+
+/**
+ * 图片 / Mermaid 查看器共用缩放比例类名。
+ */
+export const VIEWER_ZOOM_VALUE_CLASS_NAME = "scribdown-viewer-zoom-value";
+
 // ─── 图片全图查看器 ───
 
 /**
@@ -328,6 +345,28 @@ export const CODE_BLOCK_GUTTER_CLASS_NAME = "scribdown-code-block__gutter";
  */
 export const CODE_BLOCK_GUTTER_LINE_CLASS_NAME = "scribdown-code-block__gutter-line";
 
+// ─── 通用复制按钮 ───
+
+/**
+ * Markdown 内容复制按钮类名。
+ */
+export const CONTENT_COPY_BUTTON_CLASS_NAME = "scribdown-copy-button";
+
+/**
+ * Markdown 内容复制按钮图标类名。
+ */
+export const CONTENT_COPY_ICON_CLASS_NAME = "scribdown-copy-button__icon";
+
+/**
+ * Markdown 内容复制按钮默认图标类名。
+ */
+export const CONTENT_COPY_ICON_COPY_CLASS_NAME = "scribdown-copy-button__icon--copy";
+
+/**
+ * Markdown 内容复制按钮成功图标类名。
+ */
+export const CONTENT_COPY_ICON_CHECK_CLASS_NAME = "scribdown-copy-button__icon--check";
+
 // ─── Mermaid 图表 ───
 
 /**
@@ -395,6 +434,36 @@ export const MERMAID_FIGURE_LOADED_CLASS_NAME = "scribdown-mermaid--loaded";
  */
 export const MERMAID_FULLSCREEN_BUTTON_CLASS_NAME = "scribdown-mermaid__fullscreen";
 
+/**
+ * Mermaid 非全屏工具组类名。
+ */
+export const MERMAID_CONTROLS_CLASS_NAME = "scribdown-mermaid__controls";
+
+/**
+ * Mermaid 非全屏缩放按钮组类名。
+ */
+export const MERMAID_ZOOM_GROUP_CLASS_NAME = "scribdown-mermaid__zoom-group";
+
+/**
+ * Mermaid 非全屏工具按钮类名。
+ */
+export const MERMAID_CONTROL_BUTTON_CLASS_NAME = "scribdown-mermaid__control-button";
+
+/**
+ * Mermaid 非全屏缩放百分比类名。
+ */
+export const MERMAID_ZOOM_VALUE_CLASS_NAME = "scribdown-mermaid__zoom-value";
+
+/**
+ * Mermaid 非全屏拖拽模式类名。
+ */
+export const MERMAID_DRAG_MODE_CLASS_NAME = "scribdown-mermaid--drag-mode";
+
+/**
+ * Mermaid 非全屏拖拽中类名。
+ */
+export const MERMAID_DRAGGING_CLASS_NAME = "scribdown-mermaid--dragging";
+
 // ─── Mermaid 全屏查看器 ───
 
 /**
@@ -406,6 +475,11 @@ export const MERMAID_VIEWER_DIALOG_CLASS_NAME = "scribdown-mermaid-viewer";
  * Mermaid 全屏查看器缩放进行中状态类名。
  */
 export const MERMAID_VIEWER_ZOOMED_CLASS_NAME = "scribdown-mermaid-viewer--zoomed";
+
+/**
+ * Mermaid 全屏查看器拖拽模式类名。
+ */
+export const MERMAID_VIEWER_DRAG_MODE_CLASS_NAME = "scribdown-mermaid-viewer--drag-mode";
 
 /**
  * Mermaid 全屏查看器拖拽中状态类名。
@@ -451,3 +525,15 @@ export const MERMAID_VIEWER_CANVAS_CLASS_NAME = "scribdown-mermaid-viewer__canva
  * Mermaid 全屏查看器缩放百分比文本类名。
  */
 export const MERMAID_VIEWER_ZOOM_VALUE_CLASS_NAME = "scribdown-mermaid-viewer__zoom-value";
+
+// ─── 表格交互 ───
+
+/**
+ * 表格交互壳层类名。
+ */
+export const TABLE_WRAPPER_CLASS_NAME = "scribdown-table";
+
+/**
+ * 表格复制按钮修饰类名。
+ */
+export const TABLE_COPY_BUTTON_CLASS_NAME = "scribdown-table__copy";

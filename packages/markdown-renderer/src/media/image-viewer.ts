@@ -21,19 +21,20 @@ import {
 } from "@scribdown/shared";
 
 import {
+  createMarkdownViewerControlButton,
+  createMarkdownViewerZoomControls,
+  VIEWER_RESET_ZOOM_ICON_SVG
+} from "../core/viewer-controls";
+import {
   VIEWER_CLOSE_TEXT,
   VIEWER_DEFAULT_ZOOM,
   VIEWER_FIT_RATIO,
   VIEWER_MAX_ZOOM,
   VIEWER_MIN_ZOOM,
-  VIEWER_RESET_TEXT,
   VIEWER_WHEEL_ZOOM_FACTOR,
   VIEWER_WHEEL_ZOOM_MAX_DELTA,
-  VIEWER_ZOOM_IN_TEXT,
-  VIEWER_ZOOM_OUT_TEXT,
   VIEWER_ZOOM_STEP,
   clampMarkdownViewerZoom,
-  type MarkdownViewerButtonOptions,
   type MarkdownViewerFocalPoint,
   type MarkdownViewerZoomAnchor
 } from "../core/viewer-shared";
@@ -221,29 +222,37 @@ function createMarkdownImageViewerState(ownerDocument: Document): MarkdownImageV
   const hintElement = ownerDocument.createElement("p");
   // 图片查看器按钮区域。
   const controlsElement = ownerDocument.createElement("div");
-  // 缩小按钮。
-  const zoomOutButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: t("image.zoomOut"),
-    text: VIEWER_ZOOM_OUT_TEXT
-  });
-  // 当前缩放比例文本。
-  const zoomValueElement = ownerDocument.createElement("span");
-  // 放大按钮。
-  const zoomInButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: t("image.zoomIn"),
-    text: VIEWER_ZOOM_IN_TEXT
-  });
+  // 共用缩放按钮组及子节点。
+  const {
+    groupElement: zoomGroupElement,
+    zoomOutButtonElement,
+    zoomValueElement,
+    zoomInButtonElement
+  } = createMarkdownViewerZoomControls(
+    ownerDocument,
+    {
+      group: t("image.zoomControls"),
+      zoomOut: t("image.zoomOut"),
+      zoomIn: t("image.zoomIn")
+    },
+    [],
+    [IMAGE_VIEWER_BUTTON_CLASS_NAME],
+    [IMAGE_VIEWER_ZOOM_VALUE_CLASS_NAME]
+  );
   // 重置缩放按钮。
-  const resetButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: t("image.zoomReset"),
-    text: VIEWER_RESET_TEXT
-  });
+  const resetButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("image.zoomReset"),
+    VIEWER_RESET_ZOOM_ICON_SVG,
+    [IMAGE_VIEWER_BUTTON_CLASS_NAME]
+  );
   // 关闭按钮。
-  const closeButtonElement = createMarkdownImageViewerButton(ownerDocument, {
-    ariaLabel: t("image.close"),
-    className: IMAGE_VIEWER_CLOSE_BUTTON_CLASS_NAME,
-    text: VIEWER_CLOSE_TEXT
-  });
+  const closeButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("image.close"),
+    VIEWER_CLOSE_TEXT,
+    [IMAGE_VIEWER_BUTTON_CLASS_NAME, IMAGE_VIEWER_CLOSE_BUTTON_CLASS_NAME]
+  );
   // 图片滚动视口。
   const viewportElement = ownerDocument.createElement("div");
   // 查看器内展示的图片。
@@ -281,19 +290,12 @@ function createMarkdownImageViewerState(ownerDocument: Document): MarkdownImageV
   hintElement.className = IMAGE_VIEWER_HINT_CLASS_NAME;
   hintElement.textContent = t("image.hint");
   controlsElement.className = IMAGE_VIEWER_CONTROLS_CLASS_NAME;
-  zoomValueElement.className = IMAGE_VIEWER_ZOOM_VALUE_CLASS_NAME;
   viewportElement.className = IMAGE_VIEWER_VIEWPORT_CLASS_NAME;
   imageElement.className = IMAGE_VIEWER_IMAGE_CLASS_NAME;
   imageElement.decoding = "async";
 
   imageViewerStateByDialogElement.set(dialogElement, viewerState);
-  controlsElement.append(
-    zoomOutButtonElement,
-    zoomValueElement,
-    zoomInButtonElement,
-    resetButtonElement,
-    closeButtonElement
-  );
+  controlsElement.append(zoomGroupElement, resetButtonElement, closeButtonElement);
   captionGroupElement.append(captionElement, hintElement);
   chromeElement.append(captionGroupElement, controlsElement);
   viewportElement.append(imageElement);
@@ -322,29 +324,6 @@ function createMarkdownImageViewerState(ownerDocument: Document): MarkdownImageV
   updateMarkdownImageViewerZoom(viewerState, VIEWER_DEFAULT_ZOOM);
 
   return viewerState;
-}
-
-/**
- * 创建图片查看器按钮。
- * @param ownerDocument 按钮所在 document。
- * @param options 按钮文本、可访问名称和修饰类。
- * @returns 图片查看器按钮元素。
- */
-function createMarkdownImageViewerButton(
-  ownerDocument: Document,
-  options: MarkdownViewerButtonOptions
-): HTMLButtonElement {
-  // 图片查看器按钮元素。
-  const buttonElement = ownerDocument.createElement("button");
-
-  buttonElement.type = "button";
-  buttonElement.className = options.className
-    ? `${IMAGE_VIEWER_BUTTON_CLASS_NAME} ${options.className}`
-    : IMAGE_VIEWER_BUTTON_CLASS_NAME;
-  buttonElement.textContent = options.text;
-  buttonElement.setAttribute("aria-label", options.ariaLabel);
-
-  return buttonElement;
 }
 
 /**

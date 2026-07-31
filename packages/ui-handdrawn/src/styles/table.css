@@ -54,6 +54,69 @@
   box-shadow: none;
 }
 
+/* 表格交互壳层：复制按钮固定在右上角，不随表格横向滚动。 */
+.scribdown-markdown .scribdown-table {
+  --scribdown-table-ink-token: var(--scribdown-color-accent);
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 0 var(--scribdown-space-3);
+}
+
+.scribdown-markdown .scribdown-table > table {
+  margin: 0;
+}
+
+/* 为右上角复制按钮预留首行末列空间，避免遮住表头内容。 */
+.scribdown-markdown
+  .scribdown-table
+  > table
+  > :is(thead, tbody, tfoot)
+  > tr:first-child
+  > *:last-child,
+.scribdown-markdown .scribdown-table > table > tr:first-child > *:last-child {
+  padding-right: 52px;
+}
+
+.scribdown-markdown .scribdown-table__copy {
+  position: absolute;
+  z-index: 4;
+  top: 7px;
+  right: 8px;
+  opacity: 0;
+  background: color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-table-ink-token) 34%, transparent);
+  color: var(--scribdown-table-ink-token);
+  pointer-events: none;
+  transition:
+    opacity var(--scribdown-duration-fast) var(--scribdown-easing-standard),
+    background var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+/* 鼠标进入表格或键盘焦点进入壳层时展示；复制反馈期间保持可见。 */
+.scribdown-markdown .scribdown-table:hover > .scribdown-table__copy,
+.scribdown-markdown .scribdown-table:focus-within > .scribdown-table__copy,
+.scribdown-markdown .scribdown-table > .scribdown-table__copy[data-scribdown-copied="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scribdown-markdown .scribdown-table__copy:hover {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-surface) 72%,
+    var(--scribdown-table-ink-token) 16%
+  );
+}
+
+/* 无 hover 能力的触屏设备始终展示入口，避免复制能力不可发现。 */
+@media (hover: none) {
+  .scribdown-markdown .scribdown-table__copy {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 /* 关键步骤：表格外框复用代码块同款边条结构。 */
 .scribdown-markdown table::after {
   content: "";
@@ -72,10 +135,8 @@
     right -1px top 0px;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    var(--scribdown-table-border-tile-horizontal),
-    var(--scribdown-table-border-tile-horizontal),
-    var(--scribdown-table-border-tile-vertical),
-    var(--scribdown-table-border-tile-vertical);
+    var(--scribdown-table-border-tile-horizontal), var(--scribdown-table-border-tile-horizontal),
+    var(--scribdown-table-border-tile-vertical), var(--scribdown-table-border-tile-vertical);
 }
 
 .scribdown-markdown th,
@@ -228,10 +289,8 @@
       right top;
     -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     -webkit-mask-size:
-      var(--scribdown-table-border-tile-horizontal),
-      var(--scribdown-table-border-tile-horizontal),
-      var(--scribdown-table-border-tile-vertical),
-      var(--scribdown-table-border-tile-vertical);
+      var(--scribdown-table-border-tile-horizontal), var(--scribdown-table-border-tile-horizontal),
+      var(--scribdown-table-border-tile-vertical), var(--scribdown-table-border-tile-vertical);
     -webkit-mask-mode: alpha, alpha, alpha, alpha;
     mask-image:
       var(--scribdown-rough-line-shadow-horizontal), var(--scribdown-rough-line-shadow-horizontal),
@@ -243,10 +302,8 @@
       right -1px top 0px;
     mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     mask-size:
-      var(--scribdown-table-border-tile-horizontal),
-      var(--scribdown-table-border-tile-horizontal),
-      var(--scribdown-table-border-tile-vertical),
-      var(--scribdown-table-border-tile-vertical);
+      var(--scribdown-table-border-tile-horizontal), var(--scribdown-table-border-tile-horizontal),
+      var(--scribdown-table-border-tile-vertical), var(--scribdown-table-border-tile-vertical);
     mask-mode: alpha, alpha, alpha, alpha;
   }
 }

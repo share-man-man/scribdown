@@ -57,6 +57,12 @@ export interface Messages {
   /** 代码块复制按钮 aria-label（已复制态）。 */
   "code.copied": string;
 
+  // ─── 通用内容复制按钮（core/copy-control.ts）───
+  /** 通用内容复制按钮 aria-label。 */
+  "content.copy": string;
+  /** 通用内容复制成功态 aria-label。 */
+  "content.copied": string;
+
   // ─── Mermaid 图表与全屏查看器（code/mermaid.ts、code/mermaid-viewer.ts）───
   /** Mermaid 渲染失败占位文案。 */
   "mermaid.renderFailed": string;
@@ -70,8 +76,18 @@ export interface Messages {
   "mermaid.zoomOut": string;
   /** Mermaid 全屏查看器重置缩放按钮 aria-label。 */
   "mermaid.zoomReset": string;
+  /** Mermaid 非全屏缩放按钮组 aria-label。 */
+  "mermaid.zoomControls": string;
+  /** Mermaid 非全屏切换到拖拽模式按钮 aria-label。 */
+  "mermaid.switchToDrag": string;
+  /** Mermaid 非全屏切换到选择模式按钮 aria-label。 */
+  "mermaid.switchToSelect": string;
   /** Mermaid 全屏查看器关闭按钮 aria-label。 */
   "mermaid.close": string;
+
+  // ─── 表格交互（syntax/tables.ts）───
+  /** 表格复制按钮 aria-label。 */
+  "table.copy": string;
 
   // ─── 图片查看器（media/images.ts、media/image-viewer.ts）───
   /** 图片查看器无标题时的兜底 aria-label。 */
@@ -88,6 +104,8 @@ export interface Messages {
   "image.zoomOut": string;
   /** 图片查看器重置缩放按钮 aria-label。 */
   "image.zoomReset": string;
+  /** 图片查看器缩放按钮组 aria-label。 */
+  "image.zoomControls": string;
   /** 图片查看器关闭按钮 aria-label。 */
   "image.close": string;
 

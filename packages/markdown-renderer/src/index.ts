@@ -25,6 +25,7 @@ import { remarkDefinitionLists } from "./syntax/definition-lists";
 import { rehypeFrameClass } from "./syntax/frame";
 import { remarkFrontmatterMetadata } from "./syntax/frontmatter";
 import { remarkHighlightMark } from "./syntax/highlight-mark";
+import { hydrateMarkdownTables } from "./syntax/tables";
 import { hydrateToc, remarkTableOfContents } from "./syntax/toc";
 import { applyContentWidth, loadContentWidth, mountPageToolbar } from "./toolbar";
 
@@ -120,6 +121,7 @@ export function hydrateMarkdown(
   // 关键步骤：mermaid 必须先于代码块 hydrate，避免被通用 code chrome 包装。
   hydrateMermaidBlocks(rootElement);
   hydrateCodeBlocks(rootElement);
+  hydrateMarkdownTables(rootElement);
   // 关键步骤：为行内 [TOC] 绑定折叠与标题跳转；滚动实现由宿主注入，缺省原生平滑。
   hydrateToc(rootElement, options.scrollToHeading ?? defaultScrollToHeading);
 }

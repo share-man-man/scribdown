@@ -7,6 +7,10 @@ import {
   MERMAID_BODY_CLASS_NAME,
   MERMAID_CANVAS_CLASS_NAME,
   MERMAID_CHROME_CLASS_NAME,
+  MERMAID_CONTROL_BUTTON_CLASS_NAME,
+  MERMAID_CONTROLS_CLASS_NAME,
+  MERMAID_DRAGGING_CLASS_NAME,
+  MERMAID_DRAG_MODE_CLASS_NAME,
   MERMAID_FALLBACK_CLASS_NAME,
   MERMAID_FALLBACK_ICON_CLASS_NAME,
   MERMAID_FALLBACK_SOURCE_CLASS_NAME,
@@ -17,12 +21,39 @@ import {
   MERMAID_FIGURE_LOADING_CLASS_NAME,
   MERMAID_FULLSCREEN_BUTTON_CLASS_NAME,
   MERMAID_LABEL_CLASS_NAME,
+  MERMAID_ZOOM_GROUP_CLASS_NAME,
+  MERMAID_ZOOM_VALUE_CLASS_NAME,
   SOURCE_LINE_DATA_ATTRIBUTE,
+  VIEWER_CONTROL_BUTTON_CLASS_NAME,
   t
 } from "@scribdown/shared";
 
 import { CODE_BLOCK_HYDRATED_DATA_KEY } from "./code-block-chrome";
-import { MERMAID_LABEL_TEXT, openMarkdownMermaidViewer } from "./mermaid-viewer";
+import { copyMarkdownTextWithFeedback, createMarkdownCopyButton } from "../core/copy-control";
+import {
+  createMarkdownViewerControlButton,
+  createMarkdownViewerZoomControls,
+  VIEWER_DRAG_MODE_ICON_SVG,
+  VIEWER_RESET_ZOOM_ICON_SVG,
+  VIEWER_SELECT_MODE_ICON_SVG
+} from "../core/viewer-controls";
+import {
+  VIEWER_DEFAULT_ZOOM,
+  VIEWER_FIT_RATIO,
+  VIEWER_MAX_ZOOM,
+  VIEWER_MIN_ZOOM,
+  VIEWER_WHEEL_ZOOM_FACTOR,
+  VIEWER_WHEEL_ZOOM_MAX_DELTA,
+  VIEWER_ZOOM_STEP,
+  clampMarkdownViewerZoom,
+  type MarkdownViewerFocalPoint,
+  type MarkdownViewerZoomAnchor
+} from "../core/viewer-shared";
+import {
+  MERMAID_LABEL_TEXT,
+  openMarkdownMermaidViewer,
+  readSvgNaturalDimensions
+} from "./mermaid-viewer";
 
 // Mermaid 代码块的语言标识，对应 fixture 中的 ```mermaid。
 const MERMAID_LANGUAGE_ID = "mermaid";
@@ -48,6 +79,25 @@ const MERMAID_FULLSCREEN_AVAILABLE_DATA_KEY = "scribdownMermaidFullscreenReady";
 // Mermaid 全屏查看器存放原始 SVG 字符串的 dataset 键。
 const MERMAID_VIEWER_SOURCE_DATA_KEY = "scribdownMermaidSource";
 
+// Mermaid 非全屏画布横纵 padding 总和，与 mermaid.css 的 24px * 2 对齐。
+const MERMAID_BODY_PADDING_TOTAL_PX = 48;
+
+// Mermaid 工具按钮动作 dataset 键。
+const MERMAID_CONTROL_ACTION_DATA_KEY = "scribdownMermaidAction";
+
+// Mermaid 工具按钮动作值，供结构创建与 live DOM 状态恢复统一引用。
+const MERMAID_CONTROL_ACTION = {
+  mode: "mode",
+  zoomOut: "zoom-out",
+  zoomIn: "zoom-in",
+  reset: "reset",
+  copy: "copy",
+  fullscreen: "fullscreen"
+} as const;
+
+// Mermaid 非全屏运行时状态映射。
+const mermaidInlineStateByFigureElement = new WeakMap<HTMLElement, MarkdownMermaidInlineState>();
+
 /**
  * Mermaid 渲染句柄缓存：仅在浏览器环境（含 VS Code webview）下加载，
  * 避免在 Node 单元测试环境触发 mermaid 依赖加载。
@@ -65,6 +115,50 @@ interface MermaidApi {
     source: string,
     container?: Element
   ) => Promise<{ svg: string; bindFunctions?: (element: Element) => void }>;
+}
+
+/**
+ * Mermaid 非全屏图表运行时状态。
+ */
+interface MarkdownMermaidInlineState {
+  /** 外层 figure。 */
+  figureElement: HTMLElement;
+  /** 可滚动正文视口。 */
+  bodyElement: HTMLElement;
+  /** SVG 挂载画布。 */
+  canvasElement: HTMLElement;
+  /** 选择 / 拖拽模式按钮。 */
+  modeButtonElement: HTMLButtonElement;
+  /** 缩小按钮。 */
+  zoomOutButtonElement: HTMLButtonElement;
+  /** 缩放百分比。 */
+  zoomValueElement: HTMLElement;
+  /** 放大按钮。 */
+  zoomInButtonElement: HTMLButtonElement;
+  /** 重置按钮。 */
+  resetButtonElement: HTMLButtonElement;
+  /** 全屏按钮。 */
+  fullscreenButtonElement: HTMLButtonElement;
+  /** SVG 固有宽度。 */
+  naturalWidth: number;
+  /** SVG 固有高度。 */
+  naturalHeight: number;
+  /** 当前缩放倍数。 */
+  zoomValue: number;
+  /** 当前是否为拖拽模式。 */
+  isDragMode: boolean;
+  /** 当前是否正在拖拽。 */
+  isDragging: boolean;
+  /** 拖拽起点客户端 X 坐标。 */
+  dragStartClientX: number;
+  /** 拖拽起点客户端 Y 坐标。 */
+  dragStartClientY: number;
+  /** 拖拽起点横向滚动量。 */
+  dragStartScrollLeft: number;
+  /** 拖拽起点纵向滚动量。 */
+  dragStartScrollTop: number;
+  /** 响应式尺寸观察器。 */
+  resizeObserver?: ResizeObserver;
 }
 
 /**
@@ -129,6 +223,8 @@ function kickOffPendingMermaidRenders(rootElement: ParentNode): void {
       return;
     }
 
+    // 关键步骤：detached figure 被宿主合并进 live DOM 后，重新建立状态与事件绑定。
+    ensureMarkdownMermaidInlineState(figureElement);
     figureElement.dataset[MERMAID_RENDER_STARTED_DATA_KEY] = "true";
     void renderMermaidIntoCanvas(figureElement, canvasElement, mermaidSource);
   });
@@ -162,7 +258,67 @@ function decorateMermaidBlock(preElement: HTMLPreElement, codeElement: HTMLEleme
   const labelElement = ownerDocument.createElement("span");
   labelElement.className = MERMAID_LABEL_CLASS_NAME;
   labelElement.textContent = MERMAID_LABEL_TEXT;
-  chromeElement.append(labelElement);
+
+  // 右上角工具组。
+  const controlsElement = ownerDocument.createElement("div");
+  controlsElement.className = MERMAID_CONTROLS_CLASS_NAME;
+
+  // 选择 / 拖拽模式切换按钮。
+  const modeButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("mermaid.switchToDrag"),
+    VIEWER_SELECT_MODE_ICON_SVG,
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME]
+  );
+  modeButtonElement.dataset[MERMAID_CONTROL_ACTION_DATA_KEY] = MERMAID_CONTROL_ACTION.mode;
+  modeButtonElement.setAttribute("aria-pressed", "false");
+  modeButtonElement.disabled = true;
+  modeButtonElement.addEventListener("click", handleMarkdownMermaidModeClick);
+
+  // 缩放按钮组及子节点。
+  const {
+    groupElement: zoomGroupElement,
+    zoomOutButtonElement,
+    zoomValueElement,
+    zoomInButtonElement
+  } = createMarkdownViewerZoomControls(
+    ownerDocument,
+    {
+      group: t("mermaid.zoomControls"),
+      zoomOut: t("mermaid.zoomOut"),
+      zoomIn: t("mermaid.zoomIn")
+    },
+    [MERMAID_ZOOM_GROUP_CLASS_NAME],
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME],
+    [MERMAID_ZOOM_VALUE_CLASS_NAME]
+  );
+  zoomOutButtonElement.dataset[MERMAID_CONTROL_ACTION_DATA_KEY] = MERMAID_CONTROL_ACTION.zoomOut;
+  zoomOutButtonElement.disabled = true;
+  zoomOutButtonElement.addEventListener("click", handleMarkdownMermaidZoomOutClick);
+
+  zoomInButtonElement.dataset[MERMAID_CONTROL_ACTION_DATA_KEY] = MERMAID_CONTROL_ACTION.zoomIn;
+  zoomInButtonElement.disabled = true;
+  zoomInButtonElement.addEventListener("click", handleMarkdownMermaidZoomInClick);
+
+  // 重置按钮。
+  const resetButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("mermaid.zoomReset"),
+    VIEWER_RESET_ZOOM_ICON_SVG,
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME]
+  );
+  resetButtonElement.dataset[MERMAID_CONTROL_ACTION_DATA_KEY] = MERMAID_CONTROL_ACTION.reset;
+  resetButtonElement.disabled = true;
+  resetButtonElement.addEventListener("click", handleMarkdownMermaidResetClick);
+
+  // Mermaid 源码复制按钮。
+  const copyButtonElement = createMarkdownCopyButton(ownerDocument);
+  copyButtonElement.classList.add(
+    VIEWER_CONTROL_BUTTON_CLASS_NAME,
+    MERMAID_CONTROL_BUTTON_CLASS_NAME
+  );
+  copyButtonElement.dataset[MERMAID_CONTROL_ACTION_DATA_KEY] = MERMAID_CONTROL_ACTION.copy;
+  copyButtonElement.addEventListener("click", handleMarkdownMermaidCopyClick);
 
   // 正文容器，承载 SVG 画布与失败态。
   const bodyElement = ownerDocument.createElement("div");
@@ -174,18 +330,57 @@ function decorateMermaidBlock(preElement: HTMLPreElement, codeElement: HTMLEleme
   canvasElement.setAttribute("role", "img");
   canvasElement.setAttribute("aria-label", MERMAID_LABEL_TEXT);
 
-  // 右下角悬浮全屏按钮，渲染成功后再启用。
-  const fullscreenButtonElement = ownerDocument.createElement("button");
-  fullscreenButtonElement.type = "button";
-  fullscreenButtonElement.className = MERMAID_FULLSCREEN_BUTTON_CLASS_NAME;
-  fullscreenButtonElement.setAttribute("aria-label", t("mermaid.fullscreenButton"));
+  // 全屏按钮，渲染成功后再启用。
+  const fullscreenButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("mermaid.fullscreenButton"),
+    MERMAID_FULLSCREEN_ICON_SVG,
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME, MERMAID_FULLSCREEN_BUTTON_CLASS_NAME]
+  );
+  fullscreenButtonElement.dataset[MERMAID_CONTROL_ACTION_DATA_KEY] =
+    MERMAID_CONTROL_ACTION.fullscreen;
   // 渲染过程中先禁用，避免点击空白图表。
   fullscreenButtonElement.disabled = true;
-  fullscreenButtonElement.innerHTML = MERMAID_FULLSCREEN_ICON_SVG;
   fullscreenButtonElement.addEventListener("click", handleMermaidFullscreenButtonClick);
 
-  bodyElement.append(canvasElement, fullscreenButtonElement);
+  controlsElement.append(
+    modeButtonElement,
+    zoomGroupElement,
+    resetButtonElement,
+    copyButtonElement,
+    fullscreenButtonElement
+  );
+  chromeElement.append(labelElement, controlsElement);
+  bodyElement.append(canvasElement);
   figureElement.append(chromeElement, bodyElement);
+
+  // 非全屏交互状态，渲染成功后补充 SVG 固有尺寸并启用按钮。
+  const inlineState: MarkdownMermaidInlineState = {
+    figureElement,
+    bodyElement,
+    canvasElement,
+    modeButtonElement,
+    zoomOutButtonElement,
+    zoomValueElement,
+    zoomInButtonElement,
+    resetButtonElement,
+    fullscreenButtonElement,
+    naturalWidth: 720,
+    naturalHeight: 480,
+    zoomValue: VIEWER_DEFAULT_ZOOM,
+    isDragMode: false,
+    isDragging: false,
+    dragStartClientX: 0,
+    dragStartClientY: 0,
+    dragStartScrollLeft: 0,
+    dragStartScrollTop: 0
+  };
+  mermaidInlineStateByFigureElement.set(figureElement, inlineState);
+  bodyElement.addEventListener("wheel", handleMarkdownMermaidWheel, { passive: false });
+  bodyElement.addEventListener("pointerdown", handleMarkdownMermaidPointerDown);
+  bodyElement.addEventListener("pointermove", handleMarkdownMermaidPointerMove);
+  bodyElement.addEventListener("pointerup", handleMarkdownMermaidPointerUp);
+  bodyElement.addEventListener("pointercancel", handleMarkdownMermaidPointerUp);
 
   // 关键步骤：把源码行锚点从 code 迁移到 figure，对齐编辑器双向滚动。
   const sourceLine = codeElement.getAttribute(SOURCE_LINE_DATA_ATTRIBUTE);
@@ -282,12 +477,16 @@ async function renderMermaidIntoCanvas(
     figureElement.dataset[MERMAID_VIEWER_SOURCE_DATA_KEY] = svg;
     figureElement.dataset[MERMAID_FULLSCREEN_AVAILABLE_DATA_KEY] = "true";
 
-    // 渲染成功后启用全屏按钮。
-    const fullscreenButtonElement = figureElement.querySelector<HTMLButtonElement>(
-      `.${MERMAID_FULLSCREEN_BUTTON_CLASS_NAME}`
-    );
-    if (fullscreenButtonElement) {
-      fullscreenButtonElement.disabled = false;
+    // 关键步骤：解析 SVG 尺寸并启用非全屏缩放、拖拽与全屏控件。
+    const inlineState = ensureMarkdownMermaidInlineState(figureElement);
+    if (inlineState) {
+      const svgDimensions = readSvgNaturalDimensions(canvasElement);
+      inlineState.naturalWidth = svgDimensions.width;
+      inlineState.naturalHeight = svgDimensions.height;
+      inlineState.modeButtonElement.disabled = false;
+      inlineState.fullscreenButtonElement.disabled = false;
+      updateMarkdownMermaidInlineZoom(inlineState, VIEWER_DEFAULT_ZOOM);
+      observeMarkdownMermaidInlineSize(inlineState);
     }
   } catch (renderError: unknown) {
     showMermaidFallback(figureElement, canvasElement, mermaidSource, renderError);
@@ -311,7 +510,27 @@ function showMermaidFallback(
   figureElement.classList.remove(MERMAID_FIGURE_LOADING_CLASS_NAME);
   figureElement.classList.add(MERMAID_FIGURE_FAILED_CLASS_NAME);
 
-  // 失败态：移除右下角全屏按钮，避免对无图表的容器开启查看器。
+  // 失败态：移除选择 / 拖拽模式按钮，未生成画布时模式切换没有意义。
+  const modeButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.mode
+  );
+  modeButtonElement?.remove();
+
+  // 失败态：移除缩放按钮组，避免对未生成的图表提供无效操作。
+  const zoomGroupElement = figureElement.querySelector<HTMLElement>(
+    `.${MERMAID_ZOOM_GROUP_CLASS_NAME}`
+  );
+  zoomGroupElement?.remove();
+
+  // 失败态：移除重置按钮，缩放组不存在时重置操作同样没有意义。
+  const resetButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.reset
+  );
+  resetButtonElement?.remove();
+
+  // 失败态：移除全屏按钮，避免对无图表的容器开启查看器。
   const fullscreenButtonElement = figureElement.querySelector<HTMLButtonElement>(
     `.${MERMAID_FULLSCREEN_BUTTON_CLASS_NAME}`
   );
@@ -387,6 +606,482 @@ function cleanupOrphanMermaidNodes(ownerDocument: Document): void {
 }
 
 /**
+ * 确保 Mermaid figure 在当前 live DOM 中具有运行时状态与事件绑定。
+ * 宿主可能通过 morphdom 把 detached 结构合并进 live DOM，因此不能只依赖创建结构时的 WeakMap。
+ * @param figureElement Mermaid 外层 figure。
+ * @returns 已恢复的交互状态；结构不完整时返回 undefined。
+ */
+function ensureMarkdownMermaidInlineState(
+  figureElement: HTMLElement
+): MarkdownMermaidInlineState | undefined {
+  // 已存在的状态。
+  const existingState = mermaidInlineStateByFigureElement.get(figureElement);
+  if (existingState) {
+    return existingState;
+  }
+
+  // Mermaid 正文视口。
+  const bodyElement = figureElement.querySelector<HTMLElement>(`.${MERMAID_BODY_CLASS_NAME}`);
+  // SVG 画布。
+  const canvasElement = figureElement.querySelector<HTMLElement>(`.${MERMAID_CANVAS_CLASS_NAME}`);
+  // 模式按钮。
+  const modeButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.mode
+  );
+  // 缩小按钮。
+  const zoomOutButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.zoomOut
+  );
+  // 放大按钮。
+  const zoomInButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.zoomIn
+  );
+  // 重置按钮。
+  const resetButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.reset
+  );
+  // 复制按钮。
+  const copyButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.copy
+  );
+  // 全屏按钮。
+  const fullscreenButtonElement = queryMarkdownMermaidActionButton(
+    figureElement,
+    MERMAID_CONTROL_ACTION.fullscreen
+  );
+  // 缩放百分比。
+  const zoomValueElement = figureElement.querySelector<HTMLElement>(
+    `.${MERMAID_ZOOM_VALUE_CLASS_NAME}`
+  );
+
+  if (
+    !bodyElement ||
+    !canvasElement ||
+    !modeButtonElement ||
+    !zoomOutButtonElement ||
+    !zoomValueElement ||
+    !zoomInButtonElement ||
+    !resetButtonElement ||
+    !copyButtonElement ||
+    !fullscreenButtonElement
+  ) {
+    return undefined;
+  }
+
+  // 从当前 DOM 恢复的非全屏交互状态。
+  const restoredState: MarkdownMermaidInlineState = {
+    figureElement,
+    bodyElement,
+    canvasElement,
+    modeButtonElement,
+    zoomOutButtonElement,
+    zoomValueElement,
+    zoomInButtonElement,
+    resetButtonElement,
+    fullscreenButtonElement,
+    naturalWidth: 720,
+    naturalHeight: 480,
+    zoomValue: VIEWER_DEFAULT_ZOOM,
+    isDragMode: figureElement.classList.contains(MERMAID_DRAG_MODE_CLASS_NAME),
+    isDragging: false,
+    dragStartClientX: 0,
+    dragStartClientY: 0,
+    dragStartScrollLeft: 0,
+    dragStartScrollTop: 0
+  };
+
+  mermaidInlineStateByFigureElement.set(figureElement, restoredState);
+  bodyElement.addEventListener("wheel", handleMarkdownMermaidWheel, { passive: false });
+  bodyElement.addEventListener("pointerdown", handleMarkdownMermaidPointerDown);
+  bodyElement.addEventListener("pointermove", handleMarkdownMermaidPointerMove);
+  bodyElement.addEventListener("pointerup", handleMarkdownMermaidPointerUp);
+  bodyElement.addEventListener("pointercancel", handleMarkdownMermaidPointerUp);
+  modeButtonElement.addEventListener("click", handleMarkdownMermaidModeClick);
+  zoomOutButtonElement.addEventListener("click", handleMarkdownMermaidZoomOutClick);
+  zoomInButtonElement.addEventListener("click", handleMarkdownMermaidZoomInClick);
+  resetButtonElement.addEventListener("click", handleMarkdownMermaidResetClick);
+  copyButtonElement.addEventListener("click", handleMarkdownMermaidCopyClick);
+  fullscreenButtonElement.addEventListener("click", handleMermaidFullscreenButtonClick);
+  return restoredState;
+}
+
+/**
+ * 按动作值查询 Mermaid 工具按钮。
+ * @param figureElement Mermaid 外层 figure。
+ * @param actionValue 工具动作值。
+ * @returns 对应按钮。
+ */
+function queryMarkdownMermaidActionButton(
+  figureElement: HTMLElement,
+  actionValue: (typeof MERMAID_CONTROL_ACTION)[keyof typeof MERMAID_CONTROL_ACTION]
+): HTMLButtonElement | null {
+  return figureElement.querySelector<HTMLButtonElement>(
+    `[data-${toKebabCaseDataKey(MERMAID_CONTROL_ACTION_DATA_KEY)}="${actionValue}"]`
+  );
+}
+
+/**
+ * 把 dataset camelCase 键转换为 data-* 属性中的 kebab-case。
+ * @param dataKey dataset 键。
+ * @returns data 属性键。
+ */
+function toKebabCaseDataKey(dataKey: string): string {
+  return dataKey.replace(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`);
+}
+
+/**
+ * 从交互事件找到 Mermaid 非全屏状态。
+ * @param event Mermaid 工具按钮或画布事件。
+ * @returns 所属图表状态。
+ */
+function getMarkdownMermaidInlineStateFromEvent(
+  event: Event
+): MarkdownMermaidInlineState | undefined {
+  // 事件目标元素。
+  const targetElement = event.target as Element | null;
+  // 所属 Mermaid figure。
+  const figureElement =
+    targetElement?.closest<HTMLElement>(`.${MERMAID_FIGURE_CLASS_NAME}`) ?? null;
+  if (!figureElement) {
+    return undefined;
+  }
+  return mermaidInlineStateByFigureElement.get(figureElement);
+}
+
+/**
+ * 切换 Mermaid 非全屏选择 / 拖拽模式。
+ * @param event 模式按钮点击事件。
+ */
+function handleMarkdownMermaidModeClick(event: MouseEvent): void {
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState) {
+    return;
+  }
+
+  inlineState.isDragMode = !inlineState.isDragMode;
+  inlineState.figureElement.classList.toggle(MERMAID_DRAG_MODE_CLASS_NAME, inlineState.isDragMode);
+  inlineState.modeButtonElement.innerHTML = inlineState.isDragMode
+    ? VIEWER_DRAG_MODE_ICON_SVG
+    : VIEWER_SELECT_MODE_ICON_SVG;
+  inlineState.modeButtonElement.setAttribute(
+    "aria-pressed",
+    inlineState.isDragMode ? "true" : "false"
+  );
+  // aria-label 描述点击后将执行的动作，而图标与 aria-pressed 表达当前模式。
+  const modeActionLabel = inlineState.isDragMode
+    ? t("mermaid.switchToSelect")
+    : t("mermaid.switchToDrag");
+  inlineState.modeButtonElement.setAttribute("aria-label", modeActionLabel);
+  inlineState.modeButtonElement.setAttribute("title", modeActionLabel);
+}
+
+/**
+ * 处理 Mermaid 非全屏缩小。
+ * @param event 缩小按钮点击事件。
+ */
+function handleMarkdownMermaidZoomOutClick(event: MouseEvent): void {
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState) {
+    return;
+  }
+  updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue - VIEWER_ZOOM_STEP);
+}
+
+/**
+ * 处理 Mermaid 非全屏放大。
+ * @param event 放大按钮点击事件。
+ */
+function handleMarkdownMermaidZoomInClick(event: MouseEvent): void {
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState) {
+    return;
+  }
+  updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue + VIEWER_ZOOM_STEP);
+}
+
+/**
+ * 处理 Mermaid 非全屏重置缩放。
+ * @param event 重置按钮点击事件。
+ */
+function handleMarkdownMermaidResetClick(event: MouseEvent): void {
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState) {
+    return;
+  }
+  updateMarkdownMermaidInlineZoom(inlineState, VIEWER_DEFAULT_ZOOM);
+}
+
+/**
+ * 处理 Mermaid 源码复制。
+ * @param event 复制按钮点击事件。
+ */
+function handleMarkdownMermaidCopyClick(event: MouseEvent): void {
+  // 被点击的复制按钮。
+  const copyButtonElement = event.currentTarget as HTMLButtonElement;
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState) {
+    return;
+  }
+  // 图表源码由 decorate 阶段寄存在 figure dataset。
+  const mermaidSource = inlineState.figureElement.dataset[MERMAID_SOURCE_DATA_KEY] ?? "";
+  void copyMarkdownTextWithFeedback(copyButtonElement, mermaidSource);
+}
+
+/**
+ * 处理 Ctrl/Command + 滚轮缩放非全屏 Mermaid。
+ * @param event 图表正文滚轮事件。
+ */
+function handleMarkdownMermaidWheel(event: WheelEvent): void {
+  if (!event.ctrlKey && !event.metaKey) {
+    return;
+  }
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState) {
+    return;
+  }
+  // 与滚轮位移成比例，并限制单次变化，兼顾触控板与鼠标滚轮。
+  const rawDelta = -event.deltaY * VIEWER_WHEEL_ZOOM_FACTOR;
+  // 单次缩放变化量。
+  const zoomDelta = Math.max(
+    -VIEWER_WHEEL_ZOOM_MAX_DELTA,
+    Math.min(VIEWER_WHEEL_ZOOM_MAX_DELTA, rawDelta)
+  );
+  event.preventDefault();
+  updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue + zoomDelta, {
+    x: event.clientX,
+    y: event.clientY
+  });
+}
+
+/**
+ * 拖拽模式下开始平移非全屏 Mermaid。
+ * @param event 图表正文指针事件。
+ */
+function handleMarkdownMermaidPointerDown(event: PointerEvent): void {
+  if (event.button !== 0) {
+    return;
+  }
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState?.isDragMode) {
+    return;
+  }
+  // 当前滚动视口。
+  const bodyElement = event.currentTarget as HTMLElement;
+  // 横向是否可滚动。
+  const canScrollHorizontally = bodyElement.scrollWidth > bodyElement.clientWidth;
+  // 纵向是否可滚动。
+  const canScrollVertically = bodyElement.scrollHeight > bodyElement.clientHeight;
+  if (!canScrollHorizontally && !canScrollVertically) {
+    return;
+  }
+
+  inlineState.isDragging = true;
+  inlineState.dragStartClientX = event.clientX;
+  inlineState.dragStartClientY = event.clientY;
+  inlineState.dragStartScrollLeft = bodyElement.scrollLeft;
+  inlineState.dragStartScrollTop = bodyElement.scrollTop;
+  inlineState.figureElement.classList.add(MERMAID_DRAGGING_CLASS_NAME);
+  if (typeof bodyElement.setPointerCapture === "function") {
+    bodyElement.setPointerCapture(event.pointerId);
+  }
+  event.preventDefault();
+}
+
+/**
+ * 拖拽模式下更新非全屏 Mermaid 平移量。
+ * @param event 图表正文指针事件。
+ */
+function handleMarkdownMermaidPointerMove(event: PointerEvent): void {
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState?.isDragging) {
+    return;
+  }
+  // 当前滚动视口。
+  const bodyElement = event.currentTarget as HTMLElement;
+  // 横向拖拽位移。
+  const deltaX = event.clientX - inlineState.dragStartClientX;
+  // 纵向拖拽位移。
+  const deltaY = event.clientY - inlineState.dragStartClientY;
+  bodyElement.scrollLeft = inlineState.dragStartScrollLeft - deltaX;
+  bodyElement.scrollTop = inlineState.dragStartScrollTop - deltaY;
+}
+
+/**
+ * 结束非全屏 Mermaid 拖拽。
+ * @param event 图表正文指针事件。
+ */
+function handleMarkdownMermaidPointerUp(event: PointerEvent): void {
+  // 当前图表状态。
+  const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
+  if (!inlineState?.isDragging) {
+    return;
+  }
+  // 当前滚动视口。
+  const bodyElement = event.currentTarget as HTMLElement;
+  inlineState.isDragging = false;
+  inlineState.figureElement.classList.remove(MERMAID_DRAGGING_CLASS_NAME);
+  if (
+    typeof bodyElement.releasePointerCapture === "function" &&
+    bodyElement.hasPointerCapture(event.pointerId)
+  ) {
+    bodyElement.releasePointerCapture(event.pointerId);
+  }
+}
+
+/**
+ * 更新 Mermaid 非全屏缩放比例与画布尺寸。
+ * @param inlineState 当前图表状态。
+ * @param nextZoom 目标缩放倍数。
+ * @param zoomAnchor 可选缩放焦点。
+ */
+function updateMarkdownMermaidInlineZoom(
+  inlineState: MarkdownMermaidInlineState,
+  nextZoom: number,
+  zoomAnchor?: MarkdownViewerZoomAnchor
+): void {
+  // 归一化缩放倍数。
+  const normalizedZoom = clampMarkdownViewerZoom(nextZoom);
+  // 缩放前焦点。
+  const focalPoint = captureMarkdownMermaidInlineFocalPoint(inlineState, zoomAnchor);
+  inlineState.zoomValue = normalizedZoom;
+  inlineState.zoomValueElement.textContent = `${Math.round(normalizedZoom * 100)}%`;
+  inlineState.zoomOutButtonElement.disabled = normalizedZoom <= VIEWER_MIN_ZOOM;
+  inlineState.zoomInButtonElement.disabled = normalizedZoom >= VIEWER_MAX_ZOOM;
+  inlineState.resetButtonElement.disabled = normalizedZoom === VIEWER_DEFAULT_ZOOM;
+  updateMarkdownMermaidInlineCanvasSize(inlineState);
+  if (focalPoint) {
+    applyMarkdownMermaidInlineFocalPoint(inlineState, focalPoint);
+  }
+}
+
+/**
+ * 记录非全屏缩放前的画布焦点。
+ * @param inlineState 当前图表状态。
+ * @param zoomAnchor 可选客户端坐标锚点。
+ * @returns 画布归一化焦点。
+ */
+function captureMarkdownMermaidInlineFocalPoint(
+  inlineState: MarkdownMermaidInlineState,
+  zoomAnchor?: MarkdownViewerZoomAnchor
+): MarkdownViewerFocalPoint | undefined {
+  // 缩放前画布矩形。
+  const canvasRect = inlineState.canvasElement.getBoundingClientRect();
+  if (canvasRect.width <= 0 || canvasRect.height <= 0) {
+    return undefined;
+  }
+  // 正文视口矩形。
+  const bodyRect = inlineState.bodyElement.getBoundingClientRect();
+  // 客户端 X 锚点。
+  const anchorClientX = zoomAnchor?.x ?? bodyRect.left + bodyRect.width / 2;
+  // 客户端 Y 锚点。
+  const anchorClientY = zoomAnchor?.y ?? bodyRect.top + bodyRect.height / 2;
+  // 画布归一化 X。
+  const normalizedX = (anchorClientX - canvasRect.left) / canvasRect.width;
+  // 画布归一化 Y。
+  const normalizedY = (anchorClientY - canvasRect.top) / canvasRect.height;
+  return { anchorClientX, anchorClientY, normalizedX, normalizedY };
+}
+
+/**
+ * 在非全屏缩放后恢复焦点的客户端位置。
+ * @param inlineState 当前图表状态。
+ * @param focalPoint 缩放前焦点。
+ */
+function applyMarkdownMermaidInlineFocalPoint(
+  inlineState: MarkdownMermaidInlineState,
+  focalPoint: MarkdownViewerFocalPoint
+): void {
+  inlineState.bodyElement.scrollLeft = 0;
+  inlineState.bodyElement.scrollTop = 0;
+  // 缩放后画布矩形。
+  const canvasRect = inlineState.canvasElement.getBoundingClientRect();
+  if (canvasRect.width <= 0 || canvasRect.height <= 0) {
+    return;
+  }
+  // 目标画布客户端左边界。
+  const targetCanvasClientLeft =
+    focalPoint.anchorClientX - focalPoint.normalizedX * canvasRect.width;
+  // 目标画布客户端上边界。
+  const targetCanvasClientTop =
+    focalPoint.anchorClientY - focalPoint.normalizedY * canvasRect.height;
+  inlineState.bodyElement.scrollLeft = canvasRect.left - targetCanvasClientLeft;
+  inlineState.bodyElement.scrollTop = canvasRect.top - targetCanvasClientTop;
+}
+
+/**
+ * 按正文可用区域和缩放比例更新非全屏画布尺寸。
+ * @param inlineState 当前图表状态。
+ */
+function updateMarkdownMermaidInlineCanvasSize(inlineState: MarkdownMermaidInlineState): void {
+  // 正文可用宽度。
+  const viewportWidth = Math.max(
+    (inlineState.bodyElement.clientWidth - MERMAID_BODY_PADDING_TOTAL_PX) * VIEWER_FIT_RATIO,
+    1
+  );
+  // 正文可用高度。
+  const viewportHeight = Math.max(
+    (inlineState.bodyElement.clientHeight - MERMAID_BODY_PADDING_TOTAL_PX) * VIEWER_FIT_RATIO,
+    1
+  );
+  // SVG 固有宽度。
+  const naturalWidth = Math.max(inlineState.naturalWidth, 1);
+  // SVG 固有高度。
+  const naturalHeight = Math.max(inlineState.naturalHeight, 1);
+  // 默认比例始终完整适配，不主动放大固有尺寸。
+  const fitScale = Math.min(1, viewportWidth / naturalWidth, viewportHeight / naturalHeight);
+  // 当前显示宽度。
+  const displayWidth = Math.max(1, Math.round(naturalWidth * fitScale * inlineState.zoomValue));
+  // 当前显示高度。
+  const displayHeight = Math.max(1, Math.round(naturalHeight * fitScale * inlineState.zoomValue));
+  inlineState.canvasElement.style.width = `${displayWidth}px`;
+  inlineState.canvasElement.style.height = `${displayHeight}px`;
+
+  // 内部 SVG 改由 canvas 尺寸统一控制。
+  const svgElement = inlineState.canvasElement.querySelector<SVGSVGElement>("svg");
+  if (svgElement) {
+    svgElement.removeAttribute("width");
+    svgElement.removeAttribute("height");
+    svgElement.style.width = "100%";
+    svgElement.style.height = "100%";
+    svgElement.style.maxWidth = "none";
+    svgElement.style.maxHeight = "none";
+  }
+}
+
+/**
+ * 监听非全屏图表容器尺寸变化并重新适配画布。
+ * @param inlineState 当前图表状态。
+ */
+function observeMarkdownMermaidInlineSize(inlineState: MarkdownMermaidInlineState): void {
+  if (inlineState.resizeObserver) {
+    return;
+  }
+  // 当前宿主的 ResizeObserver 构造器。
+  const ResizeObserverConstructor =
+    inlineState.figureElement.ownerDocument.defaultView?.ResizeObserver;
+  if (!ResizeObserverConstructor) {
+    return;
+  }
+  inlineState.resizeObserver = new ResizeObserverConstructor(() => {
+    updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue);
+  });
+  inlineState.resizeObserver.observe(inlineState.bodyElement);
+}
+
+/**
  * 右下角全屏按钮使用的 SVG 图标（两个对角线箭头组成的方框）。
  */
 const MERMAID_FULLSCREEN_ICON_SVG =
@@ -420,9 +1115,11 @@ function handleMermaidFullscreenButtonClick(event: MouseEvent): void {
     return;
   }
 
+  // Mermaid 原始源码。
+  const mermaidSource = figureElement.dataset[MERMAID_SOURCE_DATA_KEY] ?? "";
   event.preventDefault();
   event.stopPropagation();
-  openMarkdownMermaidViewer(figureElement.ownerDocument, svgSource);
+  openMarkdownMermaidViewer(figureElement.ownerDocument, svgSource, mermaidSource);
 }
 
 export { hydrateMermaidBlocks, MERMAID_LANGUAGE_ID };

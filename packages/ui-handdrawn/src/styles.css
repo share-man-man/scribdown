@@ -37,6 +37,12 @@
 /* 8. 代码：inline code + 代码块 + 语言标签 + 复制按钮 */
 @import "./styles/code.css";
 
+/* 8.0.1 Mermaid / 表格共用复制按钮 */
+@import "./styles/copy-control.css";
+
+/* 8.0.2 图片 / Mermaid 查看器共用顶部控件 */
+@import "./styles/viewer-controls.css";
+
 /* 8.1 Mermaid 图表块 */
 @import "./styles/mermaid.css";
 

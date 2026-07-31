@@ -4,6 +4,7 @@
  */
 
 import {
+  MERMAID_CONTROL_BUTTON_CLASS_NAME,
   MERMAID_VIEWER_BUTTON_CLASS_NAME,
   MERMAID_VIEWER_CANVAS_CLASS_NAME,
   MERMAID_VIEWER_CAPTION_CLASS_NAME,
@@ -11,10 +12,14 @@ import {
   MERMAID_VIEWER_CLOSE_BUTTON_CLASS_NAME,
   MERMAID_VIEWER_CONTROLS_CLASS_NAME,
   MERMAID_VIEWER_DIALOG_CLASS_NAME,
+  MERMAID_VIEWER_DRAG_MODE_CLASS_NAME,
   MERMAID_VIEWER_DRAGGING_CLASS_NAME,
   MERMAID_VIEWER_VIEWPORT_CLASS_NAME,
   MERMAID_VIEWER_ZOOMED_CLASS_NAME,
   MERMAID_VIEWER_ZOOM_VALUE_CLASS_NAME,
+  MERMAID_ZOOM_GROUP_CLASS_NAME,
+  MERMAID_ZOOM_VALUE_CLASS_NAME,
+  VIEWER_CONTROL_BUTTON_CLASS_NAME,
   t
 } from "@scribdown/shared";
 
@@ -24,17 +29,21 @@ import {
   VIEWER_FIT_RATIO,
   VIEWER_MAX_ZOOM,
   VIEWER_MIN_ZOOM,
-  VIEWER_RESET_TEXT,
   VIEWER_WHEEL_ZOOM_FACTOR,
   VIEWER_WHEEL_ZOOM_MAX_DELTA,
-  VIEWER_ZOOM_IN_TEXT,
-  VIEWER_ZOOM_OUT_TEXT,
   VIEWER_ZOOM_STEP,
   clampMarkdownViewerZoom,
-  type MarkdownViewerButtonOptions,
   type MarkdownViewerFocalPoint,
   type MarkdownViewerZoomAnchor
 } from "../core/viewer-shared";
+import { copyMarkdownTextWithFeedback, createMarkdownCopyButton } from "../core/copy-control";
+import {
+  createMarkdownViewerControlButton,
+  createMarkdownViewerZoomControls,
+  VIEWER_DRAG_MODE_ICON_SVG,
+  VIEWER_RESET_ZOOM_ICON_SVG,
+  VIEWER_SELECT_MODE_ICON_SVG
+} from "../core/viewer-controls";
 
 // Mermaid 顶部展示标签（figure chrome 与全屏查看器 caption 共用）。
 // 安家在查看器侧而非 mermaid.ts：mermaid.ts 已依赖本模块的 openMarkdownMermaidViewer，
@@ -58,6 +67,8 @@ interface MarkdownMermaidViewerState {
   dialogElement: HTMLDialogElement;
   /** 顶部 caption 节点。 */
   captionElement: HTMLElement;
+  /** 选择 / 拖拽模式按钮。 */
+  modeButtonElement: HTMLButtonElement;
   /** 缩放比例显示节点。 */
   zoomValueElement: HTMLElement;
   /** 缩小按钮。 */
@@ -66,6 +77,8 @@ interface MarkdownMermaidViewerState {
   zoomInButtonElement: HTMLButtonElement;
   /** 重置按钮。 */
   resetButtonElement: HTMLButtonElement;
+  /** Mermaid 源码复制按钮。 */
+  copyButtonElement: HTMLButtonElement;
   /** 关闭按钮。 */
   closeButtonElement: HTMLButtonElement;
   /** 滚动视口容器。 */
@@ -78,8 +91,12 @@ interface MarkdownMermaidViewerState {
   naturalHeight: number;
   /** 当前缩放倍数。 */
   zoomValue: number;
+  /** 当前全屏图表对应的 Mermaid 源码。 */
+  mermaidSource: string;
   /** 当前是否处于鼠标拖拽平移状态。 */
   isDragging: boolean;
+  /** 当前是否为拖拽模式。 */
+  isDragMode: boolean;
   /** 拖拽起始时鼠标的客户端 X 坐标。 */
   dragStartClientX: number;
   /** 拖拽起始时鼠标的客户端 Y 坐标。 */
@@ -94,8 +111,13 @@ interface MarkdownMermaidViewerState {
  * 打开 mermaid 全屏查看器。
  * @param ownerDocument 当前 figure 所在 document。
  * @param svgSource 缓存的 SVG HTML 源码。
+ * @param mermaidSource 图表对应的 Mermaid 源码。
  */
-function openMarkdownMermaidViewer(ownerDocument: Document, svgSource: string): void {
+function openMarkdownMermaidViewer(
+  ownerDocument: Document,
+  svgSource: string,
+  mermaidSource: string
+): void {
   // 当前 document 对应的查看器状态（单例）。
   const viewerState = getOrCreateMarkdownMermaidViewerState(ownerDocument);
 
@@ -107,6 +129,8 @@ function openMarkdownMermaidViewer(ownerDocument: Document, svgSource: string): 
   viewerState.viewportElement.scrollLeft = 0;
   viewerState.viewportElement.scrollTop = 0;
   viewerState.zoomValue = VIEWER_DEFAULT_ZOOM;
+  viewerState.mermaidSource = mermaidSource;
+  setMarkdownMermaidViewerDragMode(viewerState, false);
 
   showMarkdownMermaidViewerDialog(viewerState);
   requestMarkdownMermaidViewerLayout(viewerState);
@@ -184,29 +208,52 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
   const captionElement = ownerDocument.createElement("p");
   /** 控件容器。 */
   const controlsElement = ownerDocument.createElement("div");
-  /** 缩小按钮。 */
-  const zoomOutButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: t("mermaid.zoomOut"),
-    text: VIEWER_ZOOM_OUT_TEXT
-  });
-  /** 缩放比例显示。 */
-  const zoomValueElement = ownerDocument.createElement("span");
-  /** 放大按钮。 */
-  const zoomInButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: t("mermaid.zoomIn"),
-    text: VIEWER_ZOOM_IN_TEXT
-  });
+  /** 选择 / 拖拽模式切换按钮。 */
+  const modeButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("mermaid.switchToDrag"),
+    VIEWER_SELECT_MODE_ICON_SVG,
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME, MERMAID_VIEWER_BUTTON_CLASS_NAME]
+  );
+  modeButtonElement.setAttribute("aria-pressed", "false");
+  /** 与非全屏复用的缩放按钮组及子节点。 */
+  const {
+    groupElement: zoomGroupElement,
+    zoomOutButtonElement,
+    zoomValueElement,
+    zoomInButtonElement
+  } = createMarkdownViewerZoomControls(
+    ownerDocument,
+    {
+      group: t("mermaid.zoomControls"),
+      zoomOut: t("mermaid.zoomOut"),
+      zoomIn: t("mermaid.zoomIn")
+    },
+    [MERMAID_ZOOM_GROUP_CLASS_NAME],
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME, MERMAID_VIEWER_BUTTON_CLASS_NAME],
+    [MERMAID_ZOOM_VALUE_CLASS_NAME, MERMAID_VIEWER_ZOOM_VALUE_CLASS_NAME]
+  );
   /** 重置按钮。 */
-  const resetButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: t("mermaid.zoomReset"),
-    text: VIEWER_RESET_TEXT
-  });
+  const resetButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("mermaid.zoomReset"),
+    VIEWER_RESET_ZOOM_ICON_SVG,
+    [MERMAID_CONTROL_BUTTON_CLASS_NAME, MERMAID_VIEWER_BUTTON_CLASS_NAME]
+  );
+  /** Mermaid 源码复制按钮。 */
+  const copyButtonElement = createMarkdownCopyButton(ownerDocument);
+  copyButtonElement.classList.add(
+    VIEWER_CONTROL_BUTTON_CLASS_NAME,
+    MERMAID_CONTROL_BUTTON_CLASS_NAME,
+    MERMAID_VIEWER_BUTTON_CLASS_NAME
+  );
   /** 关闭按钮。 */
-  const closeButtonElement = createMarkdownMermaidViewerButton(ownerDocument, {
-    ariaLabel: t("mermaid.close"),
-    className: MERMAID_VIEWER_CLOSE_BUTTON_CLASS_NAME,
-    text: VIEWER_CLOSE_TEXT
-  });
+  const closeButtonElement = createMarkdownViewerControlButton(
+    ownerDocument,
+    t("mermaid.close"),
+    VIEWER_CLOSE_TEXT,
+    [MERMAID_VIEWER_BUTTON_CLASS_NAME, MERMAID_VIEWER_CLOSE_BUTTON_CLASS_NAME]
+  );
   /** 滚动视口。 */
   const viewportElement = ownerDocument.createElement("div");
   /** SVG 画布。 */
@@ -216,17 +263,21 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
   const viewerState: MarkdownMermaidViewerState = {
     dialogElement,
     captionElement,
+    modeButtonElement,
     zoomValueElement,
     zoomOutButtonElement,
     zoomInButtonElement,
     resetButtonElement,
+    copyButtonElement,
     closeButtonElement,
     viewportElement,
     canvasElement,
     naturalWidth: 720,
     naturalHeight: 480,
     zoomValue: VIEWER_DEFAULT_ZOOM,
+    mermaidSource: "",
     isDragging: false,
+    isDragMode: false,
     dragStartClientX: 0,
     dragStartClientY: 0,
     dragStartScrollLeft: 0,
@@ -243,16 +294,15 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
   captionElement.className = MERMAID_VIEWER_CAPTION_CLASS_NAME;
   captionElement.textContent = MERMAID_LABEL_TEXT;
   controlsElement.className = MERMAID_VIEWER_CONTROLS_CLASS_NAME;
-  zoomValueElement.className = MERMAID_VIEWER_ZOOM_VALUE_CLASS_NAME;
   viewportElement.className = MERMAID_VIEWER_VIEWPORT_CLASS_NAME;
   canvasElement.className = MERMAID_VIEWER_CANVAS_CLASS_NAME;
 
   mermaidViewerStateByDialogElement.set(dialogElement, viewerState);
   controlsElement.append(
-    zoomOutButtonElement,
-    zoomValueElement,
-    zoomInButtonElement,
+    modeButtonElement,
+    zoomGroupElement,
     resetButtonElement,
+    copyButtonElement,
     closeButtonElement
   );
   chromeElement.append(captionElement, controlsElement);
@@ -268,9 +318,11 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
   viewportElement.addEventListener("pointermove", handleMarkdownMermaidViewerPointerMove);
   viewportElement.addEventListener("pointerup", handleMarkdownMermaidViewerPointerUp);
   viewportElement.addEventListener("pointercancel", handleMarkdownMermaidViewerPointerUp);
+  modeButtonElement.addEventListener("click", handleMarkdownMermaidViewerModeClick);
   zoomOutButtonElement.addEventListener("click", handleMarkdownMermaidViewerZoomOutClick);
   zoomInButtonElement.addEventListener("click", handleMarkdownMermaidViewerZoomInClick);
   resetButtonElement.addEventListener("click", handleMarkdownMermaidViewerResetClick);
+  copyButtonElement.addEventListener("click", handleMarkdownMermaidViewerCopyClick);
   closeButtonElement.addEventListener("click", handleMarkdownMermaidViewerCloseClick);
 
   if (ownerWindow) {
@@ -280,26 +332,6 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
   updateMarkdownMermaidViewerZoom(viewerState, VIEWER_DEFAULT_ZOOM);
 
   return viewerState;
-}
-
-/**
- * 创建查看器按钮。
- * @param ownerDocument 当前 document。
- * @param options 按钮文案与可访问名称。
- * @returns 已配置的按钮元素。
- */
-function createMarkdownMermaidViewerButton(
-  ownerDocument: Document,
-  options: MarkdownViewerButtonOptions
-): HTMLButtonElement {
-  const buttonElement = ownerDocument.createElement("button");
-  buttonElement.type = "button";
-  buttonElement.className = options.className
-    ? `${MERMAID_VIEWER_BUTTON_CLASS_NAME} ${options.className}`
-    : MERMAID_VIEWER_BUTTON_CLASS_NAME;
-  buttonElement.textContent = options.text;
-  buttonElement.setAttribute("aria-label", options.ariaLabel);
-  return buttonElement;
 }
 
 /**
@@ -378,8 +410,11 @@ function resetMarkdownMermaidViewerAfterClose(viewerState: MarkdownMermaidViewer
   viewerState.viewportElement.scrollLeft = 0;
   viewerState.viewportElement.scrollTop = 0;
   viewerState.zoomValue = VIEWER_DEFAULT_ZOOM;
+  viewerState.mermaidSource = "";
   viewerState.isDragging = false;
+  viewerState.isDragMode = false;
   viewerState.dialogElement.classList.remove(MERMAID_VIEWER_DRAGGING_CLASS_NAME);
+  viewerState.dialogElement.classList.remove(MERMAID_VIEWER_DRAG_MODE_CLASS_NAME);
   viewerState.dialogElement.classList.remove(MERMAID_VIEWER_ZOOMED_CLASS_NAME);
 }
 
@@ -452,7 +487,7 @@ function handleMarkdownMermaidViewerPointerDown(event: PointerEvent): void {
   }
   const viewportElement = event.currentTarget as HTMLElement;
   const viewerState = getMarkdownMermaidViewerStateFromEvent(event);
-  if (!viewerState) {
+  if (!viewerState || !viewerState.isDragMode) {
     return;
   }
   const canScrollHorizontally = viewportElement.scrollWidth > viewportElement.clientWidth;
@@ -509,6 +544,43 @@ function handleMarkdownMermaidViewerPointerUp(event: PointerEvent): void {
 }
 
 /**
+ * 处理 Mermaid 全屏选择 / 拖拽模式切换。
+ * @param event 模式按钮点击事件。
+ */
+function handleMarkdownMermaidViewerModeClick(event: MouseEvent): void {
+  // 当前全屏查看器状态。
+  const viewerState = getMarkdownMermaidViewerStateFromEvent(event);
+  if (!viewerState) {
+    return;
+  }
+  setMarkdownMermaidViewerDragMode(viewerState, !viewerState.isDragMode);
+}
+
+/**
+ * 设置 Mermaid 全屏查看器模式并同步图标与可访问名称。
+ * @param viewerState 当前全屏查看器状态。
+ * @param isDragMode 是否启用拖拽模式。
+ */
+function setMarkdownMermaidViewerDragMode(
+  viewerState: MarkdownMermaidViewerState,
+  isDragMode: boolean
+): void {
+  viewerState.isDragMode = isDragMode;
+  viewerState.isDragging = false;
+  viewerState.dialogElement.classList.toggle(MERMAID_VIEWER_DRAG_MODE_CLASS_NAME, isDragMode);
+  viewerState.dialogElement.classList.remove(MERMAID_VIEWER_DRAGGING_CLASS_NAME);
+  viewerState.modeButtonElement.innerHTML = isDragMode
+    ? VIEWER_DRAG_MODE_ICON_SVG
+    : VIEWER_SELECT_MODE_ICON_SVG;
+  viewerState.modeButtonElement.setAttribute("aria-pressed", String(isDragMode));
+
+  // 按钮名称描述点击后的动作，图标和 aria-pressed 表达当前模式。
+  const modeActionLabel = isDragMode ? t("mermaid.switchToSelect") : t("mermaid.switchToDrag");
+  viewerState.modeButtonElement.setAttribute("aria-label", modeActionLabel);
+  viewerState.modeButtonElement.setAttribute("title", modeActionLabel);
+}
+
+/**
  * 处理 window resize 后的画布尺寸适配。
  * @param event window resize 事件。
  */
@@ -555,6 +627,19 @@ function handleMarkdownMermaidViewerResetClick(event: MouseEvent): void {
     return;
   }
   updateMarkdownMermaidViewerZoom(viewerState, VIEWER_DEFAULT_ZOOM);
+}
+
+/**
+ * 处理 Mermaid 源码复制按钮点击。
+ * @param event 按钮点击事件。
+ */
+function handleMarkdownMermaidViewerCopyClick(event: MouseEvent): void {
+  // 当前全屏查看器状态。
+  const viewerState = getMarkdownMermaidViewerStateFromEvent(event);
+  if (!viewerState) {
+    return;
+  }
+  void copyMarkdownTextWithFeedback(viewerState.copyButtonElement, viewerState.mermaidSource);
 }
 
 /**
@@ -719,4 +804,4 @@ function updateMarkdownMermaidViewerCanvasSize(viewerState: MarkdownMermaidViewe
   }
 }
 
-export { openMarkdownMermaidViewer, MERMAID_LABEL_TEXT };
+export { openMarkdownMermaidViewer, readSvgNaturalDimensions, MERMAID_LABEL_TEXT };
