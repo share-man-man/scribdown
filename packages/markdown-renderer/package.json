@@ -1,6 +1,6 @@
 {
   "name": "@scribdown/markdown-renderer",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Scribdown 的 Markdown → HTML 渲染核心（remark/rehype + 安全清洗）。",
   "license": "MIT",
   "type": "module",

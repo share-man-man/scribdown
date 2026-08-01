@@ -1,6 +1,6 @@
 {
   "name": "@scribdown/ui-handdrawn",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Scribdown 手绘风格视觉组件：设计 Token、样式与 SVG 资产。",
   "license": "MIT",
   "type": "module",

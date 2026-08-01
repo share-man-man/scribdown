@@ -1,5 +1,13 @@
 # @scribdown/shared
 
+## 0.5.0
+
+### Minor Changes
+
+- 21eb8d3: 设计 Token 拆成「调色板层 + 语义层」：浅色与暗色的色值各定义一次，语义 Token 只做映射，两套主题不再各存一份色值副本。同时新增 `scribdown-theme-dark` / `scribdown-theme-light` 两个根元素 class（常量由 `@scribdown/shared` 导出），供自带主题开关的宿主覆盖系统 `prefers-color-scheme`；未指定时行为不变，仍跟随系统。
+- 2374a9b: 目录侧栏支持拖拽调整宽度：侧栏与正文之间新增调宽手柄，支持鼠标 / 触摸拖拽、键盘方向键微调、双击恢复默认宽度，结果按 localStorage 持久化，窗口缩放时按宿主宽度占比自动夹取。
+- b25f0b8: 统一图片与 Mermaid 的查看器控件：新增可复用的按钮、连体缩放组与图标，Mermaid 行内及全屏视图支持选择 / 拖拽模式、缩放、重置、源码复制与失败态精简，图片全屏复用同一套缩放交互。同时为表格增加 TSV 复制入口，并仅在 hover、键盘聚焦或触屏场景展示。
+
 ## 0.4.0
 
 ### Minor Changes
