@@ -27,12 +27,10 @@ import {
   VIEWER_CLOSE_TEXT,
   VIEWER_DEFAULT_ZOOM,
   VIEWER_FIT_RATIO,
-  VIEWER_MAX_ZOOM,
-  VIEWER_MIN_ZOOM,
-  VIEWER_WHEEL_ZOOM_FACTOR,
-  VIEWER_WHEEL_ZOOM_MAX_DELTA,
-  VIEWER_ZOOM_STEP,
-  clampMarkdownViewerZoom,
+  getMarkdownViewerWheelZoom,
+  getMarkdownViewerZoomStep,
+  readMarkdownViewerViewportSize,
+  shouldSkipMarkdownViewerAnchoredZoom,
   type MarkdownViewerFocalPoint,
   type MarkdownViewerZoomAnchor
 } from "../core/viewer-shared";
@@ -44,6 +42,13 @@ import {
   VIEWER_RESET_ZOOM_ICON_SVG,
   VIEWER_SELECT_MODE_ICON_SVG
 } from "../core/viewer-controls";
+import {
+  clampMarkdownMermaidZoom,
+  getMarkdownMermaidZoomBounds,
+  readMarkdownMermaidTextHeights,
+  MERMAID_FIT_VIEW_ZOOM,
+  type MarkdownMermaidZoomBounds
+} from "./mermaid-zoom-geometry";
 
 // Mermaid 顶部展示标签（figure chrome 与全屏查看器 caption 共用）。
 // 安家在查看器侧而非 mermaid.ts：mermaid.ts 已依赖本模块的 openMarkdownMermaidViewer，
@@ -91,6 +96,8 @@ interface MarkdownMermaidViewerState {
   naturalHeight: number;
   /** 当前缩放倍数。 */
   zoomValue: number;
+  /** 当前图表根据内容计算出的缩放边界。 */
+  zoomBounds: MarkdownMermaidZoomBounds;
   /** 当前全屏图表对应的 Mermaid 源码。 */
   mermaidSource: string;
   /** 当前是否处于鼠标拖拽平移状态。 */
@@ -275,6 +282,10 @@ function createMarkdownMermaidViewerState(ownerDocument: Document): MarkdownMerm
     naturalWidth: 720,
     naturalHeight: 480,
     zoomValue: VIEWER_DEFAULT_ZOOM,
+    zoomBounds: {
+      min: MERMAID_FIT_VIEW_ZOOM,
+      max: MERMAID_FIT_VIEW_ZOOM
+    },
     mermaidSource: "",
     isDragging: false,
     isDragMode: false,
@@ -369,6 +380,7 @@ function requestMarkdownMermaidViewerLayout(viewerState: MarkdownMermaidViewerSt
  * @param viewerState 查看器状态。
  */
 function handleMarkdownMermaidViewerDeferredLayout(viewerState: MarkdownMermaidViewerState): void {
+  refreshMarkdownMermaidViewerZoomBounds(viewerState);
   updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue);
 }
 
@@ -410,6 +422,10 @@ function resetMarkdownMermaidViewerAfterClose(viewerState: MarkdownMermaidViewer
   viewerState.viewportElement.scrollLeft = 0;
   viewerState.viewportElement.scrollTop = 0;
   viewerState.zoomValue = VIEWER_DEFAULT_ZOOM;
+  viewerState.zoomBounds = {
+    min: MERMAID_FIT_VIEW_ZOOM,
+    max: MERMAID_FIT_VIEW_ZOOM
+  };
   viewerState.mermaidSource = "";
   viewerState.isDragging = false;
   viewerState.isDragMode = false;
@@ -430,13 +446,19 @@ function handleMarkdownMermaidViewerKeyDown(event: KeyboardEvent): void {
 
   if (event.key === "+" || event.key === "=") {
     event.preventDefault();
-    updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue + VIEWER_ZOOM_STEP);
+    updateMarkdownMermaidViewerZoom(
+      viewerState,
+      viewerState.zoomValue + getMarkdownViewerZoomStep(viewerState.zoomValue)
+    );
     return;
   }
 
   if (event.key === "-") {
     event.preventDefault();
-    updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue - VIEWER_ZOOM_STEP);
+    updateMarkdownMermaidViewerZoom(
+      viewerState,
+      viewerState.zoomValue - getMarkdownViewerZoomStep(viewerState.zoomValue)
+    );
     return;
   }
 
@@ -464,17 +486,15 @@ function handleMarkdownMermaidViewerWheel(event: WheelEvent): void {
   if (!viewerState) {
     return;
   }
-  // 与 deltaY 成比例并夹紧到上限，让触控板细滑动产生细粒度缩放、鼠标滚轮单格仍可见。
-  const rawDelta = -event.deltaY * VIEWER_WHEEL_ZOOM_FACTOR;
-  const zoomDelta = Math.max(
-    -VIEWER_WHEEL_ZOOM_MAX_DELTA,
-    Math.min(VIEWER_WHEEL_ZOOM_MAX_DELTA, rawDelta)
-  );
   event.preventDefault();
-  updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue + zoomDelta, {
-    x: event.clientX,
-    y: event.clientY
-  });
+  updateMarkdownMermaidViewerZoom(
+    viewerState,
+    getMarkdownViewerWheelZoom(viewerState.zoomValue, event.deltaY),
+    {
+      x: event.clientX,
+      y: event.clientY
+    }
+  );
 }
 
 /**
@@ -590,6 +610,7 @@ function handleMarkdownMermaidViewerWindowResize(event: Event): void {
   if (!viewerState || !isMarkdownMermaidViewerOpen(viewerState)) {
     return;
   }
+  refreshMarkdownMermaidViewerZoomBounds(viewerState);
   updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue);
 }
 
@@ -602,7 +623,10 @@ function handleMarkdownMermaidViewerZoomOutClick(event: MouseEvent): void {
   if (!viewerState) {
     return;
   }
-  updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue - VIEWER_ZOOM_STEP);
+  updateMarkdownMermaidViewerZoom(
+    viewerState,
+    viewerState.zoomValue - getMarkdownViewerZoomStep(viewerState.zoomValue)
+  );
 }
 
 /**
@@ -614,7 +638,10 @@ function handleMarkdownMermaidViewerZoomInClick(event: MouseEvent): void {
   if (!viewerState) {
     return;
   }
-  updateMarkdownMermaidViewerZoom(viewerState, viewerState.zoomValue + VIEWER_ZOOM_STEP);
+  updateMarkdownMermaidViewerZoom(
+    viewerState,
+    viewerState.zoomValue + getMarkdownViewerZoomStep(viewerState.zoomValue)
+  );
 }
 
 /**
@@ -707,7 +734,13 @@ function updateMarkdownMermaidViewerZoom(
   zoomAnchor?: MarkdownViewerZoomAnchor
 ): void {
   /** 归一化的缩放倍数。 */
-  const normalizedZoom = clampMarkdownViewerZoom(nextZoom);
+  const normalizedZoom = clampMarkdownMermaidZoom(nextZoom, viewerState.zoomBounds);
+  // 已到达缩放边界时不再重复修正焦点，避免滚轮事件的像素舍入让视图持续漂移。
+  if (
+    shouldSkipMarkdownViewerAnchoredZoom(viewerState.zoomValue, normalizedZoom, zoomAnchor)
+  ) {
+    return;
+  }
   /** 缩放前的焦点。 */
   const focalPoint = isMarkdownMermaidViewerOpen(viewerState)
     ? captureMarkdownMermaidViewerFocalPoint(viewerState, zoomAnchor)
@@ -719,14 +752,70 @@ function updateMarkdownMermaidViewerZoom(
     normalizedZoom > VIEWER_DEFAULT_ZOOM
   );
   viewerState.zoomValueElement.textContent = `${Math.round(normalizedZoom * 100)}%`;
-  viewerState.zoomOutButtonElement.disabled = normalizedZoom <= VIEWER_MIN_ZOOM;
-  viewerState.zoomInButtonElement.disabled = normalizedZoom >= VIEWER_MAX_ZOOM;
+  viewerState.zoomOutButtonElement.disabled = normalizedZoom <= viewerState.zoomBounds.min;
+  viewerState.zoomInButtonElement.disabled = normalizedZoom >= viewerState.zoomBounds.max;
   viewerState.resetButtonElement.disabled = normalizedZoom === VIEWER_DEFAULT_ZOOM;
   updateMarkdownMermaidViewerCanvasSize(viewerState);
 
   if (focalPoint) {
     applyMarkdownMermaidViewerFocalPoint(viewerState, focalPoint);
   }
+}
+
+/**
+ * 按当前视口和图表内容刷新全屏 Mermaid 的缩放边界。
+ * @param viewerState 查看器状态。
+ */
+function refreshMarkdownMermaidViewerZoomBounds(viewerState: MarkdownMermaidViewerState): void {
+  // 关键步骤：仅在首次布局或视口变化时测量，交互缩放期间复用稳定边界。
+  updateMarkdownMermaidViewerCanvasSize(viewerState);
+  viewerState.zoomBounds = readMarkdownMermaidViewerZoomBounds(viewerState);
+}
+
+/**
+ * 读取 Mermaid 全屏图表在当前布局下的内容自适应缩放边界。
+ * @param viewerState 查看器状态。
+ * @returns 当前图表对应的缩放边界。
+ */
+function readMarkdownMermaidViewerZoomBounds(
+  viewerState: MarkdownMermaidViewerState
+): MarkdownMermaidZoomBounds {
+  /** 当前画布内是否存在可缩放的 SVG。 */
+  const hasSvg = viewerState.canvasElement.querySelector("svg") !== null;
+  if (!hasSvg) {
+    return {
+      min: MERMAID_FIT_VIEW_ZOOM,
+      max: MERMAID_FIT_VIEW_ZOOM
+    };
+  }
+
+  return getMarkdownMermaidZoomBounds({
+    currentZoom: viewerState.zoomValue,
+    fitScale: getMarkdownMermaidViewerFitScale(viewerState),
+    naturalWidth: viewerState.naturalWidth,
+    naturalHeight: viewerState.naturalHeight,
+    textHeights: readMarkdownMermaidTextHeights(viewerState.canvasElement)
+  });
+}
+
+/**
+ * 计算 Mermaid 图表固有尺寸完整适配当前全屏视口所需的绝对缩放比例。
+ * @param viewerState 查看器状态。
+ * @returns 图表适配视口的绝对缩放比例。
+ */
+function getMarkdownMermaidViewerFitScale(viewerState: MarkdownMermaidViewerState): number {
+  /** 不受滚动条显隐影响的视口布局尺寸。 */
+  const viewportSize = readMarkdownViewerViewportSize(viewerState.viewportElement);
+  /** 预留安全边距后的视口宽度。 */
+  const viewportWidth = Math.max(viewportSize.width * VIEWER_FIT_RATIO, 1);
+  /** 预留安全边距后的视口高度。 */
+  const viewportHeight = Math.max(viewportSize.height * VIEWER_FIT_RATIO, 1);
+  /** 图表固有宽度的安全值。 */
+  const naturalWidth = Math.max(viewerState.naturalWidth, 1);
+  /** 图表固有高度的安全值。 */
+  const naturalHeight = Math.max(viewerState.naturalHeight, 1);
+
+  return Math.min(1, viewportWidth / naturalWidth, viewportHeight / naturalHeight);
 }
 
 /**
@@ -780,13 +869,15 @@ function applyMarkdownMermaidViewerFocalPoint(
  * @param viewerState 查看器状态。
  */
 function updateMarkdownMermaidViewerCanvasSize(viewerState: MarkdownMermaidViewerState): void {
-  const viewportWidth = Math.max(viewerState.viewportElement.clientWidth * VIEWER_FIT_RATIO, 1);
-  const viewportHeight = Math.max(viewerState.viewportElement.clientHeight * VIEWER_FIT_RATIO, 1);
+  /** 图表完整适配视口时的绝对缩放比例。 */
+  const fitScale = getMarkdownMermaidViewerFitScale(viewerState);
+  /** 图表固有宽度的安全值。 */
   const naturalWidth = Math.max(viewerState.naturalWidth, 1);
+  /** 图表固有高度的安全值。 */
   const naturalHeight = Math.max(viewerState.naturalHeight, 1);
-  // fit 缩放：在不放大原图的前提下让整张图适配视口。
-  const fitScale = Math.min(1, viewportWidth / naturalWidth, viewportHeight / naturalHeight);
+  /** 当前缩放倍数下的图表显示宽度。 */
   const displayWidth = Math.max(1, Math.round(naturalWidth * fitScale * viewerState.zoomValue));
+  /** 当前缩放倍数下的图表显示高度。 */
   const displayHeight = Math.max(1, Math.round(naturalHeight * fitScale * viewerState.zoomValue));
 
   viewerState.canvasElement.style.width = `${displayWidth}px`;

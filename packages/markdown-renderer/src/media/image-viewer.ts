@@ -31,10 +31,11 @@ import {
   VIEWER_FIT_RATIO,
   VIEWER_MAX_ZOOM,
   VIEWER_MIN_ZOOM,
-  VIEWER_WHEEL_ZOOM_FACTOR,
-  VIEWER_WHEEL_ZOOM_MAX_DELTA,
-  VIEWER_ZOOM_STEP,
   clampMarkdownViewerZoom,
+  getMarkdownViewerWheelZoom,
+  getMarkdownViewerZoomStep,
+  readMarkdownViewerViewportSize,
+  shouldSkipMarkdownViewerAnchoredZoom,
   type MarkdownViewerFocalPoint,
   type MarkdownViewerZoomAnchor
 } from "../core/viewer-shared";
@@ -418,13 +419,19 @@ function handleMarkdownImageViewerKeyDown(event: KeyboardEvent): void {
 
   if (event.key === "+" || event.key === "=") {
     event.preventDefault();
-    updateMarkdownImageViewerZoom(viewerState, viewerState.zoomValue + VIEWER_ZOOM_STEP);
+    updateMarkdownImageViewerZoom(
+      viewerState,
+      viewerState.zoomValue + getMarkdownViewerZoomStep(viewerState.zoomValue)
+    );
     return;
   }
 
   if (event.key === "-") {
     event.preventDefault();
-    updateMarkdownImageViewerZoom(viewerState, viewerState.zoomValue - VIEWER_ZOOM_STEP);
+    updateMarkdownImageViewerZoom(
+      viewerState,
+      viewerState.zoomValue - getMarkdownViewerZoomStep(viewerState.zoomValue)
+    );
     return;
   }
 
@@ -456,18 +463,15 @@ function handleMarkdownImageViewerWheel(event: WheelEvent): void {
     return;
   }
 
-  // 与 deltaY 成比例并夹紧到上限，让触控板细滑动产生细粒度缩放、鼠标滚轮单格仍可见。
-  const rawDelta = -event.deltaY * VIEWER_WHEEL_ZOOM_FACTOR;
-  const zoomDelta = Math.max(
-    -VIEWER_WHEEL_ZOOM_MAX_DELTA,
-    Math.min(VIEWER_WHEEL_ZOOM_MAX_DELTA, rawDelta)
-  );
-
   event.preventDefault();
-  updateMarkdownImageViewerZoom(viewerState, viewerState.zoomValue + zoomDelta, {
-    x: event.clientX,
-    y: event.clientY
-  });
+  updateMarkdownImageViewerZoom(
+    viewerState,
+    getMarkdownViewerWheelZoom(viewerState.zoomValue, event.deltaY),
+    {
+      x: event.clientX,
+      y: event.clientY
+    }
+  );
 }
 
 /**
@@ -623,7 +627,10 @@ function handleMarkdownImageViewerZoomOutClick(event: MouseEvent): void {
     return;
   }
 
-  updateMarkdownImageViewerZoom(viewerState, viewerState.zoomValue - VIEWER_ZOOM_STEP);
+  updateMarkdownImageViewerZoom(
+    viewerState,
+    viewerState.zoomValue - getMarkdownViewerZoomStep(viewerState.zoomValue)
+  );
 }
 
 /**
@@ -638,7 +645,10 @@ function handleMarkdownImageViewerZoomInClick(event: MouseEvent): void {
     return;
   }
 
-  updateMarkdownImageViewerZoom(viewerState, viewerState.zoomValue + VIEWER_ZOOM_STEP);
+  updateMarkdownImageViewerZoom(
+    viewerState,
+    viewerState.zoomValue + getMarkdownViewerZoomStep(viewerState.zoomValue)
+  );
 }
 
 /**
@@ -709,6 +719,12 @@ function updateMarkdownImageViewerZoom(
 ): void {
   // 归一化后的缩放倍数。
   const normalizedZoom = clampMarkdownViewerZoom(nextZoom);
+  // 已到达缩放边界时不再重复修正焦点，避免滚轮事件的像素舍入让视图持续漂移。
+  if (
+    shouldSkipMarkdownViewerAnchoredZoom(viewerState.zoomValue, normalizedZoom, zoomAnchor)
+  ) {
+    return;
+  }
   // 缩放前的焦点信息，用于恢复光标/视口中心在新尺寸下的相对位置。
   const focalPoint = isMarkdownImageViewerOpen(viewerState)
     ? captureMarkdownImageViewerFocalPoint(viewerState, zoomAnchor)
@@ -800,10 +816,12 @@ function applyMarkdownImageViewerFocalPoint(
  * @param viewerState 图片查看器状态。
  */
 function updateMarkdownImageViewerImageSize(viewerState: MarkdownImageViewerState): void {
+  // 不受滚动条显隐影响的视口布局尺寸。
+  const viewportSize = readMarkdownViewerViewportSize(viewerState.viewportElement);
   // 视口可用宽度。
-  const viewportWidth = Math.max(viewerState.viewportElement.clientWidth * VIEWER_FIT_RATIO, 1);
+  const viewportWidth = Math.max(viewportSize.width * VIEWER_FIT_RATIO, 1);
   // 视口可用高度。
-  const viewportHeight = Math.max(viewerState.viewportElement.clientHeight * VIEWER_FIT_RATIO, 1);
+  const viewportHeight = Math.max(viewportSize.height * VIEWER_FIT_RATIO, 1);
   // 图片原始宽度。
   const naturalWidth = Math.max(viewerState.naturalWidth, 1);
   // 图片原始高度。

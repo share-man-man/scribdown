@@ -40,12 +40,10 @@ import {
 import {
   VIEWER_DEFAULT_ZOOM,
   VIEWER_FIT_RATIO,
-  VIEWER_MAX_ZOOM,
-  VIEWER_MIN_ZOOM,
-  VIEWER_WHEEL_ZOOM_FACTOR,
-  VIEWER_WHEEL_ZOOM_MAX_DELTA,
-  VIEWER_ZOOM_STEP,
-  clampMarkdownViewerZoom,
+  getMarkdownViewerWheelZoom,
+  getMarkdownViewerZoomStep,
+  readMarkdownViewerViewportSize,
+  shouldSkipMarkdownViewerAnchoredZoom,
   type MarkdownViewerFocalPoint,
   type MarkdownViewerZoomAnchor
 } from "../core/viewer-shared";
@@ -54,6 +52,13 @@ import {
   openMarkdownMermaidViewer,
   readSvgNaturalDimensions
 } from "./mermaid-viewer";
+import {
+  clampMarkdownMermaidZoom,
+  getMarkdownMermaidZoomBounds,
+  readMarkdownMermaidTextHeights,
+  MERMAID_FIT_VIEW_ZOOM,
+  type MarkdownMermaidZoomBounds
+} from "./mermaid-zoom-geometry";
 
 // Mermaid 代码块的语言标识，对应 fixture 中的 ```mermaid。
 const MERMAID_LANGUAGE_ID = "mermaid";
@@ -145,6 +150,8 @@ interface MarkdownMermaidInlineState {
   naturalHeight: number;
   /** 当前缩放倍数。 */
   zoomValue: number;
+  /** 当前图表根据内容计算出的缩放边界。 */
+  zoomBounds: MarkdownMermaidZoomBounds;
   /** 当前是否为拖拽模式。 */
   isDragMode: boolean;
   /** 当前是否正在拖拽。 */
@@ -368,6 +375,10 @@ function decorateMermaidBlock(preElement: HTMLPreElement, codeElement: HTMLEleme
     naturalWidth: 720,
     naturalHeight: 480,
     zoomValue: VIEWER_DEFAULT_ZOOM,
+    zoomBounds: {
+      min: MERMAID_FIT_VIEW_ZOOM,
+      max: MERMAID_FIT_VIEW_ZOOM
+    },
     isDragMode: false,
     isDragging: false,
     dragStartClientX: 0,
@@ -485,6 +496,7 @@ async function renderMermaidIntoCanvas(
       inlineState.naturalHeight = svgDimensions.height;
       inlineState.modeButtonElement.disabled = false;
       inlineState.fullscreenButtonElement.disabled = false;
+      refreshMarkdownMermaidInlineZoomBounds(inlineState);
       updateMarkdownMermaidInlineZoom(inlineState, VIEWER_DEFAULT_ZOOM);
       observeMarkdownMermaidInlineSize(inlineState);
     }
@@ -687,6 +699,10 @@ function ensureMarkdownMermaidInlineState(
     naturalWidth: 720,
     naturalHeight: 480,
     zoomValue: VIEWER_DEFAULT_ZOOM,
+    zoomBounds: {
+      min: MERMAID_FIT_VIEW_ZOOM,
+      max: MERMAID_FIT_VIEW_ZOOM
+    },
     isDragMode: figureElement.classList.contains(MERMAID_DRAG_MODE_CLASS_NAME),
     isDragging: false,
     dragStartClientX: 0,
@@ -791,7 +807,10 @@ function handleMarkdownMermaidZoomOutClick(event: MouseEvent): void {
   if (!inlineState) {
     return;
   }
-  updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue - VIEWER_ZOOM_STEP);
+  updateMarkdownMermaidInlineZoom(
+    inlineState,
+    inlineState.zoomValue - getMarkdownViewerZoomStep(inlineState.zoomValue)
+  );
 }
 
 /**
@@ -804,7 +823,10 @@ function handleMarkdownMermaidZoomInClick(event: MouseEvent): void {
   if (!inlineState) {
     return;
   }
-  updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue + VIEWER_ZOOM_STEP);
+  updateMarkdownMermaidInlineZoom(
+    inlineState,
+    inlineState.zoomValue + getMarkdownViewerZoomStep(inlineState.zoomValue)
+  );
 }
 
 /**
@@ -850,18 +872,15 @@ function handleMarkdownMermaidWheel(event: WheelEvent): void {
   if (!inlineState) {
     return;
   }
-  // 与滚轮位移成比例，并限制单次变化，兼顾触控板与鼠标滚轮。
-  const rawDelta = -event.deltaY * VIEWER_WHEEL_ZOOM_FACTOR;
-  // 单次缩放变化量。
-  const zoomDelta = Math.max(
-    -VIEWER_WHEEL_ZOOM_MAX_DELTA,
-    Math.min(VIEWER_WHEEL_ZOOM_MAX_DELTA, rawDelta)
-  );
   event.preventDefault();
-  updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue + zoomDelta, {
-    x: event.clientX,
-    y: event.clientY
-  });
+  updateMarkdownMermaidInlineZoom(
+    inlineState,
+    getMarkdownViewerWheelZoom(inlineState.zoomValue, event.deltaY),
+    {
+      x: event.clientX,
+      y: event.clientY
+    }
+  );
 }
 
 /**
@@ -953,18 +972,86 @@ function updateMarkdownMermaidInlineZoom(
   zoomAnchor?: MarkdownViewerZoomAnchor
 ): void {
   // 归一化缩放倍数。
-  const normalizedZoom = clampMarkdownViewerZoom(nextZoom);
+  const normalizedZoom = clampMarkdownMermaidZoom(nextZoom, inlineState.zoomBounds);
+  // 已到达缩放边界时不再重复修正焦点，避免滚轮事件的像素舍入让视图持续漂移。
+  if (
+    shouldSkipMarkdownViewerAnchoredZoom(inlineState.zoomValue, normalizedZoom, zoomAnchor)
+  ) {
+    return;
+  }
   // 缩放前焦点。
   const focalPoint = captureMarkdownMermaidInlineFocalPoint(inlineState, zoomAnchor);
   inlineState.zoomValue = normalizedZoom;
   inlineState.zoomValueElement.textContent = `${Math.round(normalizedZoom * 100)}%`;
-  inlineState.zoomOutButtonElement.disabled = normalizedZoom <= VIEWER_MIN_ZOOM;
-  inlineState.zoomInButtonElement.disabled = normalizedZoom >= VIEWER_MAX_ZOOM;
+  inlineState.zoomOutButtonElement.disabled = normalizedZoom <= inlineState.zoomBounds.min;
+  inlineState.zoomInButtonElement.disabled = normalizedZoom >= inlineState.zoomBounds.max;
   inlineState.resetButtonElement.disabled = normalizedZoom === VIEWER_DEFAULT_ZOOM;
   updateMarkdownMermaidInlineCanvasSize(inlineState);
   if (focalPoint) {
     applyMarkdownMermaidInlineFocalPoint(inlineState, focalPoint);
   }
+}
+
+/**
+ * 按当前正文视口和图表内容刷新 Mermaid 缩放边界。
+ * @param inlineState 当前图表状态。
+ */
+function refreshMarkdownMermaidInlineZoomBounds(inlineState: MarkdownMermaidInlineState): void {
+  // 关键步骤：边界仅在首次渲染或外层尺寸变化时更新，避免滚轮缩放导致上限漂移。
+  updateMarkdownMermaidInlineCanvasSize(inlineState);
+  inlineState.zoomBounds = readMarkdownMermaidInlineZoomBounds(inlineState);
+}
+
+/**
+ * 读取 Mermaid 正文图表在当前布局下的内容自适应缩放边界。
+ * @param inlineState 当前图表状态。
+ * @returns 当前图表对应的缩放边界。
+ */
+function readMarkdownMermaidInlineZoomBounds(
+  inlineState: MarkdownMermaidInlineState
+): MarkdownMermaidZoomBounds {
+  /** 当前画布内是否存在可缩放的 SVG。 */
+  const hasSvg = inlineState.canvasElement.querySelector("svg") !== null;
+  if (!hasSvg) {
+    return {
+      min: MERMAID_FIT_VIEW_ZOOM,
+      max: MERMAID_FIT_VIEW_ZOOM
+    };
+  }
+
+  return getMarkdownMermaidZoomBounds({
+    currentZoom: inlineState.zoomValue,
+    fitScale: getMarkdownMermaidInlineFitScale(inlineState),
+    naturalWidth: inlineState.naturalWidth,
+    naturalHeight: inlineState.naturalHeight,
+    textHeights: readMarkdownMermaidTextHeights(inlineState.canvasElement)
+  });
+}
+
+/**
+ * 计算 Mermaid 图表固有尺寸完整适配正文视口所需的绝对缩放比例。
+ * @param inlineState 当前图表状态。
+ * @returns 图表适配正文视口的绝对缩放比例。
+ */
+function getMarkdownMermaidInlineFitScale(inlineState: MarkdownMermaidInlineState): number {
+  /** 不受滚动条显隐影响的正文视口布局尺寸。 */
+  const viewportSize = readMarkdownViewerViewportSize(inlineState.bodyElement);
+  /** 扣除正文 padding 并预留安全边距后的可用宽度。 */
+  const viewportWidth = Math.max(
+    (viewportSize.width - MERMAID_BODY_PADDING_TOTAL_PX) * VIEWER_FIT_RATIO,
+    1
+  );
+  /** 扣除正文 padding 并预留安全边距后的可用高度。 */
+  const viewportHeight = Math.max(
+    (viewportSize.height - MERMAID_BODY_PADDING_TOTAL_PX) * VIEWER_FIT_RATIO,
+    1
+  );
+  /** SVG 固有宽度的安全值。 */
+  const naturalWidth = Math.max(inlineState.naturalWidth, 1);
+  /** SVG 固有高度的安全值。 */
+  const naturalHeight = Math.max(inlineState.naturalHeight, 1);
+
+  return Math.min(1, viewportWidth / naturalWidth, viewportHeight / naturalHeight);
 }
 
 /**
@@ -1026,22 +1113,12 @@ function applyMarkdownMermaidInlineFocalPoint(
  * @param inlineState 当前图表状态。
  */
 function updateMarkdownMermaidInlineCanvasSize(inlineState: MarkdownMermaidInlineState): void {
-  // 正文可用宽度。
-  const viewportWidth = Math.max(
-    (inlineState.bodyElement.clientWidth - MERMAID_BODY_PADDING_TOTAL_PX) * VIEWER_FIT_RATIO,
-    1
-  );
-  // 正文可用高度。
-  const viewportHeight = Math.max(
-    (inlineState.bodyElement.clientHeight - MERMAID_BODY_PADDING_TOTAL_PX) * VIEWER_FIT_RATIO,
-    1
-  );
+  // 图表完整适配正文视口时的绝对缩放比例。
+  const fitScale = getMarkdownMermaidInlineFitScale(inlineState);
   // SVG 固有宽度。
   const naturalWidth = Math.max(inlineState.naturalWidth, 1);
   // SVG 固有高度。
   const naturalHeight = Math.max(inlineState.naturalHeight, 1);
-  // 默认比例始终完整适配，不主动放大固有尺寸。
-  const fitScale = Math.min(1, viewportWidth / naturalWidth, viewportHeight / naturalHeight);
   // 当前显示宽度。
   const displayWidth = Math.max(1, Math.round(naturalWidth * fitScale * inlineState.zoomValue));
   // 当前显示高度。
@@ -1076,9 +1153,11 @@ function observeMarkdownMermaidInlineSize(inlineState: MarkdownMermaidInlineStat
     return;
   }
   inlineState.resizeObserver = new ResizeObserverConstructor(() => {
+    refreshMarkdownMermaidInlineZoomBounds(inlineState);
     updateMarkdownMermaidInlineZoom(inlineState, inlineState.zoomValue);
   });
-  inlineState.resizeObserver.observe(inlineState.bodyElement);
+  // 观察外层 figure 的布局变化，避免 body 滚动条显隐自身触发反馈循环。
+  inlineState.resizeObserver.observe(inlineState.figureElement);
 }
 
 /**
