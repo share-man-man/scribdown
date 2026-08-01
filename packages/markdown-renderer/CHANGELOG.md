@@ -1,5 +1,24 @@
 # @scribdown/markdown-renderer
 
+## 0.6.0
+
+### Minor Changes
+
+- 2374a9b: 目录侧栏支持拖拽调整宽度：侧栏与正文之间新增调宽手柄，支持鼠标 / 触摸拖拽、键盘方向键微调、双击恢复默认宽度，结果按 localStorage 持久化，窗口缩放时按宿主宽度占比自动夹取。
+- 21eb8d3: 工具栏目录按钮区分展开与收起态：展开时图标切换为带左向箭头的收起图标，按钮底色加深、着强调色并显示一条下划线，tooltip 与 `aria-label` 同步切换为「关闭目录」，`aria-expanded` 反映当前状态。展开态样式由「更多」按钮一并复用。
+- b25f0b8: 统一图片与 Mermaid 的查看器控件：新增可复用的按钮、连体缩放组与图标，Mermaid 行内及全屏视图支持选择 / 拖拽模式、缩放、重置、源码复制与失败态精简，图片全屏复用同一套缩放交互。同时为表格增加 TSV 复制入口，并仅在 hover、键盘聚焦或触屏场景展示。
+
+### Patch Changes
+
+- d1f1d10: 优化 Mermaid 与图片查看器的缩放体验：Mermaid 根据图表文字和视口尺寸计算自适应放大上限，缩放步进随当前倍率动态变化；全屏与非全屏视图稳定预留滚动条空间，并在达到缩放边界后停止重复焦点修正，避免滚动条闪烁和视图漂移。
+- Updated dependencies [d1f1d10]
+- Updated dependencies [21eb8d3]
+- Updated dependencies [2374a9b]
+- Updated dependencies [21eb8d3]
+- Updated dependencies [b25f0b8]
+  - @scribdown/ui-handdrawn@0.3.0
+  - @scribdown/shared@0.5.0
+
 ## 0.5.0
 
 ### Minor Changes

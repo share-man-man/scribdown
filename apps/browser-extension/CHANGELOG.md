@@ -1,5 +1,23 @@
 # @scribdown/browser-extension
 
+## 0.4.0
+
+### Minor Changes
+
+- 2374a9b: 目录侧栏支持拖拽调整宽度：侧栏与正文之间新增调宽手柄，支持鼠标 / 触摸拖拽、键盘方向键微调、双击恢复默认宽度，结果按 localStorage 持久化，窗口缩放时按宿主宽度占比自动夹取。
+
+### Patch Changes
+
+- 21eb8d3: 工具栏目录按钮区分展开与收起态：展开时图标切换为带左向箭头的收起图标，按钮底色加深、着强调色并显示一条下划线，tooltip 与 `aria-label` 同步切换为「关闭目录」，`aria-expanded` 反映当前状态。展开态样式由「更多」按钮一并复用。
+- Updated dependencies [d1f1d10]
+- Updated dependencies [21eb8d3]
+- Updated dependencies [2374a9b]
+- Updated dependencies [21eb8d3]
+- Updated dependencies [b25f0b8]
+  - @scribdown/markdown-renderer@0.6.0
+  - @scribdown/ui-handdrawn@0.3.0
+  - @scribdown/shared@0.5.0
+
 ## 0.3.0
 
 ### Minor Changes
