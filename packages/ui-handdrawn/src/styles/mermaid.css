@@ -69,6 +69,7 @@
     auto;
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
 }
 
 /* 全屏按钮沿用工具按钮尺寸，图标跟随 currentColor。 */
@@ -309,6 +310,7 @@
   padding: var(--scribdown-space-5);
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
   touch-action: auto;
 }
 
