@@ -40,9 +40,11 @@ import {
 import {
   VIEWER_DEFAULT_ZOOM,
   VIEWER_FIT_RATIO,
+  getMarkdownViewerAnchoredScrollOffset,
   getMarkdownViewerWheelZoom,
   getMarkdownViewerZoomStep,
   readMarkdownViewerViewportSize,
+  shouldZoomMarkdownViewerWheel,
   shouldSkipMarkdownViewerAnchoredZoom,
   type MarkdownViewerFocalPoint,
   type MarkdownViewerZoomAnchor
@@ -59,6 +61,7 @@ import {
   MERMAID_FIT_VIEW_ZOOM,
   type MarkdownMermaidZoomBounds
 } from "./mermaid-zoom-geometry";
+import { createMarkdownMermaidThemeVariables } from "./mermaid-theme";
 
 // Mermaid 代码块的语言标识，对应 fixture 中的 ```mermaid。
 const MERMAID_LANGUAGE_ID = "mermaid";
@@ -108,6 +111,9 @@ const mermaidInlineStateByFigureElement = new WeakMap<HTMLElement, MarkdownMerma
  * 避免在 Node 单元测试环境触发 mermaid 依赖加载。
  */
 let mermaidLoaderPromise: Promise<MermaidApi | undefined> | undefined;
+
+// Mermaid 配置与渲染共用全局状态；串行队列避免多个图表并发时互相覆盖主题。
+let mermaidRenderQueuePromise: Promise<void> = Promise.resolve();
 
 /**
  * Mermaid 11+ 的最小 API 子集，仅声明渲染必需成员，避免引入巨大类型。
@@ -408,7 +414,7 @@ function decorateMermaidBlock(preElement: HTMLPreElement, codeElement: HTMLEleme
 }
 
 /**
- * 加载并初始化 mermaid 实例，浏览器环境外返回 undefined。
+ * 加载 mermaid 实例，浏览器环境外返回 undefined。
  * @returns mermaid API 句柄。
  */
 async function loadMermaid(): Promise<MermaidApi | undefined> {
@@ -420,14 +426,42 @@ async function loadMermaid(): Promise<MermaidApi | undefined> {
     mermaidLoaderPromise = (async () => {
       // 动态导入：仅在确实出现 mermaid 块时才下载 mermaid 主包。
       const mermaidModule = (await import("mermaid")) as { default: MermaidApi };
-      const mermaidApi = mermaidModule.default;
-      // startOnLoad=false 由 hydrate 主动控制渲染时机；securityLevel=strict 阻断脚本注入。
-      // useMaxWidth=false：让 mermaid 输出带固有宽高属性的 SVG，避免它内联 width:100%/max-width
-      // 强行覆盖 CSS，从而把缩放完全交给画布上的 max-width/max-height:100% 配合 viewBox 等比适配。
+      return mermaidModule.default;
+    })().catch((loadError: unknown) => {
+      // 加载失败后重置 promise，给下次渲染重试机会。
+      mermaidLoaderPromise = undefined;
+      throw loadError;
+    });
+  }
+
+  return mermaidLoaderPromise;
+}
+
+/**
+ * 使用图表当前 CSS token 配置 Mermaid，并在全局队列中完成一次渲染。
+ * @param mermaidApi Mermaid API 句柄。
+ * @param figureElement 当前图表外层元素。
+ * @param renderId SVG 唯一 id。
+ * @param mermaidSource Mermaid 源码文本。
+ * @returns Mermaid SVG 与事件绑定函数。
+ */
+async function renderMermaidWithProjectTheme(
+  mermaidApi: MermaidApi,
+  figureElement: HTMLElement,
+  renderId: string,
+  mermaidSource: string
+): Promise<{ svg: string; bindFunctions?: (element: Element) => void }> {
+  // 当前渲染任务会等待前一个任务收尾，再原子地完成配置与渲染。
+  const renderResultPromise = mermaidRenderQueuePromise
+    .catch(() => undefined)
+    .then(async () => {
+      // startOnLoad=false 由 hydrate 控制时机；strict 阻断脚本注入。
+      // base 主题允许以当前元素解析出的 Scribdown CSS token 覆盖配色。
       mermaidApi.initialize({
         startOnLoad: false,
         securityLevel: "strict",
-        theme: "default",
+        theme: "base",
+        themeVariables: createMarkdownMermaidThemeVariables(figureElement),
         flowchart: { useMaxWidth: false },
         sequence: { useMaxWidth: false },
         class: { useMaxWidth: false },
@@ -446,15 +480,16 @@ async function loadMermaid(): Promise<MermaidApi | undefined> {
         sankey: { useMaxWidth: false },
         block: { useMaxWidth: false }
       });
-      return mermaidApi;
-    })().catch((loadError: unknown) => {
-      // 加载失败后重置 promise，给下次渲染重试机会。
-      mermaidLoaderPromise = undefined;
-      throw loadError;
+      // useMaxWidth=false 让 SVG 保留固有尺寸，把缩放统一交给画布运行时。
+      return mermaidApi.render(renderId, mermaidSource);
     });
-  }
 
-  return mermaidLoaderPromise;
+  // 队列本身只记录完成状态，失败由当前调用方处理且不会阻断后续图表。
+  mermaidRenderQueuePromise = renderResultPromise.then(
+    () => undefined,
+    () => undefined
+  );
+  return renderResultPromise;
 }
 
 /**
@@ -477,7 +512,12 @@ async function renderMermaidIntoCanvas(
 
     mermaidRenderIdCounter += 1;
     const renderId = `${MERMAID_RENDER_ID_PREFIX}${mermaidRenderIdCounter}`;
-    const { svg, bindFunctions } = await mermaidApi.render(renderId, mermaidSource);
+    const { svg, bindFunctions } = await renderMermaidWithProjectTheme(
+      mermaidApi,
+      figureElement,
+      renderId,
+      mermaidSource
+    );
 
     canvasElement.innerHTML = svg;
     bindFunctions?.(canvasElement);
@@ -843,6 +883,17 @@ function handleMarkdownMermaidResetClick(event: MouseEvent): void {
 }
 
 /**
+ * 清除 Mermaid 非全屏画布因缩放锚点与拖拽产生的视口偏移。
+ * @param inlineState 当前图表状态。
+ */
+function resetMarkdownMermaidInlineViewport(inlineState: MarkdownMermaidInlineState): void {
+  // 清理旧版本可能遗留在 live DOM 中的画布位移。
+  inlineState.canvasElement.style.removeProperty("transform");
+  inlineState.bodyElement.scrollLeft = 0;
+  inlineState.bodyElement.scrollTop = 0;
+}
+
+/**
  * 处理 Mermaid 源码复制。
  * @param event 复制按钮点击事件。
  */
@@ -860,27 +911,38 @@ function handleMarkdownMermaidCopyClick(event: MouseEvent): void {
 }
 
 /**
- * 处理 Ctrl/Command + 滚轮缩放非全屏 Mermaid。
+ * 处理非全屏 Mermaid 滚轮缩放；拖拽模式始终接管滚轮，选择模式仅响应缩放修饰键。
  * @param event 图表正文滚轮事件。
  */
 function handleMarkdownMermaidWheel(event: WheelEvent): void {
-  if (!event.ctrlKey && !event.metaKey) {
-    return;
-  }
   // 当前图表状态。
   const inlineState = getMarkdownMermaidInlineStateFromEvent(event);
   if (!inlineState) {
     return;
   }
+  // 是否由当前交互模式或明确的缩放修饰键接管滚轮。
+  const shouldZoom = shouldZoomMarkdownViewerWheel({
+    isDragMode: inlineState.isDragMode,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey
+  });
+  if (!shouldZoom) {
+    return;
+  }
+  // 当前滚轮事件对应的目标倍率。
+  const nextZoom = getMarkdownViewerWheelZoom(inlineState.zoomValue, event.deltaY);
+  // 应用当前图表边界后的目标倍率。
+  const normalizedNextZoom = clampMarkdownMermaidZoom(nextZoom, inlineState.zoomBounds);
+  // 关键步骤：拖拽模式的滚轮由图表完整接管，到达倍率边界后也不滚动外层页面。
   event.preventDefault();
-  updateMarkdownMermaidInlineZoom(
-    inlineState,
-    getMarkdownViewerWheelZoom(inlineState.zoomValue, event.deltaY),
-    {
-      x: event.clientX,
-      y: event.clientY
-    }
-  );
+  event.stopPropagation();
+  if (normalizedNextZoom === inlineState.zoomValue) {
+    return;
+  }
+  updateMarkdownMermaidInlineZoom(inlineState, normalizedNextZoom, {
+    x: event.clientX,
+    y: event.clientY
+  });
 }
 
 /**
@@ -973,10 +1035,19 @@ function updateMarkdownMermaidInlineZoom(
 ): void {
   // 归一化缩放倍数。
   const normalizedZoom = clampMarkdownMermaidZoom(nextZoom, inlineState.zoomBounds);
+  // 回到默认倍率必须恢复规范视图，不能保留锚点补偿的画布位移或滚动量。
+  if (normalizedZoom === VIEWER_DEFAULT_ZOOM) {
+    inlineState.zoomValue = VIEWER_DEFAULT_ZOOM;
+    inlineState.zoomValueElement.textContent = `${Math.round(VIEWER_DEFAULT_ZOOM * 100)}%`;
+    inlineState.zoomOutButtonElement.disabled = VIEWER_DEFAULT_ZOOM <= inlineState.zoomBounds.min;
+    inlineState.zoomInButtonElement.disabled = VIEWER_DEFAULT_ZOOM >= inlineState.zoomBounds.max;
+    inlineState.resetButtonElement.disabled = true;
+    updateMarkdownMermaidInlineCanvasSize(inlineState);
+    resetMarkdownMermaidInlineViewport(inlineState);
+    return;
+  }
   // 已到达缩放边界时不再重复修正焦点，避免滚轮事件的像素舍入让视图持续漂移。
-  if (
-    shouldSkipMarkdownViewerAnchoredZoom(inlineState.zoomValue, normalizedZoom, zoomAnchor)
-  ) {
+  if (shouldSkipMarkdownViewerAnchoredZoom(inlineState.zoomValue, normalizedZoom, zoomAnchor)) {
     return;
   }
   // 缩放前焦点。
@@ -985,7 +1056,7 @@ function updateMarkdownMermaidInlineZoom(
   inlineState.zoomValueElement.textContent = `${Math.round(normalizedZoom * 100)}%`;
   inlineState.zoomOutButtonElement.disabled = normalizedZoom <= inlineState.zoomBounds.min;
   inlineState.zoomInButtonElement.disabled = normalizedZoom >= inlineState.zoomBounds.max;
-  inlineState.resetButtonElement.disabled = normalizedZoom === VIEWER_DEFAULT_ZOOM;
+  inlineState.resetButtonElement.disabled = false;
   updateMarkdownMermaidInlineCanvasSize(inlineState);
   if (focalPoint) {
     applyMarkdownMermaidInlineFocalPoint(inlineState, focalPoint);
@@ -1091,21 +1162,28 @@ function applyMarkdownMermaidInlineFocalPoint(
   inlineState: MarkdownMermaidInlineState,
   focalPoint: MarkdownViewerFocalPoint
 ): void {
-  inlineState.bodyElement.scrollLeft = 0;
-  inlineState.bodyElement.scrollTop = 0;
-  // 缩放后画布矩形。
-  const canvasRect = inlineState.canvasElement.getBoundingClientRect();
-  if (canvasRect.width <= 0 || canvasRect.height <= 0) {
+  // 缩放后、滚动校正前的画布矩形。
+  const canvasRectBeforeScroll = inlineState.canvasElement.getBoundingClientRect();
+  if (canvasRectBeforeScroll.width <= 0 || canvasRectBeforeScroll.height <= 0) {
     return;
   }
-  // 目标画布客户端左边界。
-  const targetCanvasClientLeft =
-    focalPoint.anchorClientX - focalPoint.normalizedX * canvasRect.width;
-  // 目标画布客户端上边界。
-  const targetCanvasClientTop =
-    focalPoint.anchorClientY - focalPoint.normalizedY * canvasRect.height;
-  inlineState.bodyElement.scrollLeft = canvasRect.left - targetCanvasClientLeft;
-  inlineState.bodyElement.scrollTop = canvasRect.top - targetCanvasClientTop;
+  // 关键步骤：基于当前滚动量做增量校正，避免清零视口造成锚点位置逐次漂移。
+  inlineState.bodyElement.scrollLeft = getMarkdownViewerAnchoredScrollOffset(
+    inlineState.bodyElement.scrollLeft,
+    canvasRectBeforeScroll.left,
+    focalPoint.anchorClientX,
+    focalPoint.normalizedX,
+    canvasRectBeforeScroll.width
+  );
+  inlineState.bodyElement.scrollTop = getMarkdownViewerAnchoredScrollOffset(
+    inlineState.bodyElement.scrollTop,
+    canvasRectBeforeScroll.top,
+    focalPoint.anchorClientY,
+    focalPoint.normalizedY,
+    canvasRectBeforeScroll.height
+  );
+  // 浏览器会把超出范围的滚动量钳制到 0 或最大值。某一轴到达边界后允许内容自然偏移，
+  // 不再叠加 canvas transform 强行维持鼠标锚点，避免产生不可逆的残留位移。
 }
 
 /**
@@ -1120,9 +1198,9 @@ function updateMarkdownMermaidInlineCanvasSize(inlineState: MarkdownMermaidInlin
   // SVG 固有高度。
   const naturalHeight = Math.max(inlineState.naturalHeight, 1);
   // 当前显示宽度。
-  const displayWidth = Math.max(1, Math.round(naturalWidth * fitScale * inlineState.zoomValue));
+  const displayWidth = Math.max(1, naturalWidth * fitScale * inlineState.zoomValue);
   // 当前显示高度。
-  const displayHeight = Math.max(1, Math.round(naturalHeight * fitScale * inlineState.zoomValue));
+  const displayHeight = Math.max(1, naturalHeight * fitScale * inlineState.zoomValue);
   inlineState.canvasElement.style.width = `${displayWidth}px`;
   inlineState.canvasElement.style.height = `${displayHeight}px`;
 

@@ -110,6 +110,41 @@ describe("hydrateMarkdown", () => {
     expect(controlsElement?.querySelector("button[aria-label='全屏查看图表']")).not.toBeNull();
   });
 
+  it("keeps drag-mode wheel events inside Mermaid at a zoom boundary", async () => {
+    // 输入 Markdown 创建带完整交互结构的 Mermaid 图表。
+    const container = await renderAndHydrate(
+      ["```mermaid", "graph TD", "  A-->B", "```"].join("\n")
+    );
+    // Mermaid 外层 figure。
+    const figureElement = container.querySelector<HTMLElement>("figure.scribdown-mermaid");
+    // Mermaid 可滚动正文。
+    const bodyElement = figureElement?.querySelector<HTMLElement>(".scribdown-mermaid__body");
+    // 模式切换按钮。
+    const modeButtonElement = figureElement?.querySelector<HTMLButtonElement>(
+      "button[data-scribdown-mermaid-action='mode']"
+    );
+    // 模拟页面或外层滚动容器监听 wheel。
+    const outerWheelHandler = vi.fn();
+    figureElement?.addEventListener("wheel", outerWheelHandler);
+
+    // dispatchEvent 可覆盖 loading 阶段的 disabled 按钮，直接验证运行时模式逻辑。
+    modeButtonElement?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    // 拖拽模式下无需判断输入设备，任意滚轮事件都由 Mermaid 接管。
+    const wheelEvent = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+      deltaX: 0,
+      deltaY: 4,
+      clientX: 320,
+      clientY: 240
+    });
+    bodyElement?.dispatchEvent(wheelEvent);
+
+    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(outerWheelHandler).not.toHaveBeenCalled();
+  });
+
   it("wraps tables with a copy button and serializes cell text as TSV", async () => {
     // 输入 Markdown 覆盖表头与两行数据。
     const container = await renderAndHydrate(
