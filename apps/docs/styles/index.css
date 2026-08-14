@@ -1,6 +1,7 @@
 /* Scribdown 文档站：将 Rspress 主题变量映射到产品设计 Token。
    关键步骤：设计 Token 一律从 @scribdown/ui-handdrawn 引入，站点内不再复制色值；
    明暗切换由 ThemeSync 组件把 Rspress 的 rp-dark 同步成 token 包的 scribdown-theme-* class。 */
+@import "@scribdown/ui-handdrawn/styles/fonts.css";
 @import "@scribdown/ui-handdrawn/styles/tokens.css";
 
 :root {

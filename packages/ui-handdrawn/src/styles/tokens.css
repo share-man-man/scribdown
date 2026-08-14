@@ -120,8 +120,9 @@
 
 /* ─── 与主题无关的 Token ──────────────────────────────────────────── */
 :root {
-  --scribdown-font-body: "Source Serif 4", "Noto Serif SC", serif;
-  --scribdown-font-heading: "Caveat", "LXGW WenKai", "Noto Serif SC", serif;
+  /* 字体由 styles.css 本地加载；同一字体覆盖中英文，避免逐字符回退造成视觉基线错位。 */
+  --scribdown-font-body: "Noto Serif SC Variable", "Songti SC", serif;
+  --scribdown-font-heading: "LXGW WenKai Screen", "Kaiti SC", serif;
   --scribdown-font-code: "JetBrains Mono", "Fira Code", monospace;
 
   /* 四角独立写法，呼应手绘感 */

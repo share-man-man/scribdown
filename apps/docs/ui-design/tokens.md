@@ -64,8 +64,8 @@ Token 分两层：
 
 | Token | Value | 说明 |
 | --- | --- | --- |
-| `--scribdown-font-body` | `"Source Serif 4", "Noto Serif SC", serif` | 正文阅读字体 |
-| `--scribdown-font-heading` | `"Caveat", "LXGW WenKai", "Noto Serif SC", serif` | 标题与局部强调字体 |
+| `--scribdown-font-body` | `"Noto Serif SC Variable", "Songti SC", serif` | 正文阅读字体，由本地 WOFF2 资产覆盖中英文 |
+| `--scribdown-font-heading` | `"LXGW WenKai Screen", "Kaiti SC", serif` | 标题与局部强调字体，由本地 WOFF2 资产覆盖中英文 |
 | `--scribdown-font-code` | `"JetBrains Mono", "Fira Code", monospace` | 代码字体 |
 
 ## 圆角

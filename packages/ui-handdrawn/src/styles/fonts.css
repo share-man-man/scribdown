@@ -1,0 +1,3 @@
+/* 字体资产统一由共享 UI 包装配，所有宿主均使用本地 WOFF2，不依赖系统已安装字体。 */
+@import "@fontsource-variable/noto-serif-sc/wght.css";
+@import "lxgw-wenkai-screen-webfont/lxgwwenkaiscreen.css";

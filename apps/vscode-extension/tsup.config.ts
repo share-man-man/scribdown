@@ -55,12 +55,12 @@ async function prepareWebviewUiAssets(): Promise<void> {
   await ensureWebviewBuildPrerequisites();
 
   // 关键步骤：用 esbuild 内联 ui-handdrawn 的 @import 分文件，
-  // 并把 url() 引用的 SVG 拷贝到 dist/webview-ui/assets，供 Webview 单文件加载。
+  // 并把 url() 引用的 SVG 与字体拷贝到 dist/webview-ui/assets，供 Webview 单文件加载。
   await buildEsbuildBundle({
     entryPoints: [UI_HANDDRAWN_STYLES_ENTRY_FILE_PATH],
     outfile: WEBVIEW_STYLE_OUTPUT_FILE_PATH,
     bundle: true,
-    loader: { ".svg": "file" },
+    loader: { ".svg": "file", ".woff2": "file" },
     assetNames: "assets/[name]",
     legalComments: "none",
     minify: IS_PRODUCTION_BUILD
