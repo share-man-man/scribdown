@@ -39,8 +39,7 @@
   left: 0;
   min-width: 26px;
   color: var(--scribdown-color-warning);
-  font-family: "Caveat", "Comic Sans MS", "Bradley Hand", "Segoe Print", "LXGW WenKai",
-    var(--scribdown-font-heading);
+  font-family: var(--scribdown-font-heading);
   font-size: 22px;
   font-style: normal;
   font-weight: 700;
