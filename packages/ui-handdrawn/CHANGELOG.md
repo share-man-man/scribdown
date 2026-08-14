@@ -1,5 +1,11 @@
 # @scribdown/ui-handdrawn
 
+## 0.3.1
+
+### Patch Changes
+
+- 9fbad1f: 优化 Mermaid 项目主题配色、指针锚点缩放和拖拽模式滚轮交互。
+
 ## 0.3.0
 
 ### Minor Changes
