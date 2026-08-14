@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getMarkdownViewerAnchoredScrollOffset,
   getMarkdownViewerWheelZoom,
   getMarkdownViewerZoomStep,
   readMarkdownViewerViewportSize,
+  shouldZoomMarkdownViewerWheel,
   shouldSkipMarkdownViewerAnchoredZoom
 } from "./viewer-shared";
 
@@ -17,6 +19,37 @@ describe("viewer zoom geometry", () => {
     expect(getMarkdownViewerWheelZoom(1, -5)).toBe(1.05);
     expect(getMarkdownViewerWheelZoom(4, -5)).toBe(4.2);
     expect(getMarkdownViewerWheelZoom(4, -100)).toBe(4.4);
+  });
+
+  it("always zooms wheel events in drag mode", () => {
+    /** 拖拽模式下的滚轮事件。 */
+    const dragWheelIntent = {
+      isDragMode: true,
+      ctrlKey: false,
+      metaKey: false
+    };
+
+    expect(shouldZoomMarkdownViewerWheel(dragWheelIntent)).toBe(true);
+  });
+
+  it("keeps unmodified selection-mode scrolling and supports explicit modifier zoom", () => {
+    /** 选择模式下未按修饰键的滚轮事件。 */
+    const selectionWheelIntent = {
+      isDragMode: false,
+      ctrlKey: false,
+      metaKey: false
+    };
+
+    expect(shouldZoomMarkdownViewerWheel(selectionWheelIntent)).toBe(false);
+    expect(shouldZoomMarkdownViewerWheel({ ...selectionWheelIntent, ctrlKey: true })).toBe(true);
+    expect(shouldZoomMarkdownViewerWheel({ ...selectionWheelIntent, metaKey: true })).toBe(true);
+  });
+
+  it("keeps the content coordinate under the pointer stable after zoom", () => {
+    // 缩放后内容实际左边界为 40，指针下 50% 内容要求左边界为 -80。
+    expect(getMarkdownViewerAnchoredScrollOffset(200, 40, 320, 0.5, 800)).toBe(320);
+    // 应用新增的 120 滚动量后，内容左边界恰好移动到目标 -80。
+    expect(40 - (320 - 200)).toBe(-80);
   });
 
   it("skips anchored focal-point updates after zoom reaches a boundary", () => {

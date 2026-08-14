@@ -43,6 +43,18 @@ interface MarkdownViewerViewportSize {
   height: number;
 }
 
+/**
+ * 判断滚轮是否应触发缩放所需的事件信息。
+ */
+interface MarkdownViewerWheelIntent {
+  /** 是否处于拖拽模式。 */
+  isDragMode: boolean;
+  /** Ctrl 修饰键状态，浏览器也会用它表示触控板捏合。 */
+  ctrlKey: boolean;
+  /** Command 修饰键状态。 */
+  metaKey: boolean;
+}
+
 // 查看器默认缩放倍数。
 const VIEWER_DEFAULT_ZOOM = 1;
 
@@ -114,6 +126,17 @@ function getMarkdownViewerWheelZoom(zoomValue: number, deltaY: number): number {
 }
 
 /**
+ * 根据交互模式和修饰键判断当前滚轮事件是否应缩放。
+ * 拖拽模式始终由查看器接管滚轮；选择模式仅在 Ctrl/Command 明确表达缩放意图时接管。
+ *
+ * @param wheelIntent 当前模式与滚轮事件特征。
+ * @returns 是否拦截滚动并执行缩放。
+ */
+function shouldZoomMarkdownViewerWheel(wheelIntent: MarkdownViewerWheelIntent): boolean {
+  return wheelIntent.isDragMode || wheelIntent.ctrlKey || wheelIntent.metaKey;
+}
+
+/**
  * 判断带锚点的缩放是否已被边界截断为无变化。
  * @param currentZoom 当前缩放倍数。
  * @param normalizedZoom 应用边界限制后的目标缩放倍数。
@@ -126,6 +149,28 @@ function shouldSkipMarkdownViewerAnchoredZoom(
   zoomAnchor?: MarkdownViewerZoomAnchor
 ): boolean {
   return zoomAnchor !== undefined && normalizedZoom === currentZoom;
+}
+
+/**
+ * 计算缩放后保持指针下内容坐标不变所需的滚动位置。
+ * @param currentScrollOffset 当前视口滚动量。
+ * @param currentContentClientStart 缩放后内容在客户端坐标系中的起点。
+ * @param anchorClientPosition 指针在客户端坐标系中的位置。
+ * @param normalizedContentPosition 缩放前指针对应的内容归一化坐标。
+ * @param contentSize 缩放后的内容尺寸。
+ * @returns 应设置的新滚动量。
+ */
+function getMarkdownViewerAnchoredScrollOffset(
+  currentScrollOffset: number,
+  currentContentClientStart: number,
+  anchorClientPosition: number,
+  normalizedContentPosition: number,
+  contentSize: number
+): number {
+  // 指针锚点要求内容在缩放后落到的客户端起点。
+  const targetContentClientStart = anchorClientPosition - normalizedContentPosition * contentSize;
+  // 只校正实际起点与目标起点的差值，保留当前已有的平移位置。
+  return currentScrollOffset + currentContentClientStart - targetContentClientStart;
 }
 
 /**
@@ -158,7 +203,8 @@ export type {
   MarkdownViewerFocalPoint,
   MarkdownViewerZoomAnchor,
   MarkdownViewerButtonOptions,
-  MarkdownViewerViewportSize
+  MarkdownViewerViewportSize,
+  MarkdownViewerWheelIntent
 };
 export {
   VIEWER_DEFAULT_ZOOM,
@@ -170,8 +216,10 @@ export {
   VIEWER_ZOOM_OUT_TEXT,
   VIEWER_RESET_TEXT,
   clampMarkdownViewerZoom,
+  getMarkdownViewerAnchoredScrollOffset,
   getMarkdownViewerWheelZoom,
   getMarkdownViewerZoomStep,
   readMarkdownViewerViewportSize,
+  shouldZoomMarkdownViewerWheel,
   shouldSkipMarkdownViewerAnchoredZoom
 };

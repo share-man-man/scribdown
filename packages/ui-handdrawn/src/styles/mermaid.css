@@ -68,7 +68,8 @@
     32px 29px,
     auto;
   overflow: auto;
-  overscroll-behavior: contain;
+  /* 图表无可滚动空间或已经到达边界时，继续把滚轮交给外层正文滚动容器。 */
+  overscroll-behavior: auto;
   scrollbar-gutter: stable both-edges;
 }
 
