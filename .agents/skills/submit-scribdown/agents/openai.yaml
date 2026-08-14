@@ -1,0 +1,4 @@
+interface:
+  display_name: "提交 Scribdown"
+  short_description: "从 main 建分支、生成 Changeset、提交并创建 PR"
+  default_prompt: "使用 $submit-scribdown 将当前改动从 main 新建分支，生成 Changeset、提交并创建 PR。"
