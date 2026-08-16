@@ -123,7 +123,7 @@ importers:
         version: 5.8.3
 
   apps/vscode-extension:
-    devDependencies:
+    dependencies:
       '@scribdown/markdown-renderer':
         specifier: workspace:*
         version: link:../../packages/markdown-renderer
@@ -133,6 +133,7 @@ importers:
       '@scribdown/ui-handdrawn':
         specifier: workspace:*
         version: link:../../packages/ui-handdrawn
+    devDependencies:
       '@types/vscode':
         specifier: ^1.90.0
         version: 1.116.0
