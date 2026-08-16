@@ -104,10 +104,12 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "devDependencies": {
+  "dependencies": {
     "@scribdown/markdown-renderer": "workspace:*",
     "@scribdown/shared": "workspace:*",
-    "@scribdown/ui-handdrawn": "workspace:*",
+    "@scribdown/ui-handdrawn": "workspace:*"
+  },
+  "devDependencies": {
     "@types/vscode": "^1.90.0",
     "esbuild": "^0.25.11",
     "morphdom": "^2.7.5",
