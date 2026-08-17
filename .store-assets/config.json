@@ -1,0 +1,54 @@
+{
+  "buildCommand": "mise exec -- pnpm --filter @scribdown/browser-extension build",
+  "buildDir": "apps/browser-extension/.output/chrome-mv3",
+  "workDir": "apps/browser-extension/.output/store-assets",
+  "pages": [
+    "popup.html",
+    "viewer.html"
+  ],
+  "defaultParams": {},
+  "shots": [
+    {
+      "file": "01-viewer.png",
+      "path": "/viewer.html?src={{baseUrl}}/pages/sample.md&click=Contents&ready=.scribdown-toolbar-toc-panel.is-open&settle=1200",
+      "width": 1280,
+      "height": 800,
+      "note": "主界面：渲染后的 Markdown 文档 + 展开的目录侧栏"
+    },
+    {
+      "file": "02-viewer-code.png",
+      "path": "/viewer.html?src={{baseUrl}}/pages/sample-code.md&ready=pre%20code&settle=800",
+      "width": 1280,
+      "height": 800,
+      "note": "代码高亮：Shiki 着色 + 行号 + 复制按钮"
+    },
+    {
+      "file": "03-viewer-mermaid.png",
+      "path": "/viewer.html?src={{baseUrl}}/pages/sample-diagram.md&ready=.scribdown-mermaid--loaded&settle=1200",
+      "width": 1280,
+      "height": 800,
+      "note": "Mermaid 图表：源码里的流程图就地渲染"
+    },
+    {
+      "file": "04-popup.png",
+      "path": "/pages/popup-frame.html",
+      "width": 1280,
+      "height": 800,
+      "note": "Popup 合成页：真实 popup 放大后配一句说明"
+    },
+    {
+      "file": "promo-small.png",
+      "path": "/pages/promo-small.html",
+      "width": 440,
+      "height": 280,
+      "note": "小型宣传图块（设计稿，非截图）"
+    },
+    {
+      "file": "promo-marquee.png",
+      "path": "/pages/promo-marquee.html",
+      "width": 1400,
+      "height": 560,
+      "note": "Marquee 宣传图块（设计稿，非截图）"
+    }
+  ]
+}

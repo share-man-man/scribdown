@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "Experiência de renderização Markdown com estilo desenhado à mão."
+    "message": "Renderiza páginas .md e arquivos Markdown locais na hora: destaque de sintaxe, diagramas Mermaid e sumário."
   }
 }

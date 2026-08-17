@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scribdown 小型宣传图块</title>
+    <!--
+      Chrome 商店小型宣传图块（440x280）。
+
+      这是设计稿而非截图：440x280 太小，塞真实界面只会糊成色块。
+      配色取自 packages/ui-handdrawn/src/styles/tokens.css 的浅色调色板，
+      字体走扩展构建产物里的 content.css（路径由 manifest.json 固定，
+      不随构建哈希变化）。
+    -->
+    <link rel="stylesheet" href="/content-scripts/content.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      /* 商店会自行裁切，宣传图必须铺满画布、不留白边、不做圆角 */
+      html, body {
+        width: 440px;
+        height: 280px;
+        overflow: hidden;
+      }
+      body {
+        background: #ebe1c8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        position: relative;
+        color: #2f2620;
+      }
+
+      /* 纸张纹理：与渲染页的暖色纸面呼应，避免大块死板的纯色 */
+      body::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(90% 80% at 50% 8%, rgba(248, 240, 219, 0.95) 0%, rgba(248, 240, 219, 0) 70%),
+          repeating-linear-gradient(90deg, rgba(132, 96, 44, 0.05) 0 1px, transparent 1px 26px),
+          repeating-linear-gradient(0deg, rgba(67, 107, 91, 0.045) 0 1px, transparent 1px 26px);
+      }
+
+      .stack {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .mark {
+        width: 78px;
+        height: 78px;
+        display: block;
+        filter: drop-shadow(3px 4px 0 rgba(47, 38, 32, 0.16));
+      }
+
+      .wordmark {
+        font-family: 'LXGW WenKai Screen', 'Kaiti SC', serif;
+        font-size: 50px;
+        line-height: 1;
+        letter-spacing: 0.01em;
+      }
+
+      /* 手绘风下划线，呼应渲染页标题的笔触 */
+      .wordmark::after {
+        content: '';
+        display: block;
+        height: 4px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: #d7ab48;
+        transform: rotate(-0.5deg);
+      }
+
+      .tagline {
+        font-family: 'Noto Serif SC Variable', 'Songti SC', serif;
+        font-size: 19px;
+        color: #5d5044;
+        letter-spacing: 0.01em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stack">
+      <img class="mark" src="/icons/icon-128.png" alt="" />
+      <div class="wordmark">Scribdown</div>
+      <div class="tagline">Markdown, rendered in place</div>
+    </div>
+    <script>
+      /** 供截图脚本轮询的就绪标记。 */
+      window.__assetReady = false;
+
+      // 字体来自本地 WOFF2，未加载完就截图会拍到回退字体
+      Promise.all([document.fonts.ready, new Promise((resolve) => window.addEventListener('load', resolve))]).then(
+        () => {
+          setTimeout(() => {
+            window.__assetReady = true;
+          }, 300);
+        },
+      );
+    </script>
+  </body>
+</html>

@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "Handdrawn markdown rendering experience."
+    "message": "Renders any .md page or local Markdown file in place — code highlighting, Mermaid diagrams, table of contents."
   }
 }
