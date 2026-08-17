@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "Рендеринг Markdown в рисованном стиле."
+    "message": "Отображает .md-страницы и локальные Markdown-файлы: подсветка кода, диаграммы Mermaid, оглавление."
   }
 }

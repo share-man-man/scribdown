@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "손그림 스타일 Markdown 렌더링 경험."
+    "message": ".md 페이지와 로컬 Markdown 파일을 즉시 렌더링. 코드 하이라이트, Mermaid 다이어그램, 목차 제공."
   }
 }

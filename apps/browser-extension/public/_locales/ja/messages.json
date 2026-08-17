@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "手書き風の Markdown レンダリング体験。"
+    "message": ".md ページやローカルの Markdown をその場で整形。コードハイライト、Mermaid 図、目次、自動更新。"
   }
 }

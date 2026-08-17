@@ -109,7 +109,8 @@ const EN_MESSAGES: Messages = {
   "vscode.renderFailed": "Render failed",
 
   "manifest.browserName": "Scribdown",
-  "manifest.browserDescription": "Handdrawn markdown rendering experience.",
+  "manifest.browserDescription":
+    "Renders any .md page or local Markdown file in place — code highlighting, Mermaid diagrams, table of contents.",
   "manifest.vscodeDisplayName": "Scribdown Markdown Preview",
   "manifest.vscodeDescription": "Handdrawn-style Markdown preview for VS Code.",
   "manifest.vscodeCommandTitle": "Open Scribdown Preview",
@@ -227,7 +228,8 @@ const ZH_CN_MESSAGES: Messages = {
   "vscode.renderFailed": "渲染失败",
 
   "manifest.browserName": "Scribdown",
-  "manifest.browserDescription": "手绘风格的 Markdown 渲染体验。",
+  "manifest.browserDescription":
+    "就地渲染 .md 网页与本地 Markdown 文件：代码高亮、Mermaid 图表、目录导航、本地文件自动刷新。",
   "manifest.vscodeDisplayName": "Scribdown Markdown 预览",
   "manifest.vscodeDescription": "VS Code 的手绘风格 Markdown 预览。",
   "manifest.vscodeCommandTitle": "打开 Scribdown 预览",
@@ -325,7 +327,8 @@ const ZH_TW_MESSAGES: Messages = {
   "vscode.openLinkFailed": "無法開啟連結：{href}",
   "vscode.linkTargetMissing": "找不到連結目標：{path}",
   "vscode.renderFailed": "轉譯失敗",
-  "manifest.browserDescription": "手繪風格的 Markdown 轉譯體驗。",
+  "manifest.browserDescription":
+    "就地算繪 .md 網頁與本機 Markdown 檔案：程式碼高亮、Mermaid 圖表、目錄導覽、本機檔案自動重新整理。",
   "manifest.vscodeDisplayName": "Scribdown Markdown 預覽",
   "manifest.vscodeDescription": "VS Code 的手繪風格 Markdown 預覽。",
   "manifest.vscodeCommandTitle": "開啟 Scribdown 預覽",
@@ -424,7 +427,8 @@ const JA_MESSAGES: Messages = {
   "vscode.openLinkFailed": "リンクを開けません：{href}",
   "vscode.linkTargetMissing": "リンク先が見つかりません：{path}",
   "vscode.renderFailed": "レンダリングに失敗しました",
-  "manifest.browserDescription": "手書き風の Markdown レンダリング体験。",
+  "manifest.browserDescription":
+    ".md ページやローカルの Markdown をその場で整形。コードハイライト、Mermaid 図、目次、自動更新。",
   "manifest.vscodeDisplayName": "Scribdown Markdown プレビュー",
   "manifest.vscodeDescription": "VS Code 用の手書き風 Markdown プレビュー。",
   "manifest.vscodeCommandTitle": "Scribdown プレビューを開く",
@@ -521,7 +525,8 @@ const KO_MESSAGES: Messages = {
   "vscode.openLinkFailed": "링크를 열 수 없습니다: {href}",
   "vscode.linkTargetMissing": "링크 대상을 찾을 수 없습니다: {path}",
   "vscode.renderFailed": "렌더링 실패",
-  "manifest.browserDescription": "손그림 스타일 Markdown 렌더링 경험.",
+  "manifest.browserDescription":
+    ".md 페이지와 로컬 Markdown 파일을 즉시 렌더링. 코드 하이라이트, Mermaid 다이어그램, 목차 제공.",
   "manifest.vscodeDisplayName": "Scribdown Markdown 미리 보기",
   "manifest.vscodeDescription": "VS Code용 손그림 스타일 Markdown 미리 보기.",
   "manifest.vscodeCommandTitle": "Scribdown 미리 보기 열기",
@@ -622,7 +627,7 @@ const ES_MESSAGES: Messages = {
   "vscode.linkTargetMissing": "No se encontró el destino del enlace: {path}",
   "vscode.renderFailed": "Error de renderizado",
   "manifest.browserDescription":
-    "Experiencia de renderizado de Markdown con estilo dibujado a mano.",
+    "Renderiza páginas .md y archivos Markdown locales al instante: resaltado, diagramas Mermaid e índice.",
   "manifest.vscodeDisplayName": "Vista previa de Markdown de Scribdown",
   "manifest.vscodeDescription": "Vista previa de Markdown con estilo dibujado a mano para VS Code.",
   "manifest.vscodeCommandTitle": "Abrir vista previa de Scribdown",
@@ -658,7 +663,8 @@ const FR_MESSAGES: Messages = {
   "toolbar.languageBrazilianPortuguese": "Portugais (Brésil)",
   "toolbar.languageRussian": "Russe",
   "toolbar.about": "À propos",
-  "manifest.browserDescription": "Expérience de rendu Markdown au style dessiné à la main.",
+  "manifest.browserDescription":
+    "Affiche les pages .md et vos fichiers Markdown locaux : coloration syntaxique, diagrammes Mermaid, sommaire.",
   "manifest.vscodeDisplayName": "Aperçu Markdown Scribdown",
   "manifest.vscodeDescription": "Aperçu Markdown au style dessiné à la main pour VS Code.",
   "manifest.vscodeCommandTitle": "Ouvrir l’aperçu Scribdown",
@@ -698,7 +704,8 @@ const DE_MESSAGES: Messages = {
   "toolbar.languageBrazilianPortuguese": "Portugiesisch (Brasilien)",
   "toolbar.languageRussian": "Russisch",
   "toolbar.about": "Über",
-  "manifest.browserDescription": "Markdown-Rendering im handgezeichneten Stil.",
+  "manifest.browserDescription":
+    "Rendert .md-Seiten und lokale Markdown-Dateien direkt: Syntaxhervorhebung, Mermaid-Diagramme, Inhaltsverzeichnis.",
   "manifest.vscodeDisplayName": "Scribdown Markdown-Vorschau",
   "manifest.vscodeDescription": "Markdown-Vorschau im handgezeichneten Stil für VS Code.",
   "manifest.vscodeCommandTitle": "Scribdown-Vorschau öffnen",
@@ -738,7 +745,8 @@ const PT_BR_MESSAGES: Messages = {
   "toolbar.languageBrazilianPortuguese": "Português (Brasil)",
   "toolbar.languageRussian": "Russo",
   "toolbar.about": "Sobre",
-  "manifest.browserDescription": "Experiência de renderização Markdown com estilo desenhado à mão.",
+  "manifest.browserDescription":
+    "Renderiza páginas .md e arquivos Markdown locais na hora: destaque de sintaxe, diagramas Mermaid e sumário.",
   "manifest.vscodeDisplayName": "Visualização Markdown do Scribdown",
   "manifest.vscodeDescription": "Visualização Markdown com estilo desenhado à mão para VS Code.",
   "manifest.vscodeCommandTitle": "Abrir visualização do Scribdown",
@@ -778,7 +786,8 @@ const RU_MESSAGES: Messages = {
   "toolbar.languageBrazilianPortuguese": "Португальский (Бразилия)",
   "toolbar.languageRussian": "Русский",
   "toolbar.about": "О программе",
-  "manifest.browserDescription": "Рендеринг Markdown в рисованном стиле.",
+  "manifest.browserDescription":
+    "Отображает .md-страницы и локальные Markdown-файлы: подсветка кода, диаграммы Mermaid, оглавление.",
   "manifest.vscodeDisplayName": "Предпросмотр Markdown Scribdown",
   "manifest.vscodeDescription": "Предпросмотр Markdown в рисованном стиле для VS Code.",
   "manifest.vscodeCommandTitle": "Открыть предпросмотр Scribdown",

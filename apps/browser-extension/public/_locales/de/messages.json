@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "Markdown-Rendering im handgezeichneten Stil."
+    "message": "Rendert .md-Seiten und lokale Markdown-Dateien direkt: Syntaxhervorhebung, Mermaid-Diagramme, Inhaltsverzeichnis."
   }
 }

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scribdown popup</title>
+    <style>
+      /*
+       * 把真实 popup 合成到 1280x800 画布上。
+       *
+       * Scribdown 的 popup 只有 300px 宽（src/popup/popup.css），直接截远小于
+       * 商店要求的截图尺寸。这里用 iframe 引真实 popup 再等比放大，
+       * 左侧留一段说明把画布填满。配色沿用扩展的暖色手绘风。
+       */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 1280px;
+        height: 800px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 80px;
+        padding: 0 92px;
+        background: radial-gradient(120% 120% at 12% 0%, #fdf8f1 0%, #fffdfa 55%, #fbf4ea 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #2d241f;
+      }
+      .copy { flex: 1; max-width: 520px; }
+      .copy h1 {
+        font-size: 44px;
+        line-height: 1.16;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .copy p {
+        margin-top: 20px;
+        font-size: 20px;
+        line-height: 1.55;
+        color: #6a5b53;
+      }
+      .copy ul {
+        margin-top: 32px;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .copy li {
+        font-size: 18px;
+        color: #4a3d36;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .copy li::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #d9822b;
+        flex: none;
+      }
+      .popup-stage {
+        width: 420px;
+        flex: none;
+        position: relative;
+      }
+      .popup-stage iframe {
+        border: 0;
+        border-radius: 14px;
+        background: #fff;
+        transform-origin: top left;
+        box-shadow: 0 24px 60px rgba(70, 46, 26, 0.16), 0 2px 8px rgba(70, 46, 26, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <h1>Markdown, readable the moment you open it.</h1>
+      <p>Scribdown takes over raw <code>.md</code> pages and local files, then renders them with syntax highlighting, diagrams and a table of contents.</p>
+      <ul>
+        <li>Works on http(s) and local file:// documents</li>
+        <li>Auto-refreshes while you edit</li>
+        <li>One toggle to hand the page back</li>
+      </ul>
+    </div>
+    <div class="popup-stage">
+      <iframe title="popup"></iframe>
+    </div>
+    <script>
+      /** 真实 popup 的地址，可用 ?src= 覆盖。 */
+      const POPUP_SRC = new URLSearchParams(location.search).get('src') || '/popup.html';
+      /** popup 的自然宽度（px），与 src/popup/popup.css 的 body 宽度一致。 */
+      const POPUP_WIDTH = 300;
+      /** 放大倍率；放大后宽度不要超过 .popup-stage 的宽度。 */
+      const POPUP_SCALE = 1.35;
+      /** 等 popup 内部 React 渲染稳定的时间（毫秒）。 */
+      const RENDER_SETTLE_MS = 1200;
+
+      window.__assetReady = false;
+
+      /** 承载真实 popup 的 iframe。 */
+      const frame = document.querySelector('.popup-stage iframe');
+      /** iframe 的定位容器。 */
+      const stage = document.querySelector('.popup-stage');
+      frame.style.width = `${POPUP_WIDTH}px`;
+      // 先给一个足够大的高度让 popup 完整渲染，稍后再按真实内容收紧
+      frame.style.height = '900px';
+      frame.style.transform = `scale(${POPUP_SCALE})`;
+      frame.src = POPUP_SRC;
+
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          /** popup 文档。 */
+          const doc = frame.contentDocument;
+          // popup 的根容器会撑满 iframe，scrollHeight 量不出内容高度；
+          // 改成取最靠下的可见元素底边，否则卡片下方会留一大段空白
+          const contentBottom = [...doc.querySelectorAll('body *')].reduce((lowest, element) => {
+            /** 元素的可视矩形。 */
+            const rect = element.getBoundingClientRect();
+            if (rect.height === 0 || rect.width === 0) return lowest;
+            if (rect.height >= frame.clientHeight - 1) return lowest;
+            return Math.max(lowest, rect.bottom);
+          }, 0);
+          /** popup 内容的自然高度（含底部内边距）。 */
+          const contentHeight = Math.ceil(contentBottom) + 12;
+          frame.style.height = `${contentHeight}px`;
+          stage.style.height = `${contentHeight * POPUP_SCALE}px`;
+          setTimeout(() => {
+            window.__assetReady = true;
+          }, 500);
+        }, RENDER_SETTLE_MS);
+      });
+    </script>
+  </body>
+</html>

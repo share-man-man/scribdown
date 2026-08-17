@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "手绘风格的 Markdown 渲染体验。"
+    "message": "就地渲染 .md 网页与本地 Markdown 文件：代码高亮、Mermaid 图表、目录导航、本地文件自动刷新。"
   }
 }

@@ -3,6 +3,6 @@
     "message": "Scribdown"
   },
   "extDescription": {
-    "message": "手繪風格的 Markdown 轉譯體驗。"
+    "message": "就地算繪 .md 網頁與本機 Markdown 檔案：程式碼高亮、Mermaid 圖表、目錄導覽、本機檔案自動重新整理。"
   }
 }
