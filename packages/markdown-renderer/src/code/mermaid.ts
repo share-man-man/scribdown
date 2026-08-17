@@ -90,6 +90,9 @@ const MERMAID_VIEWER_SOURCE_DATA_KEY = "scribdownMermaidSource";
 // Mermaid 非全屏画布横纵 padding 总和，与 mermaid.css 的 24px * 2 对齐。
 const MERMAID_BODY_PADDING_TOTAL_PX = 48;
 
+// Mermaid 流程图长文案的最大排版宽度，超出后由 Mermaid 参与换行和节点尺寸计算。
+const MERMAID_FLOWCHART_WRAPPING_WIDTH_PX = 200;
+
 // Mermaid 工具按钮动作 dataset 键。
 const MERMAID_CONTROL_ACTION_DATA_KEY = "scribdownMermaidAction";
 
@@ -172,6 +175,20 @@ interface MarkdownMermaidInlineState {
   dragStartScrollTop: number;
   /** 响应式尺寸观察器。 */
   resizeObserver?: ResizeObserver;
+}
+
+/**
+ * 等待图表宿主文档的字体完成加载，避免 Mermaid 使用回退字体测量后再切换字体导致标签被裁切。
+ * @param ownerDocument Mermaid 图表所在文档。
+ * @returns 字体加载完成后的 Promise。
+ */
+async function waitForMarkdownMermaidFonts(ownerDocument: Document): Promise<void> {
+  // 部分旧版 Webview 不提供 FontFaceSet；此时保持兼容并直接继续渲染。
+  if (!ownerDocument.fonts) {
+    return;
+  }
+
+  await ownerDocument.fonts.ready;
 }
 
 /**
@@ -461,8 +478,12 @@ async function renderMermaidWithProjectTheme(
         startOnLoad: false,
         securityLevel: "strict",
         theme: "base",
+        markdownAutoWrap: true,
         themeVariables: createMarkdownMermaidThemeVariables(figureElement),
-        flowchart: { useMaxWidth: false },
+        flowchart: {
+          useMaxWidth: false,
+          wrappingWidth: MERMAID_FLOWCHART_WRAPPING_WIDTH_PX
+        },
         sequence: { useMaxWidth: false },
         class: { useMaxWidth: false },
         state: { useMaxWidth: false },
@@ -509,6 +530,9 @@ async function renderMermaidIntoCanvas(
       // 非浏览器环境：保留 loading 类名但不抛错，避免单测污染。
       return;
     }
+
+    // 关键步骤：Mermaid 会按渲染时的字体计算 foreignObject 与节点尺寸，必须先等最终字体就绪。
+    await waitForMarkdownMermaidFonts(figureElement.ownerDocument);
 
     mermaidRenderIdCounter += 1;
     const renderId = `${MERMAID_RENDER_ID_PREFIX}${mermaidRenderIdCounter}`;
