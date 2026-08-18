@@ -1,5 +1,13 @@
 # @scribdown/markdown-renderer
 
+## 0.6.2
+
+### Patch Changes
+
+- 0824a4b: 修复 Mermaid 长文案字体测量裁切问题，并区分分组与节点的背景层级。
+- Updated dependencies [ccd56f4]
+  - @scribdown/shared@0.5.1
+
 ## 0.6.1
 
 ### Patch Changes

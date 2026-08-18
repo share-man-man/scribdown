@@ -1,6 +1,6 @@
 {
   "name": "@scribdown/shared",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Scribdown 跨端共享的常量、枚举与命名约定。",
   "license": "MIT",
   "type": "module",
