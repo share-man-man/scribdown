@@ -94,7 +94,8 @@ export function createMarkdownMermaidThemeVariables(
     nodeBkg: background,
     nodeBorder: accent,
     nodeTextColor: textPrimary,
-    clusterBkg: background,
+    // 分组使用 surface 层级，避免与内部 node 的 background 底色融成同一块。
+    clusterBkg: surface,
     clusterBorder: border,
     edgeLabelBackground: surface,
     noteBkgColor: mark,

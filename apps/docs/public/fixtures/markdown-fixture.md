@@ -458,6 +458,17 @@ flowchart LR
     V --> W[Done]
 ```
 
+分组与长文案（用于验证分组背景层级和 `foreignObject`
+文案完整性）：
+
+```mermaid
+flowchart LR
+    subgraph Rendering[渲染流程]
+        LongNode[这是一段用于验证 Mermaid 节点长文案不会被 foreignObject 裁切的说明文字]
+        LongNode --> Output[预览输出]
+    end
+```
+
 渲染失败（无效语法）：
 
 ```mermaid

@@ -33,6 +33,7 @@ describe("createMarkdownMermaidThemeVariables", () => {
       lineColor: "#bbbbbb",
       mainBkg: "#101010",
       nodeBkg: "#101010",
+      clusterBkg: "#202020",
       noteBorderColor: "#cc9955",
       errorBkgColor: "#dd6655",
       fontFamily: '"Test Serif", serif',
