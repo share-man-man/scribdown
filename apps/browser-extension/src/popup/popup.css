@@ -116,6 +116,8 @@ body {
   left: 0;
   z-index: 10;
   width: max-content;
+  /* 至少与 label + ? 按钮一样宽，保证右上角的三角始终落在气泡上边缘内。 */
+  min-width: 100%;
   max-width: 240px;
   padding: 6px 10px;
   border-radius: var(--scribdown-radius-sm);
@@ -126,12 +128,16 @@ body {
   box-shadow: var(--scribdown-shadow-sm);
 }
 
-.scribdown-popup__info-tip::before {
+/* 三角画在 label 容器上（而非气泡内），这样无需知道 label 宽度即可精确对齐 ? 按钮中心：
+ * ? 按钮是容器最后一个 flex item，宽 16px，其中心距容器右边 8px，三角半宽 5px，故 right: 3px。 */
+.scribdown-popup__label-with-info:has(.scribdown-popup__info-tip)::after {
   content: "";
   position: absolute;
-  bottom: 100%;
-  /* 三角对齐到 ? 按钮中心：label 大致宽度未知，固定一个偏移让箭头落在按钮附近即可。 */
-  left: 12px;
+  /* 只有 border-bottom 可见（占 10px 盒子的下半部分），所以盒子上移 10px，
+   * 让可见三角正好落在 100%+3px ~ 100%+8px，即气泡上沿之上。 */
+  top: calc(100% - 2px);
+  right: 3px;
+  z-index: 11;
   border: 5px solid transparent;
   border-bottom-color: var(--scribdown-color-text-primary);
 }
