@@ -194,6 +194,12 @@ function getOrCreateMarkdownImageViewerState(ownerDocument: Document): MarkdownI
   const existingViewerState = imageViewerStateByDocument.get(ownerDocument);
 
   if (existingViewerState) {
+    // 关键步骤：与 mermaid 全屏查看器同理，宿主整页重渲染后 dialog 会被从 body 里移除，
+    // 而按 document 缓存的状态仍然命中。detached dialog 上调用 showModal 会抛错，
+    // 因此重新挂回 body 后复用同一实例（监听均在 dialog 子树内，不会重复注册）。
+    if (!existingViewerState.dialogElement.isConnected) {
+      ownerDocument.body.append(existingViewerState.dialogElement);
+    }
     return existingViewerState;
   }
 
@@ -720,9 +726,7 @@ function updateMarkdownImageViewerZoom(
   // 归一化后的缩放倍数。
   const normalizedZoom = clampMarkdownViewerZoom(nextZoom);
   // 已到达缩放边界时不再重复修正焦点，避免滚轮事件的像素舍入让视图持续漂移。
-  if (
-    shouldSkipMarkdownViewerAnchoredZoom(viewerState.zoomValue, normalizedZoom, zoomAnchor)
-  ) {
+  if (shouldSkipMarkdownViewerAnchoredZoom(viewerState.zoomValue, normalizedZoom, zoomAnchor)) {
     return;
   }
   // 缩放前的焦点信息，用于恢复光标/视口中心在新尺寸下的相对位置。
