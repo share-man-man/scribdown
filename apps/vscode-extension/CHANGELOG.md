@@ -1,5 +1,12 @@
 # scribdown-markdown-preview
 
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies [7293500]
+  - @scribdown/markdown-renderer@0.6.3
+
 ## 0.7.2
 
 ### Patch Changes

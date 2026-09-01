@@ -1,5 +1,14 @@
 # @scribdown/browser-extension
 
+## 0.4.3
+
+### Patch Changes
+
+- 66cf3ad: 修正弹窗说明气泡的三角指向：三角现在稳定对齐到 `?` 按钮中心，不再随 label 文案长度偏移。
+- 7293500: 修复浏览器插件在文档内容更新后重新渲染时，阅读位置跳回顶部、Mermaid 全屏与图片放大失效的问题。插件改为与 VS Code 预览一致的 morphdom 增量更新，未变化的内容原地保留；全屏查看器在宿主重建页面后也能自动恢复可用。
+- Updated dependencies [7293500]
+  - @scribdown/markdown-renderer@0.6.3
+
 ## 0.4.2
 
 ### Patch Changes

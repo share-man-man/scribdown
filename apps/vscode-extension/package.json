@@ -3,7 +3,7 @@
   "displayName": "%displayName%",
   "description": "%description%",
   "publisher": "ShareManMan",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "type": "module",
   "main": "dist/extension.cjs",
