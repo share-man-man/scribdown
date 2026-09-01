@@ -1,5 +1,12 @@
 # @scribdown/docs
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [7293500]
+  - @scribdown/markdown-renderer@0.6.3
+
 ## 0.0.3
 
 ### Patch Changes
