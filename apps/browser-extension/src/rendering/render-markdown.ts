@@ -8,6 +8,7 @@ import {
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
   SCRIBDOWN_PAGE_CLASS_NAME
 } from "@scribdown/shared";
+import morphdom from "morphdom";
 import {
   getExtensionHostLocale,
   getExtensionLocalePreference,
@@ -94,7 +95,61 @@ export function rewriteRelativeUrls(rootElement: Element, sourceUrl: string): vo
 }
 
 /**
- * 把给定 Markdown 文本渲染到当前 document，统一替换 head 标签与 body 结构。
+ * 确保当前 document 已具备渲染外壳（head 元信息 + body 骨架），并返回正文挂载点。
+ * 仅在首次接管时重置 head / body；后续重渲染复用同一套外壳与同一个正文节点，
+ * 由 morphdom 做增量合并，避免整页销毁重建。
+ * @param title 用于 document.title 的标题文本。
+ * @returns 承载 Markdown 正文的 article 节点。
+ */
+function ensureDocumentShell(title: string): HTMLElement {
+  document.title = title;
+
+  /** 已存在的正文节点；存在即说明本文档已被接管过，外壳无需重建。 */
+  const existingArticle = document.querySelector<HTMLElement>(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`);
+  if (existingArticle) {
+    return existingArticle;
+  }
+
+  // 重置 <head>，去掉宿主页面残留的元信息和样式。
+  document.head.innerHTML = "";
+  /** 字符集元标签。 */
+  const charsetMeta = document.createElement("meta");
+  charsetMeta.setAttribute("charset", "UTF-8");
+  document.head.appendChild(charsetMeta);
+  /** 视口元标签。 */
+  const viewportMeta = document.createElement("meta");
+  viewportMeta.setAttribute("name", "viewport");
+  viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0");
+  document.head.appendChild(viewportMeta);
+
+  /** 注入的渲染样式 link 节点。 */
+  const stylesheetLink = document.createElement("link");
+  stylesheetLink.id = RENDERER_STYLESHEET_ID;
+  stylesheetLink.rel = "stylesheet";
+  stylesheetLink.href = resolveExtensionResourceUrl(rendererStylesheetPath);
+  document.head.appendChild(stylesheetLink);
+
+  // 关键步骤：只建空骨架，正文内容统一走下面的 morphdom 合并路径，
+  // 首次渲染与后续更新共用同一条代码路径。
+  document.body.className = SCRIBDOWN_PAGE_CLASS_NAME;
+  document.body.innerHTML = "";
+  /** 满宽外壳节点，同时作为工具栏与目录侧栏的挂载点。 */
+  const appElement = document.createElement("main");
+  appElement.className = SCRIBDOWN_APP_CLASS_NAME;
+  /** Markdown 正文节点，后续所有更新都增量合并进这个节点。 */
+  const articleElement = document.createElement("article");
+  articleElement.className = SCRIBDOWN_MARKDOWN_CLASS_NAME;
+  appElement.appendChild(articleElement);
+  document.body.appendChild(appElement);
+
+  return articleElement;
+}
+
+/**
+ * 把给定 Markdown 文本渲染到当前 document。
+ * 首次调用建立 head 与 body 骨架，之后每次调用都以 morphdom 增量合并正文，
+ * 未变化的节点原地保留——滚动容器、已挂载的全屏查看器、图片加载状态都不会被销毁。
+ * 与 VS Code 预览侧保持同一套增量更新策略。
  * 由 file:// content script 与扩展 viewer 页共享，保证两个入口渲染一致。
  * @param rawMarkdown 原始 Markdown 字符串。
  * @param title 用于 document.title 的标题文本。
@@ -108,42 +163,30 @@ export async function renderMarkdownToDocument(
   // 关键步骤：将原始 Markdown 渲染为安全 HTML。
   const renderedHtml = await renderMarkdown(rawMarkdown);
 
-  // 重置 <head>，去掉宿主页面残留的元信息和样式。
-  document.head.innerHTML = "";
-  /** 字符集元标签。 */
-  const charsetMeta = document.createElement("meta");
-  charsetMeta.setAttribute("charset", "UTF-8");
-  document.head.appendChild(charsetMeta);
-  /** 视口元标签。 */
-  const viewportMeta = document.createElement("meta");
-  viewportMeta.setAttribute("name", "viewport");
-  viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0");
-  document.head.appendChild(viewportMeta);
-  document.title = title;
+  /** 当前 document 中承载正文的 article 节点（首次调用时创建）。 */
+  const articleElement = ensureDocumentShell(title);
 
-  /** 注入的渲染样式 link 节点。 */
-  const stylesheetLink = document.createElement("link");
-  stylesheetLink.id = RENDERER_STYLESHEET_ID;
-  stylesheetLink.rel = "stylesheet";
-  stylesheetLink.href = resolveExtensionResourceUrl(rendererStylesheetPath);
-  document.head.appendChild(stylesheetLink);
+  // 关键步骤：在游离节点上构建并 hydrate 新内容，使代码块包装等结构与现有 DOM 对齐，
+  // morphdom 才能逐节点比对而非按标签差异整块销毁重建。
+  /** 本轮新内容的游离快照节点；标签与 class 与 live 正文节点保持一致。 */
+  const incomingArticle = document.createElement("article");
+  incomingArticle.className = SCRIBDOWN_MARKDOWN_CLASS_NAME;
+  incomingArticle.innerHTML = renderedHtml;
+  // 关键步骤：sanitize 与高亮完成后，再把用户文档里的相对 href/src 解析到原始 Markdown URL。
+  rewriteRelativeUrls(incomingArticle, sourceUrl);
+  hydrateMarkdown(incomingArticle);
 
-  // 用渲染结果替换 <body> 内容。
-  document.body.className = SCRIBDOWN_PAGE_CLASS_NAME;
-  document.body.innerHTML = `
-    <main class="${SCRIBDOWN_APP_CLASS_NAME}">
-      <article class="${SCRIBDOWN_MARKDOWN_CLASS_NAME}">${renderedHtml}</article>
-    </main>
-  `;
-  /** 刚注入的 Markdown 正文节点。 */
-  const markdownArticle = document.querySelector(`.${SCRIBDOWN_MARKDOWN_CLASS_NAME}`);
-  if (markdownArticle) {
-    // 关键步骤：sanitize 与高亮完成后，再把用户文档里的相对 href/src 解析到原始 Markdown URL。
-    rewriteRelativeUrls(markdownArticle, sourceUrl);
-  }
-  // 关键步骤：统一执行图片与代码块的 hydration，保持各宿主行为一致。
-  hydrateMarkdown(document.body);
+  // 关键步骤：增量更新正文 DOM，仅替换真正变化的节点。未变节点原地保留，
+  // 因此滚动位置、body 上的全屏 dialog 与图片加载状态都不会因刷新而丢失。
+  morphdom(articleElement, incomingArticle, { childrenOnly: true });
+
+  // 关键步骤：morphdom 同步属性会抹掉 hydration 运行时写入的图片加载状态类，
+  // 重新 hydrate 由渲染器内部依据真实加载结果纠正；各 hydrate 均带幂等守卫，
+  // 已处理过的节点会被跳过。
+  hydrateMarkdown(articleElement);
+
   // 关键步骤：浏览器宿主下挂载浮动工具栏，并把语言选择保存到扩展全局存储。
+  // mountMarkdownToolbar 幂等：会先清理旧实例，再依据最新标题重建目录。
   mountMarkdownToolbar(document.body, {
     onLocaleChange: (preference) => {
       void saveExtensionLocalePreference(preference);

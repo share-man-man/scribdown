@@ -191,6 +191,13 @@ function getOrCreateMarkdownMermaidViewerState(
   const existingViewerState = mermaidViewerStateByDocument.get(ownerDocument);
 
   if (existingViewerState) {
+    // 关键步骤：宿主整页重渲染（如浏览器插件轮询到文件更新后重写 body）会把 dialog 一起抹掉，
+    // 但缓存仍按 document 命中。此时 dialog 已 detached，showModal 会抛 InvalidStateError，
+    // 表现为「全屏按钮点了没反应」。检测到脱离文档就重新挂回 body 复用同一实例，
+    // 事件监听全部绑定在 dialog 自身子树上，重新挂载后依旧有效，不会重复注册。
+    if (!existingViewerState.dialogElement.isConnected) {
+      ownerDocument.body.append(existingViewerState.dialogElement);
+    }
     return existingViewerState;
   }
 
@@ -736,9 +743,7 @@ function updateMarkdownMermaidViewerZoom(
   /** 归一化的缩放倍数。 */
   const normalizedZoom = clampMarkdownMermaidZoom(nextZoom, viewerState.zoomBounds);
   // 已到达缩放边界时不再重复修正焦点，避免滚轮事件的像素舍入让视图持续漂移。
-  if (
-    shouldSkipMarkdownViewerAnchoredZoom(viewerState.zoomValue, normalizedZoom, zoomAnchor)
-  ) {
+  if (shouldSkipMarkdownViewerAnchoredZoom(viewerState.zoomValue, normalizedZoom, zoomAnchor)) {
     return;
   }
   /** 缩放前的焦点。 */

@@ -59,6 +59,9 @@ importers:
       '@scribdown/ui-handdrawn':
         specifier: workspace:*
         version: link:../../packages/ui-handdrawn
+      morphdom:
+        specifier: ^2.7.5
+        version: 2.7.8
       react:
         specifier: ^19.2.0
         version: 19.2.5
@@ -77,10 +80,13 @@ importers:
         version: 19.2.14
       '@types/react-dom':
         specifier: ^19.2.2
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.5(@types/react@19.2.14)
       '@wxt-dev/module-react':
         specifier: ^1.2.2
         version: 1.2.2(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0))(wxt@0.20.27(@rspack/core@2.1.5(@swc/helpers@0.5.23))(@types/node@26.1.1)(eslint@9.39.5(jiti@2.7.0))(jiti@2.7.0)(rollup@4.62.2)(yaml@2.9.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
@@ -111,7 +117,7 @@ importers:
         version: 19.2.14
       '@types/react-dom':
         specifier: ^19.2.2
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.5(@types/react@19.2.14)
       react:
         specifier: ^19.2.0
         version: 19.2.8
@@ -1823,8 +1829,8 @@ packages:
   '@types/node@26.1.1':
     resolution: {integrity: sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==}
 
-  '@types/react-dom@19.2.3':
-    resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
+  '@types/react-dom@19.2.5':
+    resolution: {integrity: sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg==}
     peerDependencies:
       '@types/react': ^19.2.0
 
@@ -2746,6 +2752,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -6508,7 +6515,7 @@ snapshots:
     dependencies:
       undici-types: 8.3.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.14)':
+  '@types/react-dom@19.2.5(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
 

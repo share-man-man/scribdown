@@ -62,12 +62,11 @@ async function renderFileUrlInPlace(): Promise<void> {
       return response.text;
     },
     onChange: async (latest) => {
-      /** 重渲染前保留的纵向滚动位置，避免内容刷新后视口跳到顶部。 */
-      const previousScrollY = window.scrollY;
       // 关键步骤：shiki 实例与 grammar chunk 在初次渲染后已全部缓存，
       // 后续重渲染复用缓存，开销可忽略，无需禁用代码高亮。
+      // renderMarkdownToDocument 内部走 morphdom 增量合并，滚动容器不会被重建，
+      // 阅读位置原地保留，这里无需再手动保存 / 恢复滚动。
       await renderMarkdownToDocument(latest, filename, window.location.href);
-      window.scrollTo(0, previousScrollY);
     }
   });
 }
