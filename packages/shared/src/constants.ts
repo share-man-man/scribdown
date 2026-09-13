@@ -271,3 +271,9 @@ export const TOC_WIDTH_MAX_PX = 640;
  * 目录侧栏宽度相对宿主容器宽度的占比上限，避免窄屏下目录挤没正文。
  */
 export const TOC_WIDTH_MAX_HOST_RATIO = 0.7;
+
+/** 可复制块的原始 Markdown 属性，跨渲染与 hydration 保留。 */
+export const MARKDOWN_SOURCE_DATA_ATTRIBUTE = "data-scribdown-markdown-source";
+
+/** 原始 Markdown 的 HAST 属性名，供解析与安全清洗共用。 */
+export const MARKDOWN_SOURCE_HAST_PROPERTY = "dataScribdownMarkdownSource";

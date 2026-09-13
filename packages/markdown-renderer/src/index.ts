@@ -17,6 +17,7 @@ import { unified } from "unified";
 import { hydrateCodeBlocks } from "./code/code-block-chrome";
 import { highlightMarkdownCodeBlocks } from "./code/code-highlight";
 import { hydrateMermaidBlocks } from "./code/mermaid";
+import { remarkMarkdownSource } from "./core/markdown-source";
 import { remarkSourceLine } from "./core/source-line";
 import { hydrateMarkdownImages, remarkImageFigures } from "./media/images";
 import { hydrateMarkdownVideos, rehypeVideoFigures } from "./media/videos";
@@ -43,6 +44,7 @@ export async function renderMarkdown(markdownText: string): Promise<string> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkMarkdownSource, markdownText)
     .use(remarkFrontmatter)
     .use(remarkFrontmatterMetadata)
     .use(remarkHighlightMark)

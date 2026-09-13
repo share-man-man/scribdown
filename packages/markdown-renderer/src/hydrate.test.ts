@@ -3,7 +3,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { getActiveLocale, LocalePreference, LocaleType, setActiveLocale } from "@scribdown/shared";
 
 import { hydrateMarkdown, mountMarkdownToolbar, renderMarkdown } from "./index";
-import { serializeMarkdownTableAsTsv } from "./syntax/tables";
 
 // 固定为简体中文：本文件断言的复制按钮 / 图片查看器等 UI 文案与中文测试内容配套。
 beforeAll(() => {
@@ -12,6 +11,7 @@ beforeAll(() => {
 
 // 统一清理挂到 body 的容器：断言失败时也不残留 DOM，避免污染后续用例。
 afterEach(() => {
+  vi.unstubAllGlobals();
   document.body.innerHTML = "";
   setActiveLocale(LocaleType.SimplifiedChinese);
 });
@@ -82,7 +82,10 @@ describe("hydrateMarkdown", () => {
     const figureElement = container.querySelector<HTMLElement>("figure.scribdown-mermaid");
     expect(figureElement).not.toBeNull();
     expect(figureElement?.classList.contains("scribdown-mermaid--loading")).toBe(true);
-    expect(figureElement?.dataset.scribdownMermaidSourceText).toBe(mermaidSource);
+    expect(figureElement?.hasAttribute("data-scribdown-mermaid-source-text")).toBe(false);
+    expect(
+      decodeURIComponent(figureElement?.getAttribute("data-scribdown-markdown-source") ?? "")
+    ).toBe(["```mermaid", mermaidSource, "```"].join("\n"));
     // detached 容器上不启动真实渲染（等待进入 live DOM 后再触发）。
     expect(figureElement?.dataset.scribdownMermaidRenderStarted).toBeUndefined();
     expect(container.querySelector("pre > code.language-mermaid")).toBeNull();
@@ -108,6 +111,18 @@ describe("hydrateMarkdown", () => {
     expect(controlsElement?.querySelector("button[aria-label='重置缩放'] svg")).not.toBeNull();
     expect(controlsElement?.querySelector("button[aria-label='复制内容']")).not.toBeNull();
     expect(controlsElement?.querySelector("button[aria-label='全屏查看图表']")).not.toBeNull();
+  });
+
+  it("copies complete Mermaid Markdown including its original fence", async () => {
+    // 使用波浪围栏和引号验证原文穿过属性转义后保持不变。
+    const markdownSource = '~~~~mermaid\ngraph TD\n  A["start"] --> B\n~~~~';
+    // 渲染后图表复制按钮。
+    const container = await renderAndHydrate(markdownSource);
+    // 捕获真实点击触发的剪贴板写入。
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    container.querySelector<HTMLButtonElement>("button[aria-label='复制内容']")?.click();
+    expect(writeText).toHaveBeenCalledWith(markdownSource);
   });
 
   it("keeps drag-mode wheel events inside Mermaid at a zoom boundary", async () => {
@@ -145,23 +160,29 @@ describe("hydrateMarkdown", () => {
     expect(outerWheelHandler).not.toHaveBeenCalled();
   });
 
-  it("wraps tables with a copy button and serializes cell text as TSV", async () => {
+  it("copies original table Markdown with alignment and inline formatting", async () => {
     // 输入 Markdown 覆盖表头与两行数据。
-    const container = await renderAndHydrate(
-      ["| 名称 | 状态 |", "| --- | --- |", "| Mermaid | ready |", "| Table | stable |"].join("\n")
-    );
+    const markdownSource = [
+      "| 名称 | 状态 |",
+      "| :--- | ---: |",
+      "| **Mermaid** | [ready](/ready) |",
+      "| `Table` | stable |"
+    ].join("\n");
+    // 实际渲染与 hydration 链路，包含双重安全清洗。
+    const container = await renderAndHydrate(markdownSource);
+    // 捕获写入剪贴板的文本。
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
 
     // 表格被包进交互壳层，并提供本地化复制入口。
     const wrapperElement = container.querySelector(".scribdown-table");
-    const tableElement = wrapperElement?.querySelector<HTMLTableElement>(":scope > table");
     const copyButtonElement = wrapperElement?.querySelector<HTMLButtonElement>(
       "button.scribdown-table__copy"
     );
     expect(wrapperElement).not.toBeNull();
     expect(copyButtonElement?.getAttribute("aria-label")).toBe("复制表格");
-    expect(tableElement ? serializeMarkdownTableAsTsv(tableElement) : "").toBe(
-      ["名称\t状态", "Mermaid\tready", "Table\tstable"].join("\n")
-    );
+    copyButtonElement?.click();
+    expect(writeText).toHaveBeenCalledWith(markdownSource);
 
     // 重复 hydrate 不产生嵌套壳层或重复按钮。
     hydrateMarkdown(container, { scrollToHeading: () => {} });

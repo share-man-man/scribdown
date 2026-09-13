@@ -262,7 +262,7 @@ describe("renderMarkdown", () => {
     const renderedHtml = await renderMarkdown(markdownText);
 
     // 表格整体保留源码行锚点。
-    expect(renderedHtml).toContain('<table data-source-line="1">');
+    expect(renderedHtml).toMatch(/<table[^>]* data-source-line="1"[^>]*>/u);
     // 表头行保留行级源码行锚点。
     expect(renderedHtml).toContain('<tr data-source-line="1">');
     // 表体各行保留各自的行级源码行锚点，支撑光标同步高亮到行。

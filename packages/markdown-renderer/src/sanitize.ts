@@ -1,3 +1,4 @@
+import { MARKDOWN_SOURCE_HAST_PROPERTY } from "@scribdown/shared";
 /**
  * HTML 安全清洗：rehype-sanitize 的 Scribdown 白名单扩展
  * 与 DOMPurify 字符串级二次清洗。
@@ -188,7 +189,11 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
     ] as [string, string, RegExp]
   ];
   // 通配元素属性白名单：额外放行滚动对齐用的 data-source-line。
-  const wildcardAttributes = [...(defaultAttributes["*"] ?? []), SOURCE_LINE_HAST_PROPERTY];
+  const wildcardAttributes = [
+    ...(defaultAttributes["*"] ?? []),
+    SOURCE_LINE_HAST_PROPERTY,
+    MARKDOWN_SOURCE_HAST_PROPERTY
+  ];
 
   return {
     ...defaultSchema,
