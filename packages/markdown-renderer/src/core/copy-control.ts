@@ -3,6 +3,7 @@
  */
 
 import {
+  MARKDOWN_SOURCE_DATA_ATTRIBUTE,
   CONTENT_COPY_BUTTON_CLASS_NAME,
   CONTENT_COPY_ICON_CHECK_CLASS_NAME,
   CONTENT_COPY_ICON_CLASS_NAME,
@@ -145,3 +146,21 @@ async function writeMarkdownTextToClipboard(
 }
 
 export { copyMarkdownTextWithFeedback, createMarkdownCopyButton };
+
+/**
+ * 读取安全编码的 Markdown 原文属性。
+ * @param element 保存源码的元素。
+ * @returns 解码后的原文；外部 HTML 中无效的编码返回 undefined。
+ */
+export function readMarkdownSource(element: Element): string | undefined {
+  /** 编码后的原文，可能由原生 HTML 提供。 */
+  const encodedSource = element.getAttribute(MARKDOWN_SOURCE_DATA_ATTRIBUTE);
+  if (encodedSource === null) {
+    return undefined;
+  }
+  try {
+    return decodeURIComponent(encodedSource);
+  } catch {
+    return undefined;
+  }
+}
