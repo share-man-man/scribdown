@@ -1,5 +1,13 @@
 # @scribdown/browser-extension
 
+## 0.4.5
+
+### Patch Changes
+
+- Updated dependencies [d8dca11]
+  - @scribdown/ui-handdrawn@0.3.3
+  - @scribdown/markdown-renderer@0.6.5
+
 ## 0.4.4
 
 ### Patch Changes
