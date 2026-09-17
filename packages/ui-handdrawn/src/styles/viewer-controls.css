@@ -61,6 +61,17 @@
   box-shadow: none;
 }
 
+/* 两端按钮继承外侧圆角，让内收的焦点轮廓沿圆角绘制，避免被按钮组裁切。 */
+.scribdown-viewer-zoom-group .scribdown-viewer-control-button:first-child {
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+}
+
+.scribdown-viewer-zoom-group .scribdown-viewer-control-button:last-child {
+  border-top-right-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
 .scribdown-viewer-zoom-group .scribdown-viewer-control-button:hover {
   background: color-mix(
     in srgb,

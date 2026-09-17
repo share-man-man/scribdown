@@ -47,6 +47,13 @@
   scrollbar-width: none;
 }
 
+/* 滚动容器会裁切外扩轮廓；将焦点边框内收，确保首尾按钮也能完整显示。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  .scribdown-viewer-control-button:focus-visible {
+  outline-offset: -2px;
+}
+
 :is(.scribdown-markdown, .scribdown-mermaid-viewer)
   .scribdown-mermaid__controls::-webkit-scrollbar {
   display: none;
