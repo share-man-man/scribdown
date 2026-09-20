@@ -519,39 +519,6 @@
   outline: none;
 }
 
-/* ─── 通用细滚动条（主题色，opt-in）────────────────────────────────
-   目录侧栏（.scribdown-toolbar-toc-panel）与正文滚动层（.scribdown-content-scroll）共用：
-   挂载时显式给滚动容器加 .scribdown-scrollbar-thin 引入，不在此罗列各容器选择器。
-   - 标准 scrollbar-width / scrollbar-color：新版 Chromium / Firefox / VS Code Webview 生效；
-     VS Code Webview 会在根元素注入并向下继承 scrollbar-color，显式声明可覆盖宿主值。
-   - ::-webkit-scrollbar：仅作不支持标准属性的旧引擎兜底（标准属性一旦生效会停用 webkit 伪元素）。 */
-.scribdown-scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--scribdown-color-accent) 60%, transparent) transparent;
-}
-
-.scribdown-scrollbar-thin::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.scribdown-scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scribdown-scrollbar-thin::-webkit-scrollbar-thumb {
-  /* border + background-clip:content-box 让拇指四周留白、悬浮感更强；2px 边框后可见拇指仅 4px。
-     颜色取主题强调色（accent）的半透明，与目录链接同色系。 */
-  background-color: color-mix(in srgb, var(--scribdown-color-accent) 55%, transparent);
-  background-clip: content-box;
-  border: 2px solid transparent;
-  border-radius: 999px;
-}
-
-.scribdown-scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: color-mix(in srgb, var(--scribdown-color-accent) 80%, transparent);
-}
-
 .scribdown-toolbar-toc-panel-title {
   display: flex;
   align-items: center;

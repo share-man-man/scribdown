@@ -428,7 +428,8 @@
   max-height: var(--scribdown-code-block-max-height);
   background-color: var(--scribdown-color-surface);
   overflow: auto;
-  scrollbar-color: color-mix(in srgb, var(--scribdown-code-ink) 30%, transparent) transparent;
+  /* 代码块沿用代码墨色，其余滚动条外观由 scrollbar.css 统一提供。 */
+  --scribdown-scrollbar-color: var(--scribdown-code-ink);
   /* 关键步骤：纵向滚动阴影改用 inset box-shadow + animation-timeline 驱动，
      由浏览器原生绘制，天然不会画到滚动条凹槽上，无需再硬编码滚动条宽度补偿；
      横向阴影交给 sticky 的 __gutter 投影承担。

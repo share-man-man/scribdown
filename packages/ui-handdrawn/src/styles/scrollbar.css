@@ -1,0 +1,102 @@
+/* 原生手绘滚动条：复用细笔触平铺轨道，rect-shadow.svg 沿滑块方向等比平铺。
+   彩色背景由共享调色板生成，不在原生滚动条上使用 mask。 */
+:is(.scribdown-scrollbar-thin, .scribdown-markdown .scribdown-code-block__body) {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--scribdown-scrollbar-color, var(--scribdown-color-accent)) 65%,
+      transparent
+    )
+    transparent;
+}
+
+/* 代码块只替换颜色，几何与交互沿用通用滚动条。 */
+.scribdown-markdown .scribdown-code-block__body {
+  --scribdown-scrollbar-thumb-vertical: var(--scribdown-scrollbar-code-thumb-vertical);
+  --scribdown-scrollbar-thumb-horizontal: var(--scribdown-scrollbar-code-thumb-horizontal);
+}
+
+@supports selector(::-webkit-scrollbar) {
+  :is(.scribdown-scrollbar-thin, .scribdown-markdown .scribdown-code-block__body) {
+    /* 显式解除标准属性与 VS Code 宿主继承值对伪元素外观的覆盖。 */
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+
+    &::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-image: var(--scribdown-scrollbar-track-vertical);
+      background-size: 3px 200px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      --scribdown-scrollbar-image: var(--scribdown-scrollbar-thumb-vertical);
+      min-width: 28px;
+      min-height: 28px;
+      background-image: var(--scribdown-scrollbar-image);
+      /* 固定横向笔触宽度，长边按 SVG 原始比例计算，不随滑块长度拉伸。 */
+      background-size: 8px auto;
+    }
+
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-thumb {
+      /* 背景在留白内平铺，端部统一裁切，不再为首尾另造 SVG 切片。 */
+      border: 2px solid transparent;
+      border-radius: 7px 5px 8px 4px;
+      background-color: transparent;
+      background-origin: padding-box;
+      background-clip: padding-box;
+      background-position: center top;
+      background-repeat: repeat-y;
+    }
+
+    &::-webkit-scrollbar-track:horizontal {
+      background-image: var(--scribdown-scrollbar-track-horizontal);
+      background-size: 200px 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:horizontal {
+      --scribdown-scrollbar-image: var(--scribdown-scrollbar-thumb-horizontal);
+      background-size: auto 8px;
+    }
+
+    &::-webkit-scrollbar-track:horizontal,
+    &::-webkit-scrollbar-thumb:horizontal {
+      background-position: left center;
+      background-repeat: repeat-x;
+    }
+
+    /* 关键步骤：叠加相同半透明笔触加深墨色，状态间不生成新的 SVG。 */
+    &::-webkit-scrollbar-thumb:hover {
+      background-image: var(--scribdown-scrollbar-image), var(--scribdown-scrollbar-image);
+    }
+
+    &::-webkit-scrollbar-thumb:active {
+      background-image:
+        var(--scribdown-scrollbar-image), var(--scribdown-scrollbar-image),
+        var(--scribdown-scrollbar-image);
+    }
+
+    &::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+  }
+}
+
+/* 高对比度模式交还系统绘制。 */
+@media (forced-colors: active) {
+  :is(.scribdown-scrollbar-thin, .scribdown-markdown .scribdown-code-block__body) {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+
+    &::-webkit-scrollbar,
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-thumb,
+    &::-webkit-scrollbar-corner {
+      all: revert;
+    }
+  }
+}

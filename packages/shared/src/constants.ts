@@ -154,8 +154,8 @@ export const SCRIBDOWN_CONTENT_AREA_CLASS_NAME = "scribdown-content-area";
 export const SCRIBDOWN_CONTENT_SCROLL_CLASS_NAME = "scribdown-content-scroll";
 
 /**
- * 通用「细 + 主题色」滚动条 class：各滚动容器（目录侧栏、正文滚动层等）显式 opt-in 引入，
- * 统一标准 scrollbar-* 与 ::-webkit-scrollbar 兜底配色，避免在多个容器选择器上重复罗列。
+ * 通用手绘滚动条 class：各滚动容器（目录侧栏、正文滚动层等）显式 opt-in 引入，
+ * 支持伪元素的环境使用铅笔轨道与蜡笔滑块，其余环境使用标准属性配色，避免在多个容器选择器上重复罗列。
  */
 export const SCRIBDOWN_THIN_SCROLLBAR_CLASS_NAME = "scribdown-scrollbar-thin";
 
