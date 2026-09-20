@@ -2,13 +2,31 @@
    以 .scribdown-frame 作为可复用的「边框」基底，由内容折叠块（.scribdown-details）、
    目录根（.scribdown-toc）等元素显式 opt-in 引入；blockquote 形态单一、无歧义，
    直接以元素选择器复用同一圈边，避免重复声明这段 ::after。
+   工具栏及菜单也复用笔触；定位由消费方保留，避免覆盖 fixed / absolute。
    底色不在此处声明，交由各消费方自行决定（卡片用 surface，引用块用 blockquote-bg）。 */
+/* 关键步骤：笔触变量同时提供给正文和正文外的浮动控件。 */
+:is(
+  .scribdown-markdown,
+  .scribdown-frame,
+  .scribdown-toolbar,
+  .scribdown-toolbar-menu,
+  .scribdown-mermaid
+) {
+  --scribdown-frame-edge-horizontal: url("../assets/rough-line-horizontal.svg");
+  --scribdown-frame-edge-vertical: url("../assets/rough-line-vertical.svg");
+  /* SVG 形状与主题颜色分离，浅色和深色主题共用同一资产。 */
+  --scribdown-frame-edge-color: var(--scribdown-color-accent);
+  /* 横竖笔触按固定长度平铺，避免拉伸。 */
+  --scribdown-frame-edge-tile-horizontal: 200px 6px;
+  --scribdown-frame-edge-tile-vertical: 6px 200px;
+}
+
 .scribdown-markdown .scribdown-frame {
   position: relative;
   box-sizing: border-box;
 }
 
-.scribdown-markdown .scribdown-frame::after,
+:is(.scribdown-frame, .scribdown-toolbar, .scribdown-toolbar-menu, .scribdown-mermaid)::after,
 .scribdown-markdown blockquote::after {
   content: "";
   position: absolute;
@@ -25,14 +43,12 @@
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    var(--scribdown-frame-edge-tile-horizontal),
-    var(--scribdown-frame-edge-tile-horizontal),
-    var(--scribdown-frame-edge-tile-vertical),
-    var(--scribdown-frame-edge-tile-vertical);
+    var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
 }
 
 @supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
-  .scribdown-markdown .scribdown-frame::after,
+  :is(.scribdown-frame, .scribdown-toolbar, .scribdown-toolbar-menu, .scribdown-mermaid)::after,
   .scribdown-markdown blockquote::after {
     /* 关键步骤：用 mask 保留 SVG 形状，描边色交给 background-color，便于主题化。 */
     background-color: var(--scribdown-frame-edge-color);
@@ -47,10 +63,8 @@
       right top;
     -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     -webkit-mask-size:
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-vertical),
-      var(--scribdown-frame-edge-tile-vertical);
+      var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
     -webkit-mask-mode: alpha, alpha, alpha, alpha;
     mask-image:
       var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
@@ -62,10 +76,8 @@
       right top;
     mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     mask-size:
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-vertical),
-      var(--scribdown-frame-edge-tile-vertical);
+      var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
     mask-mode: alpha, alpha, alpha, alpha;
   }
 }

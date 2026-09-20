@@ -69,3 +69,6 @@
 
 /* 15. 浮动工具栏（回到顶部 / 目录 / 页面宽度） */
 @import "./styles/toolbar.css";
+
+/* 16. 原生手绘滚动条：正文、目录与代码块共享。 */
+@import "./styles/scrollbar.css";

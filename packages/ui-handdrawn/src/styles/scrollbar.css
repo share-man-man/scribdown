@@ -1,0 +1,118 @@
+/* 原生手绘滚动条：复用细笔触平铺轨道，rect-shadow.svg 沿滑块方向等比平铺。
+   底色复用主题 token，排线保留源 SVG 自带颜色，不复制配色或图片数据。
+   Mermaid 图表视口同时覆盖正文与全屏查看器；工具按钮栏仍保留隐藏滚动条。 */
+:is(
+  .scribdown-scrollbar-thin,
+  .scribdown-markdown .scribdown-code-block__body,
+  :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__body
+) {
+  /* 原生回退与 SVG 滑块共用同一底色，代码块可覆盖基础墨色。 */
+  --scribdown-scrollbar-fill: color-mix(
+    in srgb,
+    var(--scribdown-scrollbar-color, var(--scribdown-color-accent)) 48%,
+    transparent
+  );
+  scrollbar-width: thin;
+  scrollbar-color: var(--scribdown-scrollbar-fill) transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  :is(
+    .scribdown-scrollbar-thin,
+    .scribdown-markdown .scribdown-code-block__body,
+    :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__body
+  ) {
+    /* 显式解除标准属性与 VS Code 宿主继承值对伪元素外观的覆盖。 */
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+
+    &::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+      background-image: url("../assets/rough-line-vertical.svg");
+      background-size: 3px 200px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      --scribdown-scrollbar-image: url("../assets/rect-shadow.svg");
+      min-width: 28px;
+      min-height: 28px;
+      /* 关键步骤：底色由 token 控制，透明 SVG 排线作为独立纹理叠在上方。 */
+      background-color: var(--scribdown-scrollbar-fill);
+      background-image: var(--scribdown-scrollbar-image);
+      /* 固定笔触高度并保留源图比例；竖向截取中部排线重复，避免复制旋转 SVG。 */
+      background-size: auto 8px;
+    }
+
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-thumb {
+      /* 背景在留白内平铺，端部统一裁切，不再为首尾另造 SVG 切片。 */
+      border: 2px solid transparent;
+      border-radius: 7px 5px 8px 4px;
+      background-origin: padding-box;
+      background-clip: padding-box;
+      background-position: center top;
+      background-repeat: repeat-y;
+    }
+
+    &::-webkit-scrollbar-track:horizontal {
+      background-image: url("../assets/rough-line-horizontal.svg");
+      background-size: 200px 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:horizontal {
+      /* 横向沿用同一源图和尺寸，只有平铺方向不同。 */
+      background-size: auto 8px;
+    }
+
+    &::-webkit-scrollbar-track:horizontal,
+    &::-webkit-scrollbar-thumb:horizontal {
+      background-position: left center;
+      background-repeat: repeat-x;
+    }
+
+    /* 状态反馈只加深底色，排线始终复用同一张 SVG。 */
+    &::-webkit-scrollbar-thumb:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--scribdown-scrollbar-color, var(--scribdown-color-accent)) 65%,
+        transparent
+      );
+    }
+
+    &::-webkit-scrollbar-thumb:active {
+      background-color: color-mix(
+        in srgb,
+        var(--scribdown-scrollbar-color, var(--scribdown-color-accent)) 80%,
+        transparent
+      );
+    }
+
+    &::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+  }
+}
+
+/* 高对比度模式交还系统绘制。 */
+@media (forced-colors: active) {
+  :is(
+    .scribdown-scrollbar-thin,
+    .scribdown-markdown .scribdown-code-block__body,
+    :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__body
+  ) {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+
+    &::-webkit-scrollbar,
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-thumb,
+    &::-webkit-scrollbar-corner {
+      all: revert;
+    }
+  }
+}

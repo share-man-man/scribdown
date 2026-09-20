@@ -1,20 +1,28 @@
-/* MermaidBlock：复用代码块的手绘外框，承载 SVG 图表 + 失败态。 */
+/* MermaidBlock：复用 SVG 笔触外框，以赭橙直角边框区分代码块、表格与工具栏。 */
 :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid {
+  /* 图表专用墨色控制描边，并跟随深浅主题切换。 */
+  --scribdown-frame-edge-color: var(--scribdown-color-diagram-ink);
   position: relative;
   margin: 32px auto 36px;
   padding: 0;
   background: var(--scribdown-color-surface);
-  border: 1.5px solid color-mix(in srgb, var(--scribdown-color-border) 80%, transparent);
-  border-radius: 10px 12px 11px 13px;
-  box-shadow: 4px 5px 0 color-mix(in srgb, var(--scribdown-color-border) 28%, transparent);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   transform: rotate(-0.18deg);
   width: min(100%, 720px);
   box-sizing: border-box;
   overflow: hidden;
 }
 
+/* 笔触盖在图表画布上，避免内部定位元素遮住边框；点击仍穿透装饰层。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid::after {
+  z-index: 1;
+}
+
 /* 顶部 chrome：仅放置 Mermaid 类型标签，对齐代码块视觉语言。 */
 :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__chrome {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -23,9 +31,23 @@
   background: color-mix(
     in srgb,
     var(--scribdown-color-surface) 90%,
-    var(--scribdown-color-border) 10%
+    var(--scribdown-color-diagram-ink) 10%
   );
-  border-bottom: 1px dashed color-mix(in srgb, var(--scribdown-color-border) 60%, transparent);
+}
+
+/* 复用手绘虚线 SVG，固定笔触尺寸横向平铺；mask 让描边跟随图表墨色。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__chrome::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  left: 0;
+  z-index: 1;
+  height: 8px;
+  pointer-events: none;
+  background-color: var(--scribdown-color-diagram-ink);
+  -webkit-mask: url("../assets/rough-line-dash-horizontal.svg") left center / 64px 8px repeat-x;
+  mask: url("../assets/rough-line-dash-horizontal.svg") left center / 64px 8px repeat-x;
 }
 
 :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__label {
@@ -33,7 +55,7 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: color-mix(in srgb, var(--scribdown-color-text-primary) 78%, transparent);
+  color: var(--scribdown-color-diagram-ink);
   text-transform: uppercase;
 }
 
@@ -47,10 +69,73 @@
   scrollbar-width: none;
 }
 
+/* Rough.js 静态圆角轮廓：独立按钮交替笔触，缩放组共用横向轮廓。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__controls {
+  --scribdown-control-outline: url("../assets/rough-button-rounded-a.svg");
+  --scribdown-control-outline-alternate: url("../assets/rough-button-rounded-b.svg");
+  --scribdown-control-outline-wide: url("../assets/rough-button-rounded-wide.svg");
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  :is(.scribdown-viewer-control-button, .scribdown-viewer-zoom-group) {
+  position: relative;
+  border: 0;
+  box-shadow: none;
+  color: var(--scribdown-color-diagram-ink);
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  > .scribdown-viewer-control-button:nth-child(even) {
+  --scribdown-control-outline: var(--scribdown-control-outline-alternate);
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  .scribdown-viewer-zoom-group {
+  --scribdown-control-outline: var(--scribdown-control-outline-wide);
+}
+
+/* mask 仅控制轮廓形状，颜色继承图表 token；装饰层不拦截按钮点击。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  > :is(.scribdown-viewer-control-button, .scribdown-viewer-zoom-group)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: currentColor;
+  -webkit-mask: var(--scribdown-control-outline) center / 100% 100% no-repeat;
+  mask: var(--scribdown-control-outline) center / 100% 100% no-repeat;
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  .scribdown-viewer-control-button:is(:hover:not(:disabled), [aria-pressed="true"]) {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-diagram-ink) 16%,
+    var(--scribdown-color-surface)
+  );
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer)
+  .scribdown-mermaid__controls
+  .scribdown-viewer-control-button:active:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--scribdown-color-diagram-ink) 26%,
+    var(--scribdown-color-surface)
+  );
+}
+
 /* 滚动容器会裁切外扩轮廓；将焦点边框内收，确保首尾按钮也能完整显示。 */
 :is(.scribdown-markdown, .scribdown-mermaid-viewer)
   .scribdown-mermaid__controls
   .scribdown-viewer-control-button:focus-visible {
+  outline-color: var(--scribdown-color-diagram-ink);
   outline-offset: -2px;
 }
 
@@ -315,8 +400,8 @@
 
 .scribdown-mermaid-viewer .scribdown-mermaid__canvas {
   background: var(--scribdown-color-surface);
-  border-radius: 6px 7px 5px 6px;
-  box-shadow: 6px 8px 0 color-mix(in srgb, var(--scribdown-color-text-primary) 26%, transparent);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .scribdown-mermaid-viewer__button--close {

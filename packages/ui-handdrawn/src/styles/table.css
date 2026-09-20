@@ -85,12 +85,23 @@
   right: 8px;
   opacity: 0;
   background: color-mix(in srgb, var(--scribdown-color-surface) 88%, transparent);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--scribdown-table-ink-token) 34%, transparent);
+  box-shadow: none;
   color: var(--scribdown-table-ink-token);
   pointer-events: none;
   transition:
     opacity var(--scribdown-duration-fast) var(--scribdown-easing-standard),
     background var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+/* 复用 Rough.js 圆角轮廓，描边随表格墨色变化，装饰层不拦截复制点击。 */
+.scribdown-markdown .scribdown-table__copy::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: currentColor;
+  -webkit-mask: url("../assets/rough-button-rounded-a.svg") center / 100% 100% no-repeat;
+  mask: url("../assets/rough-button-rounded-a.svg") center / 100% 100% no-repeat;
 }
 
 /* 鼠标进入表格或键盘焦点进入壳层时展示；复制反馈期间保持可见。 */

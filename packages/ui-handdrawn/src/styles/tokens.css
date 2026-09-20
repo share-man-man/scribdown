@@ -37,6 +37,8 @@
   --scribdown-palette-light-warning: #8d6432;
   /* 代码块墨色：板岩紫，与正文棕色明显区分但不抢眼。 */
   --scribdown-palette-light-code-ink: #5e5483;
+  /* 图表墨色：低饱和赭橙，与代码紫、表格绿和工具栏灰区分。 */
+  --scribdown-palette-light-diagram-ink: #a45f35;
   --scribdown-palette-light-blockquote-bg: color-mix(
     in srgb,
     var(--scribdown-color-border) 18%,
@@ -89,6 +91,8 @@
   --scribdown-palette-dark-warning: #d3a45f;
   /* 代码块墨色：紫罗兰粉笔。 */
   --scribdown-palette-dark-code-ink: #beacdc;
+  /* 图表墨色：提亮的赭橙粉笔，在暗色纸面上保留暖调。 */
+  --scribdown-palette-dark-diagram-ink: #d99a6b;
   --scribdown-palette-dark-blockquote-bg: color-mix(
     in srgb,
     var(--scribdown-color-border) 28%,
@@ -163,6 +167,7 @@
   --scribdown-color-danger: var(--scribdown-palette-light-danger);
   --scribdown-color-warning: var(--scribdown-palette-light-warning);
   --scribdown-color-code-ink: var(--scribdown-palette-light-code-ink);
+  --scribdown-color-diagram-ink: var(--scribdown-palette-light-diagram-ink);
   --scribdown-color-blockquote-bg: var(--scribdown-palette-light-blockquote-bg);
   --scribdown-color-blockquote-text: var(--scribdown-palette-light-blockquote-text);
   --scribdown-color-blockquote-link: var(--scribdown-palette-light-blockquote-link);
@@ -188,6 +193,7 @@
     --scribdown-color-danger: var(--scribdown-palette-dark-danger);
     --scribdown-color-warning: var(--scribdown-palette-dark-warning);
     --scribdown-color-code-ink: var(--scribdown-palette-dark-code-ink);
+    --scribdown-color-diagram-ink: var(--scribdown-palette-dark-diagram-ink);
     --scribdown-color-blockquote-bg: var(--scribdown-palette-dark-blockquote-bg);
     --scribdown-color-blockquote-text: var(--scribdown-palette-dark-blockquote-text);
     --scribdown-color-blockquote-link: var(--scribdown-palette-dark-blockquote-link);
@@ -216,6 +222,7 @@
   --scribdown-color-danger: var(--scribdown-palette-dark-danger);
   --scribdown-color-warning: var(--scribdown-palette-dark-warning);
   --scribdown-color-code-ink: var(--scribdown-palette-dark-code-ink);
+  --scribdown-color-diagram-ink: var(--scribdown-palette-dark-diagram-ink);
   --scribdown-color-blockquote-bg: var(--scribdown-palette-dark-blockquote-bg);
   --scribdown-color-blockquote-text: var(--scribdown-palette-dark-blockquote-text);
   --scribdown-color-blockquote-link: var(--scribdown-palette-dark-blockquote-link);

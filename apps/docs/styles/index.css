@@ -244,7 +244,7 @@ html.rp-dark .home-cta__btn--brand {
   /* 贴左上角，仅右下角需要圆角收口。 */
   border-top: 0;
   border-left: 0;
-  border-bottom-right-radius: var(--scribdown-radius-md);
+  border-bottom-right-radius: 10px;
   background: var(--scribdown-color-surface);
   color: var(--scribdown-color-text-secondary);
   font-family: var(--scribdown-font-body);
@@ -255,6 +255,11 @@ html.rp-dark .home-cta__btn--brand {
 
 .render-preview__back:hover {
   color: var(--scribdown-color-accent);
+}
+
+.render-preview__back:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 2px;
 }
 
 .render-preview__status {
