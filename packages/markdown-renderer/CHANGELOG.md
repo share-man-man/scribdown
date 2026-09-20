@@ -1,5 +1,14 @@
 # @scribdown/markdown-renderer
 
+## 0.6.6
+
+### Patch Changes
+
+- Updated dependencies [aa0fa64]
+- Updated dependencies [aa0fa64]
+- Updated dependencies [aa0fa64]
+  - @scribdown/ui-handdrawn@0.3.4
+
 ## 0.6.5
 
 ### Patch Changes
