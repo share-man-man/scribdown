@@ -10,14 +10,6 @@
   max-width: var(--scribdown-content-width, 840px);
   margin-left: auto;
   margin-right: auto;
-  --scribdown-frame-edge-horizontal: url("../assets/rough-line-horizontal.svg");
-  --scribdown-frame-edge-vertical: url("../assets/rough-line-vertical.svg");
-  /* 手绘边框颜色：通过 mask + background-color 让外部 token 接管描边色。 */
-  --scribdown-frame-edge-color: var(--scribdown-color-accent);
-  /* 手绘边框 SVG 切片的平铺尺寸：长边 = 单段花纹长度，短边 = 描边粗细。
-     用于 background-size / mask-size，避免在各 CSS 文件里重复硬编码。 */
-  --scribdown-frame-edge-tile-horizontal: 200px 6px;
-  --scribdown-frame-edge-tile-vertical: 6px 200px;
   /* 代码块行号分隔线（rough-line-shadow-vertical.svg）的平铺尺寸，花纹周期短于通用边框。 */
   --scribdown-rough-line-shadow-tile-vertical: 6px 144px;
   /* 表格外框（共用 rough-line-shadow svg）的平铺尺寸：横向 192×12，纵向 12×144，描边比通用边框略粗。 */
@@ -76,10 +68,8 @@
     right top;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size:
-    var(--scribdown-frame-edge-tile-horizontal),
-    var(--scribdown-frame-edge-tile-horizontal),
-    var(--scribdown-frame-edge-tile-vertical),
-    var(--scribdown-frame-edge-tile-vertical);
+    var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+    var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
 }
 
 @supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
@@ -97,10 +87,8 @@
       right top;
     -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     -webkit-mask-size:
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-vertical),
-      var(--scribdown-frame-edge-tile-vertical);
+      var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
     -webkit-mask-mode: alpha, alpha, alpha, alpha;
     mask-image:
       var(--scribdown-frame-edge-horizontal), var(--scribdown-frame-edge-horizontal),
@@ -112,10 +100,8 @@
       right top;
     mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     mask-size:
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-horizontal),
-      var(--scribdown-frame-edge-tile-vertical),
-      var(--scribdown-frame-edge-tile-vertical);
+      var(--scribdown-frame-edge-tile-horizontal), var(--scribdown-frame-edge-tile-horizontal),
+      var(--scribdown-frame-edge-tile-vertical), var(--scribdown-frame-edge-tile-vertical);
     mask-mode: alpha, alpha, alpha, alpha;
   }
 }
