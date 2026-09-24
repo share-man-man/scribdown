@@ -1,5 +1,14 @@
 # @scribdown/docs
 
+## 0.0.8
+
+### Patch Changes
+
+- 02323d5: 同步字体改造：移除站点样式对 `@scribdown/ui-handdrawn/styles/fonts.css` 的导入，并更新设计 Token 文档中的字体栈说明与回退规则。
+- Updated dependencies [02323d5]
+  - @scribdown/ui-handdrawn@0.4.0
+  - @scribdown/markdown-renderer@0.6.7
+
 ## 0.0.7
 
 ### Patch Changes
