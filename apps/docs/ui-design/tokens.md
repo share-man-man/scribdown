@@ -64,9 +64,25 @@ Token 分两层：
 
 | Token | Value | 说明 |
 | --- | --- | --- |
-| `--scribdown-font-body` | `"Noto Serif SC Variable", "Songti SC", serif` | 正文阅读字体，由本地 WOFF2 资产覆盖中英文 |
-| `--scribdown-font-heading` | `"LXGW WenKai Screen", "Kaiti SC", serif` | 标题与局部强调字体，由本地 WOFF2 资产覆盖中英文 |
-| `--scribdown-font-code` | `"JetBrains Mono", "Fira Code", monospace` | 代码字体 |
+全部使用系统字体，不内置任何 WOFF2 资产（原约 10.6MB）。排列遵循中文网页的通行规则：
+
+> **西文在前，中文在后，泛型兜底，emoji 收尾。**
+>
+> 中文字体包内含西文字形，反之不成立。中文字体若排在前面，西文将永远 fallback 不到，
+> 只能使用中文字体自带的西文字形（`SimSun` 尤其糟糕）。
+
+| Token | Value | 说明 |
+| --- | --- | --- |
+| `--scribdown-font-body` | `Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, "Times New Roman", "Songti SC", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif, "Apple Color Emoji", "Segoe UI Emoji"` | 正文阅读字体（衬线一档），西文段取 modern-font-stacks 的 Transitional 组 |
+| `--scribdown-font-heading` | `Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, "Times New Roman", "Kaiti SC", STKaiti, KaiTi, "AR PL UKai CN", "Songti SC", "SimSun", serif, "Apple Color Emoji", "Segoe UI Emoji"` | 标题与局部强调字体（楷体一档），西文段与正文同族 |
+| `--scribdown-font-code` | `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace` | 代码字体，与 GitHub Primer 一致 |
+
+注意事项：
+
+- `ui-monospace` 及 `ui-serif` / `ui-sans-serif` / `ui-rounded` **仅 Safari 实现**，Chrome / Edge / Firefox 均未支持。
+  浏览器插件与 VS Code Webview 都是 Chromium，实际生效的是其后的系统等宽字体，因此 `Menlo` / `Consolas` / `Liberation Mono` 不可省略。
+- 逐字符回退会使中英文混排的基线与字重略有跳动（即 #30 修复过的现象）。此处以通用性优先；
+  若需重新消除该抖动，应改为指定单一同时覆盖中英文的字体，而非调整回退顺序。
 
 ## 圆角
 

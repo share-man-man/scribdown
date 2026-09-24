@@ -1,7 +1,4 @@
-import { applyExtensionLocale } from "../config/locale";
-import { MARKDOWN_PLAINTEXT_MIME_TYPES } from "../config/markdown-mime-types";
-import { EXTENSION_ENABLED_STORAGE_KEY } from "../config/storage";
-import { CONSUME_BYPASS_MESSAGE, FETCH_FILE_MESSAGE } from "../messages/runtime";
+import { FETCH_FILE_MESSAGE } from "../messages/runtime";
 import { renderMarkdownToDocument } from "../rendering/render-markdown";
 import { startPollingSource } from "./poll-source";
 
@@ -19,8 +16,12 @@ function waitForDom(): Promise<void> {
 /**
  * file:// 场景就地渲染：扩展 viewer 不允许以 file: 作为 src，
  * 因此只能在原页面取 `<pre>` 文本后调用渲染核心。
+ *
+ * 本模块会把渲染核心（shiki grammar、mermaid 等）整体打进 file:// 的
+ * content script bundle，因此只被 file.content.ts 引用，
+ * 不可在 http(s) 入口中导入。
  */
-async function renderFileUrlInPlace(): Promise<void> {
+export async function renderFileUrlInPlace(): Promise<void> {
   await waitForDom();
 
   /** Chrome 打开 file://*.md 时，body 内会有一个 <pre> 节点承载原始文本。 */
@@ -32,9 +33,9 @@ async function renderFileUrlInPlace(): Promise<void> {
   /** 当前文件的展示名，用于页面标题。 */
   const filename = decodeURIComponent(window.location.pathname.split("/").pop() ?? "Markdown");
 
-  // vite.config.ts 的 renderBuiltUrl 已把动态 chunk URL 统一改写为
-  // `chrome.runtime.getURL(...)`，shiki grammar 与 wasm 引擎都从扩展 origin 加载，
-  // 不再受 file:// 的 CORS 限制，因此 file:// 场景也启用代码高亮。
+  // 代码高亮在 file:// 下同样可用：MV3 声明式 content script 走 IIFE 单文件打包，
+  // shiki grammar 与 wasm 引擎已全部内联进本 bundle，运行期不再发起跨源请求，
+  // 因此不受 file:// 的 CORS 限制。
   await renderMarkdownToDocument(rawMarkdown, filename, window.location.href);
 
   // 关键步骤：启动文件轮询，磁盘内容更新后无需手动刷新即可看到最新版本。
@@ -62,54 +63,11 @@ async function renderFileUrlInPlace(): Promise<void> {
       return response.text;
     },
     onChange: async (latest) => {
-      // 关键步骤：shiki 实例与 grammar chunk 在初次渲染后已全部缓存，
-      // 后续重渲染复用缓存，开销可忽略，无需禁用代码高亮。
+      // 关键步骤：shiki 实例在初次渲染后已完成初始化，后续重渲染复用同一实例，
+      // 开销可忽略，无需禁用代码高亮。
       // renderMarkdownToDocument 内部走 morphdom 增量合并，滚动容器不会被重建，
       // 阅读位置原地保留，这里无需再手动保存 / 恢复滚动。
       await renderMarkdownToDocument(latest, filename, window.location.href);
     }
   });
-}
-
-/**
- * http(s):// 场景将当前页替换为扩展 viewer，由 viewer 在 chrome-extension:// origin 下
- * 重新发起带凭证的 fetch 并渲染，规避源站 CSP / sandbox 等约束。
- */
-async function redirectToViewer(): Promise<void> {
-  // 关键步骤：先消费一次性 bypass，避免「查看原始链接」回到原 URL 后又被拦回 viewer。
-  /** background 维护的 bypass 标记消费结果。 */
-  const bypassResult = (await chrome.runtime.sendMessage({
-    type: CONSUME_BYPASS_MESSAGE,
-    url: location.href
-  })) as { bypassed?: boolean } | undefined;
-  if (bypassResult?.bypassed) return;
-
-  /** 扩展 viewer 页面的目标 URL，src 参数携带原始资源地址。 */
-  const viewerUrl = chrome.runtime.getURL(`viewer.html?src=${encodeURIComponent(location.href)}`);
-  window.location.replace(viewerUrl);
-}
-
-/**
- * 启动 Markdown content script。
- * WXT 在开发配置解析时不会执行此函数，避免 Node 环境访问 chrome API。
- */
-export async function startContentScript(): Promise<void> {
-  // 关键步骤：接管渲染前按宿主语言确定界面文案语言。
-  await applyExtensionLocale();
-
-  // 关键步骤：尊重 popup 总开关，关闭时让浏览器原样展示，不做任何渲染或重定向。
-  /** 从 chrome.storage.local 读到的当前启用状态（未设置视为启用）。 */
-  const enabledResult = await chrome.storage.local.get(EXTENSION_ENABLED_STORAGE_KEY);
-  if (enabledResult[EXTENSION_ENABLED_STORAGE_KEY] === false) return;
-
-  // 关键步骤：以实际响应的 Content-Type 为准而非 URL 后缀。
-  // 源站若返回 text/html（如 GitHub blob 自渲染页），直接放行，不介入。
-  if (!MARKDOWN_PLAINTEXT_MIME_TYPES.has(document.contentType)) return;
-
-  if (location.protocol === "file:") {
-    await renderFileUrlInPlace();
-    return;
-  }
-
-  await redirectToViewer();
 }

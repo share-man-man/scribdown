@@ -124,10 +124,27 @@
 
 /* ─── 与主题无关的 Token ──────────────────────────────────────────── */
 :root {
-  /* 字体由 styles.css 本地加载；同一字体覆盖中英文，避免逐字符回退造成视觉基线错位。 */
-  --scribdown-font-body: "Noto Serif SC Variable", "Songti SC", serif;
-  --scribdown-font-heading: "LXGW WenKai Screen", "Kaiti SC", serif;
-  --scribdown-font-code: "JetBrains Mono", "Fira Code", monospace;
+  /* 字体不随包内置（原 WOFF2 资产约 10.6MB，占 vsix 85% / 浏览器插件 60%），一律用系统字体。
+     排列规则（中文网页字体设置的通行做法）：**西文在前，中文在后，泛型兜底，emoji 收尾**。
+     原因：中文字体包内含西文字形，反之不成立；中文字体一旦排在前面，
+     西文就永远 fallback 不到，只能用中文字体自带的西文字形（SimSun 尤其糟）。
+     代价：逐字符回退会让中英文混排的基线/字重略有跳动，即 #30 修过的症状；
+     此处取通用性优先，如需重新消除该抖动，应改为指定单一覆盖双文种的字体。 */
+  /* 正文：衬线一档。西文取 modern-font-stacks 的 Transitional 组，中文接宋体系。 */
+  --scribdown-font-body:
+    Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, "Times New Roman",
+    "Songti SC", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  /* 标题：楷体一档。Kaiti SC(macOS) / KaiTi(Windows) 均为系统自带；
+     Linux 少有楷体，回退到宋体系与正文一致。西文段与正文保持同族，避免标题正文西文风格打架。 */
+  --scribdown-font-heading:
+    Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, "Times New Roman",
+    "Kaiti SC", STKaiti, KaiTi, "AR PL UKai CN", "Songti SC", "SimSun", serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  /* 代码：GitHub Primer 同款。ui-monospace 仅 Safari 实现，Chrome/Edge/Firefox 会跳过，
+     真正生效的是其后的系统等宽字体，故不可省略 Menlo / Consolas / Liberation Mono。 */
+  --scribdown-font-code:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* 四角独立写法，呼应手绘感 */
   --scribdown-radius-sm: 8px 10px 9px 11px;
