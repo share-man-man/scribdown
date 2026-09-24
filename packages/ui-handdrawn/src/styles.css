@@ -7,10 +7,7 @@
  * 调整顺序或新增模块时，仅需修改本文件。
  */
 
-/* 0. 字体资产：随宿主本地打包，保证浏览器插件、文档站与 VS Code Webview 字形一致。 */
-@import "./styles/fonts.css";
-
-/* 1. 设计 token：浅色 + 暗色主题变量 */
+/* 1. 设计 token：浅色 + 暗色主题变量（字体族亦在此定义，不再内置字体资产） */
 @import "./styles/tokens.css";
 
 /* 2. 外层壳层：page / app 容器 */

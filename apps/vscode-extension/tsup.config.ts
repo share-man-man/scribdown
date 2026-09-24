@@ -31,9 +31,6 @@ const WEBVIEW_RUNTIME_OUTPUT_FILE_PATH = resolve(
   "preview-runtime.global.js"
 );
 
-// 是否为生产构建。
-const IS_PRODUCTION_BUILD = process.env.NODE_ENV === "production";
-
 /**
  * 校验 Webview 资源准备条件。
  */
@@ -50,8 +47,9 @@ async function ensureWebviewBuildPrerequisites(): Promise<void> {
 
 /**
  * 准备 Webview 运行时资源（样式 + runtime 脚本）。
+ * @param isProductionBuild 是否为生产构建，决定样式与 runtime 是否压缩
  */
-async function prepareWebviewUiAssets(): Promise<void> {
+async function prepareWebviewUiAssets(isProductionBuild: boolean): Promise<void> {
   await ensureWebviewBuildPrerequisites();
 
   // 关键步骤：用 esbuild 内联 ui-handdrawn 的 @import 分文件，
@@ -63,7 +61,7 @@ async function prepareWebviewUiAssets(): Promise<void> {
     loader: { ".svg": "file", ".woff2": "file" },
     assetNames: "assets/[name]",
     legalComments: "none",
-    minify: IS_PRODUCTION_BUILD
+    minify: isProductionBuild
   });
 
   // 关键步骤：将 runtime.ts 打包为 IIFE，供 Webview 以 script 标签加载。
@@ -77,7 +75,7 @@ async function prepareWebviewUiAssets(): Promise<void> {
     target: ["es2020"],
     sourcemap: false,
     legalComments: "none",
-    minify: IS_PRODUCTION_BUILD
+    minify: isProductionBuild
   });
 }
 
@@ -86,18 +84,26 @@ async function prepareWebviewUiAssets(): Promise<void> {
  * - 产物为 CJS 单文件（VS Code 主进程只支持 CJS）
  * - bundle 模式将 workspace 包（JIT 源码）一并打入，发布到 marketplace 时不依赖 node_modules
  * - vscode 模块由宿主提供，必须 external
+ * - 默认按生产构建（压缩、不产出 sourcemap）；只有 `tsup --watch`（dev）才产出未压缩的调试产物，
+ *   避免依赖调用方设置 NODE_ENV——历史上没有任何脚本设过它，导致发布产物长期未压缩。
  */
-export default defineConfig({
-  entry: { extension: "src/extension.ts" },
-  format: ["cjs"],
-  platform: "node",
-  target: "node18",
-  bundle: true,
-  skipNodeModulesBundle: false,
-  noExternal: ["@scribdown/shared", "@scribdown/markdown-renderer"],
-  external: ["vscode"],
-  sourcemap: true,
-  clean: true,
-  minify: IS_PRODUCTION_BUILD,
-  onSuccess: prepareWebviewUiAssets
+export default defineConfig((overrideOptions) => {
+  // 关键步骤：以 watch 模式作为唯一的开发构建判据，跨平台且无需环境变量。
+  const isProductionBuild = !overrideOptions.watch;
+
+  return {
+    entry: { extension: "src/extension.ts" },
+    format: ["cjs"],
+    platform: "node",
+    target: "node18",
+    bundle: true,
+    skipNodeModulesBundle: false,
+    noExternal: ["@scribdown/shared", "@scribdown/markdown-renderer"],
+    external: ["vscode"],
+    // 生产产物不随扩展发布 sourcemap（`files` 白名单含 dist/**，会被一并打进 vsix）。
+    sourcemap: !isProductionBuild,
+    clean: true,
+    minify: isProductionBuild,
+    onSuccess: () => prepareWebviewUiAssets(isProductionBuild)
+  };
 });
