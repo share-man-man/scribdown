@@ -12,7 +12,7 @@ concurrency:
 permissions:
   contents: write # changesets 推送版本提交与 git tag
   pull-requests: write # changesets 自动开 "Version Packages" PR
-  id-token: write # npm provenance（可选）
+  id-token: write # 关键：npm Trusted Publishing（OIDC）换取发布令牌，并生成 provenance
 
 jobs:
   # 版本编排 + npm 发布：开 PR 轮只更新 Version PR；发布轮发 npm 并输出 app 版本变化标记
@@ -34,7 +34,9 @@ jobs:
         with:
           node-version: "24.18.0" # 与 mise.toml 中的 Node.js 版本保持一致
           cache: pnpm
-          registry-url: "https://registry.npmjs.org" # 写入 .npmrc，供 npm 发布鉴权
+          # 不设 registry-url：该选项会写入 `_authToken=${NODE_AUTH_TOKEN}` 的 .npmrc，
+          # 改用 OIDC 后该变量为空会让 npm 报「Failed to replace env in config」。
+          # registry.npmjs.org 本就是 npm 默认源，无需显式声明。
       - run: pnpm install --frozen-lockfile
 
       # 有未消费的 changeset → 开/更新 Version PR；
@@ -50,9 +52,10 @@ jobs:
         env:
           # 关键步骤：changesets/action 用 PAT 开 Version PR，使 PR 以真实用户身份创建、CI 自动触发。
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-          # NPM_TOKEN 供 changesets/action 识别为令牌发布；NODE_AUTH_TOKEN 供 setup-node 写入 .npmrc
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # 关键步骤：不注入 NPM_TOKEN —— changesets/action 检测到无令牌且 OIDC 可用时，
+          # 会跳过写 .npmrc，由 npm 自身用 GitHub OIDC 令牌向 registry 换取短期发布令牌
+          # （Trusted Publishing，需在 npm 包的 Access 页登记本仓库与 release.yml）。
+          # 长期令牌有 90 天有效期上限，过期后 PUT 会返回 E404，改用 OIDC 可彻底规避。
           # 启用 npm provenance：在 npm 页面展示「来源可验证」，依赖上方 id-token: write
           NPM_CONFIG_PROVENANCE: true
 
