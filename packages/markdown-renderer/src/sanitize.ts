@@ -5,6 +5,9 @@ import { MARKDOWN_SOURCE_HAST_PROPERTY } from "@scribdown/shared";
  */
 
 import {
+  CALLOUT_CLASS_NAME,
+  CALLOUT_META,
+  CALLOUT_TITLE_CLASS_NAME,
   DETAILS_CLASS_NAME,
   FRAME_CLASS_NAME,
   FRONTMATTER_CHROME_CLASS_NAME,
@@ -115,10 +118,14 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
   // div 元素的属性白名单：放行 frontmatter 元数据卡片容器与 chrome 的 class。
   const divAttributes = [
     ...(defaultAttributes.div ?? []),
-    ["className", FRONTMATTER_CLASS_NAME, FRAME_CLASS_NAME, FRONTMATTER_CHROME_CLASS_NAME] as [
-      string,
-      ...string[]
-    ]
+    [
+      "className",
+      FRONTMATTER_CLASS_NAME,
+      FRAME_CLASS_NAME,
+      FRONTMATTER_CHROME_CLASS_NAME,
+      CALLOUT_CLASS_NAME,
+      ...Object.values(CALLOUT_META).map((meta) => meta.className)
+    ] as [string, ...string[]]
   ];
   // dl 元素的属性白名单：放行 frontmatter 键值列表（含嵌套修饰类）的 class。
   const definitionListAttributes = [
@@ -232,6 +239,7 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       ol: orderedListAttributes,
       li: listItemAttributes,
       div: divAttributes,
+      p: [...(defaultAttributes.p ?? []), ["className", CALLOUT_TITLE_CLASS_NAME]],
       dl: definitionListAttributes,
       span: spanAttributes,
       abbr: abbrAttributes,

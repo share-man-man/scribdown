@@ -185,3 +185,14 @@
 | `VideoRenderer` 播放按钮    | `2px` 实线，颜色 `--scribdown-color-accent`，偏移 `3px`       |
 | `FullscreenViewer` 关闭按钮 | `2px` 实线，颜色 `--scribdown-color-text-primary`，偏移 `2px` |
 | 标题锚点入口                | `2px` 实线，颜色 `--scribdown-color-accent`，偏移 `2px`       |
+
+## 提示块与容器
+
+提示块通过共享渲染器输出，在浏览器扩展和 VS Code 中使用相同的手绘边框、语义色及明暗主题。标题与类型名称提供颜色之外的识别信息，普通引用保持原样。
+
+- GitHub 提示：引用第一行使用 `[!NOTE]`、`[!TIP]`、`[!IMPORTANT]`、`[!WARNING]` 或 `[!CAUTION]`，后续引用行作为正文。
+- 冒号容器：独立行使用 `::: tip` 开始，以 `:::` 结束；同时支持 `note`、`info`、`important`、`warning`、`caution`、`danger`。容器写在文档根级，嵌套时建议外层使用更多冒号。
+- 自定义标题：提示标记或容器类型后加空格和纯文本标题；省略时显示对应类型的英文名称。
+- 折叠内容：`::: details 标题` 转为原生 `<details>`，默认折叠，复用已有折叠块样式。
+
+正文继续支持链接、列表、代码、表格和其他 Markdown 块，并保留源码行号。未知类型、未闭合容器、转义文本以及代码中的语法不转换；标题按纯文本转义，正文经过统一安全清洗。完整示例见[渲染预览](./render-preview)。

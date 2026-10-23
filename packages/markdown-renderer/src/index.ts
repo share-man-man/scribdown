@@ -22,6 +22,7 @@ import { remarkSourceLine } from "./core/source-line";
 import { hydrateMarkdownImages, remarkImageFigures } from "./media/images";
 import { hydrateMarkdownVideos, rehypeVideoFigures } from "./media/videos";
 import { createScribdownSanitizeSchema, sanitizeHtmlWithDomPurify } from "./sanitize";
+import { remarkCallouts } from "./syntax/callouts";
 import { remarkDefinitionLists } from "./syntax/definition-lists";
 import { rehypeFrameClass } from "./syntax/frame";
 import { remarkFrontmatterMetadata } from "./syntax/frontmatter";
@@ -44,8 +45,9 @@ export async function renderMarkdown(markdownText: string): Promise<string> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkMarkdownSource, markdownText)
     .use(remarkFrontmatter)
+    .use(remarkCallouts, markdownText)
+    .use(remarkMarkdownSource, markdownText)
     .use(remarkFrontmatterMetadata)
     .use(remarkHighlightMark)
     .use(remarkDefinitionLists)
