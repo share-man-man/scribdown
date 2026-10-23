@@ -1,15 +1,15 @@
-/* Blockquote：边框与强调条拆层，强调条高度跟随容器撑满。 */
-.scribdown-markdown blockquote {
+/* 普通引用与提示块共用尺寸、留白和侧边笔触，外框统一由 frame.css 绘制。 */
+.scribdown-markdown :is(blockquote, .scribdown-callout) {
   position: relative;
   box-sizing: border-box;
   width: 100%;
   color: var(--scribdown-color-blockquote-text);
   margin: 0 0 var(--scribdown-space-3);
-  padding: var(--scribdown-space-2) 16px var(--scribdown-space-2) 36px;
+  padding: var(--scribdown-space-2) 16px var(--scribdown-space-2) 24px;
   background: var(--scribdown-color-blockquote-bg);
 }
 
-.scribdown-markdown blockquote::before {
+.scribdown-markdown :is(blockquote, .scribdown-callout)::before {
   content: "";
   position: absolute;
   top: -2px;
@@ -17,24 +17,24 @@
   left: 0;
   width: 20px;
   pointer-events: none;
-  background-image: var(--scribdown-blockquote-bar);
-  background-repeat: repeat-y;
-  background-position: center top;
-  background-size: 100% 72px;
+  /* 共用透明笔触资产，颜色由主题 Token 决定；留白透出容器自身背景。 */
+  background-color: var(--scribdown-color-accent);
+  -webkit-mask: var(--scribdown-blockquote-bar) center top / 100% 72px repeat-y;
+  mask: var(--scribdown-blockquote-bar) center top / 100% 72px repeat-y;
 }
 
-.scribdown-markdown blockquote p {
+.scribdown-markdown :is(blockquote, .scribdown-callout) p {
   margin-bottom: var(--scribdown-space-1);
 }
 
-.scribdown-markdown blockquote p:last-child {
+.scribdown-markdown :is(blockquote, .scribdown-callout) p:last-child {
   margin-bottom: 0;
 }
 
-.scribdown-markdown blockquote a {
+.scribdown-markdown :is(blockquote, .scribdown-callout) a {
   color: var(--scribdown-color-blockquote-link);
 }
 
-.scribdown-markdown blockquote a:visited {
+.scribdown-markdown :is(blockquote, .scribdown-callout) a:visited {
   color: var(--scribdown-color-blockquote-link-visited);
 }

@@ -26,7 +26,8 @@
     "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "gen:rough-lines": "node scripts/generate-rough-lines.mjs"
+    "gen:rough-lines": "node scripts/generate-rough-lines.mjs",
+    "gen:rough-callout-icons": "node --experimental-transform-types scripts/generate-rough-callout-icons.mjs"
   },
   "devDependencies": {
     "roughjs": "^4.6.6",

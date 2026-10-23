@@ -1,0 +1,61 @@
+/* 尺寸、留白与侧边笔触继承 blockquote.css；这里设置语义颜色和标题图标。 */
+.scribdown-markdown .scribdown-callout {
+  --scribdown-callout-color: var(--scribdown-color-link);
+  --scribdown-callout-icon: url("../assets/rough-callout-note.svg");
+  --scribdown-frame-edge-color: var(--scribdown-callout-color);
+  color: var(--scribdown-color-text-primary);
+  background: color-mix(in srgb, var(--scribdown-callout-color) 9%, var(--scribdown-color-surface));
+  overflow-wrap: anywhere;
+}
+
+/* 遮罩和尺寸继承 blockquote.css，只覆盖各提示类型的语义颜色。 */
+.scribdown-markdown .scribdown-callout::before {
+  background-color: var(--scribdown-callout-color);
+}
+
+.scribdown-markdown .scribdown-callout--tip {
+  --scribdown-callout-color: var(--scribdown-color-accent);
+  --scribdown-callout-icon: url("../assets/rough-callout-tip.svg");
+}
+
+.scribdown-markdown .scribdown-callout--important {
+  --scribdown-callout-color: var(--scribdown-color-link-visited);
+  --scribdown-callout-icon: url("../assets/rough-callout-important.svg");
+}
+
+.scribdown-markdown .scribdown-callout--warning {
+  --scribdown-callout-color: var(--scribdown-color-warning);
+  --scribdown-callout-icon: url("../assets/rough-callout-warning.svg");
+}
+
+.scribdown-markdown .scribdown-callout--caution {
+  --scribdown-callout-color: var(--scribdown-color-danger);
+  --scribdown-callout-icon: url("../assets/rough-callout-caution.svg");
+}
+
+.scribdown-markdown .scribdown-callout > .scribdown-callout__title {
+  position: relative;
+  padding-inline-start: 1.75em;
+  margin: 0 0 var(--scribdown-space-1);
+  color: var(--scribdown-callout-color);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 图标只作装饰；遮罩继承标题颜色，兼容明暗主题及多行标题。 */
+.scribdown-markdown .scribdown-callout > .scribdown-callout__title::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.125em;
+  width: 1.25em;
+  height: 1.25em;
+  background-color: currentColor;
+  -webkit-mask: var(--scribdown-callout-icon) center / contain no-repeat;
+  mask: var(--scribdown-callout-icon) center / contain no-repeat;
+}
+
+/* 标题之外允许任意 Markdown 块；清理末尾间距，嵌套容器保持紧凑。 */
+.scribdown-markdown .scribdown-callout > :last-child {
+  margin-bottom: 0;
+}

@@ -4,6 +4,7 @@
  * 遍历统一用 unist-util-visit，文本提取统一用 mdast-util-to-string。
  */
 
+import type { CalloutToken } from "@scribdown/shared";
 import type {
   BlockContent,
   DefinitionContent,
@@ -18,6 +19,14 @@ import type {
 // 关键步骤：加载 mdast-util-to-hast 的类型副作用，为 mdast Data 合入 hName / hProperties 官方增强。
 import type {} from "mdast-util-to-hast";
 import { toString as mdastToString } from "mdast-util-to-string";
+
+/** 冒号围栏在解析阶段生成的块级容器，随后转换为带渲染信息的引用节点。 */
+interface CalloutContainer extends Parent {
+  type: CalloutToken.Container;
+  name: string;
+  title: string;
+  children: (BlockContent | DefinitionContent)[];
+}
 
 // ── 标题（toc.ts）──────────────────────────────────────────────
 
@@ -177,6 +186,7 @@ interface ImageFallbackSource extends Parent {
 declare module "mdast" {
   /** 所有自定义节点都可出现在文档树中，注册进 RootContentMap 使其成为 Nodes 联合的一部分。 */
   interface RootContentMap {
+    scribdownCalloutContainer: CalloutContainer;
     scribdownHeadingMark: HeadingMark;
     scribdownToc: Toc;
     scribdownTocSummary: TocSummary;
@@ -205,6 +215,7 @@ declare module "mdast" {
 
   /** 可替换段落等块级位置的自定义节点，注册进 BlockContentMap。 */
   interface BlockContentMap {
+    scribdownCalloutContainer: CalloutContainer;
     scribdownToc: Toc;
     scribdownDefinitionList: DefinitionList;
     scribdownFrontmatterMetadata: FrontmatterMetadata;
@@ -239,6 +250,7 @@ function isImageNode(node: Node): node is Image | ImageReference {
 }
 
 export type {
+  CalloutContainer,
   BlockContent,
   DefinitionContent,
   DefinitionDescription,
