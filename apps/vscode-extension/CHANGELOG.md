@@ -1,5 +1,18 @@
 # scribdown-markdown-preview
 
+## 0.8.0
+
+### Minor Changes
+
+- cdf8600: 新增提示块渲染：支持 GitHub `> [!NOTE]` 等五种引用提示与 `::: tip` 冒号容器（含自定义标题和 `::: details` 折叠块），并提供手绘边框、语义色与明暗主题样式；普通引用的侧边笔触改为随主题强调色着色。
+
+### Patch Changes
+
+- Updated dependencies [cdf8600]
+  - @scribdown/shared@0.6.0
+  - @scribdown/markdown-renderer@0.7.0
+  - @scribdown/ui-handdrawn@0.5.0
+
 ## 0.7.7
 
 ### Patch Changes
