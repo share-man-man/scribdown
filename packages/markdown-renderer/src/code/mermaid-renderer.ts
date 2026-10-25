@@ -4,6 +4,7 @@
  */
 
 import {
+  FALLBACK_ICON_CLASS_NAME,
   MARKDOWN_SOURCE_DATA_ATTRIBUTE,
   MERMAID_BODY_CLASS_NAME,
   MERMAID_CANVAS_CLASS_NAME,
@@ -712,7 +713,7 @@ function showMermaidFallback(
 
   // 错误提示图标。
   const iconElement = ownerDocument.createElement("span");
-  iconElement.className = MERMAID_FALLBACK_ICON_CLASS_NAME;
+  iconElement.classList.add(MERMAID_FALLBACK_ICON_CLASS_NAME, FALLBACK_ICON_CLASS_NAME);
   iconElement.setAttribute("aria-hidden", "true");
   fallbackElement.append(iconElement);
 

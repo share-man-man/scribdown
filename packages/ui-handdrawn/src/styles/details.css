@@ -12,8 +12,8 @@
   padding-bottom: var(--scribdown-space-4);
 }
 
+/* 展开 / 收起箭头复用目录的手绘图标，由 disclosure.css 的 .scribdown-disclosure-summary 提供。 */
 .scribdown-markdown .scribdown-details > summary {
-  cursor: pointer;
   font-family: var(--scribdown-font-heading);
   font-size: 22px;
   font-weight: 700;

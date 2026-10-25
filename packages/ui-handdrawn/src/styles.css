@@ -28,6 +28,9 @@
 /* 6. 折叠块（details / summary） */
 @import "./styles/details.css";
 
+/* 6.1 可折叠块摘要箭头（目录根与折叠块共用） */
+@import "./styles/disclosure.css";
+
 /* 7. 目录（[TOC]） */
 @import "./styles/toc.css";
 
@@ -42,6 +45,9 @@
 
 /* 8.0.2 图片 / Mermaid 查看器共用顶部控件 */
 @import "./styles/viewer-controls.css";
+
+/* 8.0.3 图片 / 视频 / Mermaid 渲染失败统一图标 */
+@import "./styles/fallback-icon.css";
 
 /* 8.1 Mermaid 图表块 */
 @import "./styles/mermaid.css";

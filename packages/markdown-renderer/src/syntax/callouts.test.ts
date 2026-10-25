@@ -4,6 +4,7 @@ import {
   CALLOUT_CLASS_NAME,
   CALLOUT_META,
   CALLOUT_TITLE_CLASS_NAME,
+  DISCLOSURE_SUMMARY_CLASS_NAME,
   MARKDOWN_SOURCE_DATA_ATTRIBUTE,
   CalloutKind,
   CalloutToken
@@ -182,6 +183,7 @@ describe("callouts", () => {
     expect(element.querySelectorAll(`.${CALLOUT_CLASS_NAME}`)).toHaveLength(2);
     expect(element.querySelector(`.${CALLOUT_CLASS_NAME} .${CALLOUT_CLASS_NAME}`)).not.toBeNull();
     expect(element.querySelector("summary")?.textContent).toBe("展开详情");
+    expect(element.querySelector("summary")?.classList.contains(DISCLOSURE_SUMMARY_CLASS_NAME)).toBe(true);
     expect(element.querySelector("details")?.hasAttribute("open")).toBe(false);
     expect(element.querySelector("table")?.getAttribute("data-source-line")).toBe("5");
   });

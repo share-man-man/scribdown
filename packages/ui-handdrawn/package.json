@@ -27,7 +27,10 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "gen:rough-lines": "node scripts/generate-rough-lines.mjs",
-    "gen:rough-callout-icons": "node --experimental-transform-types scripts/generate-rough-callout-icons.mjs"
+    "gen:rough-callout-icons": "node --experimental-transform-types scripts/generate-rough-callout-icons.mjs",
+    "gen:rough-toc-toggle": "node scripts/generate-rough-toc-toggle.mjs",
+    "gen:rough-list-icons": "node scripts/generate-rough-list-icons.mjs",
+    "gen:rough-fallback-icon": "node scripts/generate-rough-fallback-icon.mjs"
   },
   "devDependencies": {
     "roughjs": "^4.6.6",

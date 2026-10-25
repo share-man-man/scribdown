@@ -141,30 +141,9 @@
   text-align: center;
 }
 
-/* 失败态图标：手绘风方框 + 居中三角形播放符号，区别于图片裂痕图标。 */
+/* 图标绘制见 fallback-icon.css，这里只负责与标题的间距。 */
 .scribdown-markdown .scribdown-video-fallback-icon {
-  position: relative;
-  display: block;
-  box-sizing: border-box;
-  width: 58px;
-  height: 46px;
   margin-bottom: var(--scribdown-space-3);
-  border: 2px solid var(--scribdown-color-text-primary);
-  background: color-mix(in srgb, var(--scribdown-color-surface) 78%, var(--scribdown-color-accent) 8%);
-  transform: rotate(-1.5deg);
-}
-
-.scribdown-markdown .scribdown-video-fallback-icon::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 9px 0 9px 14px;
-  border-color: transparent transparent transparent var(--scribdown-color-accent);
-  transform: translate(-40%, -50%);
 }
 
 .scribdown-markdown .scribdown-video-fallback-text {

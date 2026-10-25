@@ -9,9 +9,11 @@ import {
   CALLOUT_META,
   CALLOUT_TITLE_CLASS_NAME,
   DETAILS_CLASS_NAME,
+  DISCLOSURE_SUMMARY_CLASS_NAME,
   FRAME_CLASS_NAME,
   FRONTMATTER_CHROME_CLASS_NAME,
   FRONTMATTER_CLASS_NAME,
+  FALLBACK_ICON_CLASS_NAME,
   FRONTMATTER_LABEL_CLASS_NAME,
   FRONTMATTER_LIST_CLASS_NAME,
   FRONTMATTER_LIST_NESTED_CLASS_NAME,
@@ -81,10 +83,10 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       string
     ]
   ];
-  // summary 元素的属性白名单（仅目录根 summary）。
+  // summary 元素的属性白名单：目录根 summary 与折叠块共用的箭头 class。
   const summaryAttributes = [
     ...(defaultAttributes.summary ?? []),
-    ["className", TOC_SUMMARY_CLASS_NAME] as [string, string]
+    ["className", TOC_SUMMARY_CLASS_NAME, DISCLOSURE_SUMMARY_CLASS_NAME] as [string, string, string]
   ];
   // nav 元素的属性白名单。
   const navAttributes = ["ariaLabel", ["className", TOC_NAV_CLASS_NAME] as [string, string]];
@@ -145,6 +147,7 @@ function createScribdownSanitizeSchema(): typeof defaultSchema {
       IMAGE_FRAME_CLASS_NAME,
       IMAGE_FALLBACK_CLASS_NAME,
       IMAGE_FALLBACK_ICON_CLASS_NAME,
+      FALLBACK_ICON_CLASS_NAME,
       IMAGE_FALLBACK_TEXT_CLASS_NAME,
       IMAGE_FALLBACK_SOURCE_CLASS_NAME,
       VIDEO_FRAME_CLASS_NAME,

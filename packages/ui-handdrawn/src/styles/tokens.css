@@ -162,9 +162,20 @@
   --scribdown-duration-base: 200ms;
   --scribdown-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* 关键步骤：目录折叠箭头 SVG 由 inline TOC 与 toolbar 抽屉共用，
+  /* 关键步骤：目录折叠箭头 SVG 由 inline TOC、toolbar 抽屉与内容折叠块共用，
      放在 :root 上避免抽屉脱离 .scribdown-markdown 作用域后变量失效。 */
   --scribdown-toc-toggle-icon: url("../assets/toc-branch-toggle.svg");
+
+  /* 列表 / 任务复选框手绘图标（Rough.js 离线生成的单色 SVG），以 mask 引用，颜色跟随主题 token。 */
+  --scribdown-list-bullet-icon-1: url("../assets/rough-list-bullet-1.svg");
+  --scribdown-list-bullet-icon-2: url("../assets/rough-list-bullet-2.svg");
+  --scribdown-list-bullet-icon-3: url("../assets/rough-list-bullet-3.svg");
+  --scribdown-checkbox-box-icon: url("../assets/rough-checkbox-box.svg");
+  --scribdown-checkbox-check-icon: url("../assets/rough-checkbox-check.svg");
+
+  /* 渲染失败统一图标：外框与裂痕两层，分别着色。 */
+  --scribdown-fallback-frame-icon: url("../assets/rough-fallback-frame.svg");
+  --scribdown-fallback-crack-icon: url("../assets/rough-fallback-crack.svg");
 }
 
 /* ─── 语义 Token ← 浅色 ────────────────────────────────────────────
