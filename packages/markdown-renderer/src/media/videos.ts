@@ -4,6 +4,7 @@
  */
 
 import {
+  FALLBACK_ICON_CLASS_NAME,
   VIDEO_ELEMENT_CLASS_NAME,
   VIDEO_FALLBACK_CLASS_NAME,
   VIDEO_FALLBACK_ICON_CLASS_NAME,
@@ -158,7 +159,7 @@ function createVideoFallbackHast(sourceUrl: string): Element {
       {
         type: "element",
         tagName: "span",
-        properties: { className: [VIDEO_FALLBACK_ICON_CLASS_NAME] },
+        properties: { className: [VIDEO_FALLBACK_ICON_CLASS_NAME, FALLBACK_ICON_CLASS_NAME] },
         children: []
       },
       {

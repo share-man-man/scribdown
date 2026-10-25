@@ -15,46 +15,20 @@
   padding-bottom: var(--scribdown-space-4);
 }
 
+/* 展开 / 收起箭头由 disclosure.css 的 .scribdown-disclosure-summary 提供，这里只负责排版。 */
 .scribdown-toc-summary {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--scribdown-space-2);
   min-height: 36px;
   color: var(--scribdown-color-accent);
-  cursor: pointer;
   font-family: var(--scribdown-font-heading);
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
-  list-style: none;
-  user-select: none;
 }
 
 .scribdown-toc-summary:focus,
 .scribdown-toc-summary:focus-visible {
   outline: none;
-}
-
-.scribdown-toc-summary::marker,
-.scribdown-toc-summary::-webkit-details-marker {
-  display: none;
-}
-
-.scribdown-toc-summary::before {
-  content: "";
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
-  background-image: var(--scribdown-toc-toggle-icon);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  transform: rotate(-5deg);
-  transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
-}
-
-.scribdown-toc[open] .scribdown-toc-summary::before {
-  transform: rotate(85deg);
 }
 
 .scribdown-toc-nav {

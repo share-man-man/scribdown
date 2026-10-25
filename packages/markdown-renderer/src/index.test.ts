@@ -24,7 +24,7 @@ describe("renderMarkdown", () => {
       '<h1 id="文档标题" data-source-line="1"><span class="scribdown-heading-mark">文档标题</span></h1>'
     );
     expect(renderedHtml).toContain(
-      '<details class="scribdown-toc scribdown-frame" data-source-line="3"><summary class="scribdown-toc-summary">目录</summary>'
+      '<details class="scribdown-toc scribdown-frame" data-source-line="3"><summary class="scribdown-toc-summary scribdown-disclosure-summary">目录</summary>'
     );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     // 分支条目：li + 折叠按钮 + 与叶子完全相同的标题链接（节点间有换行，分别断言）。
@@ -148,7 +148,7 @@ describe("renderMarkdown", () => {
       '<button type="button" class="scribdown-toc-toggle" aria-expanded="true" aria-label="展开或折叠子目录"></button>';
 
     expect(renderedHtml).toContain(
-      '<details class="scribdown-toc scribdown-frame" data-source-line="1"><summary class="scribdown-toc-summary">目录</summary>'
+      '<details class="scribdown-toc scribdown-frame" data-source-line="1"><summary class="scribdown-toc-summary scribdown-disclosure-summary">目录</summary>'
     );
     expect(renderedHtml).toContain('<nav aria-label="目录" class="scribdown-toc-nav">');
     expect(renderedHtml).toContain('<ol class="scribdown-toc-list">');

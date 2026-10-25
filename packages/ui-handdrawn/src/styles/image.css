@@ -170,40 +170,9 @@
   text-align: center;
 }
 
+/* 图标绘制见 fallback-icon.css，这里只负责与标题的间距。 */
 .scribdown-markdown .scribdown-image-fallback-icon {
-  position: relative;
-  display: block;
-  box-sizing: border-box;
-  width: 58px;
-  height: 46px;
   margin-bottom: var(--scribdown-space-3);
-  border: 2px solid var(--scribdown-color-text-primary);
-  background:
-    linear-gradient(
-      42deg,
-      transparent 0 47%,
-      var(--scribdown-color-accent) 48% 52%,
-      transparent 53% 100%
-    ),
-    linear-gradient(
-      138deg,
-      transparent 0 47%,
-      var(--scribdown-color-accent) 48% 52%,
-      transparent 53% 100%
-    ),
-    color-mix(in srgb, var(--scribdown-color-surface) 78%, var(--scribdown-color-accent) 8%);
-  transform: rotate(-1.5deg);
-}
-
-.scribdown-markdown .scribdown-image-fallback-icon::before {
-  content: "";
-  position: absolute;
-  right: 8px;
-  top: 7px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--scribdown-color-accent);
-  border-radius: 50%;
 }
 
 .scribdown-markdown .scribdown-image-fallback-text {

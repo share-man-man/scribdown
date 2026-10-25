@@ -262,42 +262,6 @@
   text-align: center;
 }
 
-/* 失败态图标：手绘风方框 + 中心叉号。 */
-:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__fallback-icon {
-  position: relative;
-  display: block;
-  box-sizing: border-box;
-  width: 52px;
-  height: 52px;
-  border: 2px solid var(--scribdown-color-text-primary);
-  background: color-mix(
-    in srgb,
-    var(--scribdown-color-surface) 80%,
-    var(--scribdown-color-warning) 12%
-  );
-  transform: rotate(-2deg);
-}
-
-:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__fallback-icon::before,
-:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__fallback-icon::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 30px;
-  height: 2.5px;
-  background: var(--scribdown-color-text-primary);
-  transform-origin: center;
-}
-
-:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__fallback-icon::before {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__fallback-icon::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
-
 :is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-mermaid__fallback-text {
   margin: 0;
   font-family: var(--scribdown-font-heading);

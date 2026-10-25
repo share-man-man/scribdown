@@ -1,0 +1,30 @@
+/* 渲染失败统一图标：图片 / 视频 / Mermaid 失败态共用的手绘破损画框。
+   渲染器给图标元素额外加 .scribdown-fallback-icon 显式引入；各自的布局间距仍由原类名负责。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-fallback-icon {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 60px;
+  height: 48px;
+  transform: rotate(-2deg);
+}
+
+/* 外框与裂痕共用同一画布坐标，分两层 mask 着色。 */
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-fallback-icon::before,
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-fallback-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-fallback-icon::before {
+  background-color: var(--scribdown-color-text-primary);
+  -webkit-mask: var(--scribdown-fallback-frame-icon) center / contain no-repeat;
+  mask: var(--scribdown-fallback-frame-icon) center / contain no-repeat;
+}
+
+:is(.scribdown-markdown, .scribdown-mermaid-viewer) .scribdown-fallback-icon::after {
+  background-color: var(--scribdown-color-warning);
+  -webkit-mask: var(--scribdown-fallback-crack-icon) center / contain no-repeat;
+  mask: var(--scribdown-fallback-crack-icon) center / contain no-repeat;
+}

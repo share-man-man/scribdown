@@ -1,0 +1,34 @@
+/* 可折叠块摘要：目录根与内容折叠块（<details> / ::: details）共用的手绘展开 / 收起箭头。
+   渲染器给 summary 加 .scribdown-disclosure-summary 显式引入；字号、颜色等排版由各组件自行负责，
+   箭头尺寸跟随字号（1em）。不依赖 .scribdown-markdown，toolbar 抽屉中的目录同样生效。 */
+.scribdown-disclosure-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--scribdown-space-2);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.scribdown-disclosure-summary::marker,
+.scribdown-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 收起态：箭头朝右。 */
+.scribdown-disclosure-summary::before {
+  content: "";
+  flex: 0 0 1em;
+  width: 1em;
+  height: 1em;
+  background-image: var(--scribdown-toc-toggle-icon);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transform: rotate(-5deg);
+  transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+/* 展开态：箭头朝下。 */
+details[open] > .scribdown-disclosure-summary::before {
+  transform: rotate(85deg);
+}

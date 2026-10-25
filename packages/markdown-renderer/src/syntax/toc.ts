@@ -4,6 +4,7 @@
  */
 
 import {
+  DISCLOSURE_SUMMARY_CLASS_NAME,
   FRAME_CLASS_NAME,
   HEADING_MARK_CLASS_NAME,
   SCRIBDOWN_MARKDOWN_CLASS_NAME,
@@ -193,7 +194,7 @@ function createTocNode(tocHeadings: TocHeading[], markerNode: Paragraph): Toc {
         data: {
           hName: "summary",
           hProperties: {
-            className: [TOC_SUMMARY_CLASS_NAME]
+            className: [TOC_SUMMARY_CLASS_NAME, DISCLOSURE_SUMMARY_CLASS_NAME]
           }
         },
         children: [

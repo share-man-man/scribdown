@@ -33,14 +33,17 @@ function createIcon(kind, paths) {
       })
     )
   );
-  /** 圆角笔触保留手绘感，坐标精简到三位小数以控制资产体积。 */
+  /** 圆角笔触保留手绘感，坐标精简到两位小数以控制资产体积；排线填充的线宽与轮廓不同，按路径单独写出。 */
   const body = strokes
-    .map(
-      ({ d }) =>
-        `  <path d="${d.replace(/-?\d+\.\d+/g, (number) => String(Number(Number(number).toFixed(3))))}" />`
-    )
+    .map(({ d, strokeWidth }) => {
+      /** 精简后的路径数据。 */
+      const data = d.replace(/-?\d+\.\d+/g, (number) => String(Number(Number(number).toFixed(2))));
+      /** 与根节点不同的线宽才单独声明。 */
+      const width = strokeWidth === CALLOUT_ICON_STYLE.strokeWidth ? "" : ` stroke-width="${strokeWidth}"`;
+      return `  <path d="${data}"${width} />`;
+    })
     .join("\n");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${CALLOUT_ICON_STYLE.size}" height="${CALLOUT_ICON_STYLE.size}" viewBox="0 0 ${CALLOUT_ICON_STYLE.size} ${CALLOUT_ICON_STYLE.size}" fill="none" stroke="${CALLOUT_ICON_STYLE.stroke}" stroke-width="${CALLOUT_ICON_STYLE.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" role="img">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${CALLOUT_ICON_STYLE.size}" height="${CALLOUT_ICON_STYLE.size}" viewBox="0 0 ${CALLOUT_ICON_STYLE.viewBoxSize} ${CALLOUT_ICON_STYLE.viewBoxSize}" fill="none" stroke="${CALLOUT_ICON_STYLE.stroke}" stroke-width="${CALLOUT_ICON_STYLE.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" role="img">
   <title>${CALLOUT_META[kind].title}</title>
 ${body}
 </svg>

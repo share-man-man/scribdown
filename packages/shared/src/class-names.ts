@@ -51,6 +51,11 @@ export const FRONTMATTER_LIST_NESTED_CLASS_NAME = "scribdown-frontmatter__list--
 export const TOC_CLASS_NAME = "scribdown-toc";
 
 /**
+ * 可折叠块摘要类名：目录根与内容折叠块的 summary 共用，提供手绘展开 / 收起箭头。
+ */
+export const DISCLOSURE_SUMMARY_CLASS_NAME = "scribdown-disclosure-summary";
+
+/**
  * 目录摘要按钮类名。
  */
 export const TOC_SUMMARY_CLASS_NAME = "scribdown-toc-summary";
@@ -141,6 +146,11 @@ export const IMAGE_FRAME_LOADED_CLASS_NAME = "scribdown-image-frame--loaded";
  * 图片失败态占位内容类名。
  */
 export const IMAGE_FALLBACK_CLASS_NAME = "scribdown-image-fallback";
+
+/**
+ * 渲染失败统一图标类名（图片 / 视频 / Mermaid 共用的手绘破损画框），与各自的图标类名并存。
+ */
+export const FALLBACK_ICON_CLASS_NAME = "scribdown-fallback-icon";
 
 /**
  * 图片失败态图标类名。

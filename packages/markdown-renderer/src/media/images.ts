@@ -4,6 +4,7 @@
  */
 
 import {
+  FALLBACK_ICON_CLASS_NAME,
   IMAGE_CAPTION_CLASS_NAME,
   IMAGE_ELEMENT_CLASS_NAME,
   IMAGE_FALLBACK_CLASS_NAME,
@@ -178,7 +179,7 @@ function createImageFallbackNode(imageNode: Image | ImageReference): ImageFallba
         data: {
           hName: "span",
           hProperties: {
-            className: [IMAGE_FALLBACK_ICON_CLASS_NAME]
+            className: [IMAGE_FALLBACK_ICON_CLASS_NAME, FALLBACK_ICON_CLASS_NAME]
           }
         }
       },

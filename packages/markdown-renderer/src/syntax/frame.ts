@@ -1,11 +1,16 @@
 /**
  * rehype 插件：为用户手写的内容折叠块 <details>
- * 打上 scribdown-details + scribdown-frame 手绘边框 class。
+ * 打上 scribdown-details + scribdown-frame 手绘边框 class，并为其 summary 打上折叠箭头 class。
  */
 
-import { DETAILS_CLASS_NAME, FRAME_CLASS_NAME, TOC_CLASS_NAME } from "@scribdown/shared";
+import {
+  DETAILS_CLASS_NAME,
+  DISCLOSURE_SUMMARY_CLASS_NAME,
+  FRAME_CLASS_NAME,
+  TOC_CLASS_NAME
+} from "@scribdown/shared";
 
-import type { Root } from "hast";
+import type { Element, Root } from "hast";
 import { classnames } from "hast-util-classnames";
 import { visit } from "unist-util-visit";
 
@@ -30,6 +35,14 @@ function rehypeFrameClass(): (tree: Root) => void {
       if (!classNames.includes(TOC_CLASS_NAME)) {
         // 关键步骤：hast-util-classnames 追加 class 并去重，保留已有 class。
         classnames(node, DETAILS_CLASS_NAME, FRAME_CLASS_NAME);
+
+        // 直接子级 summary：复用目录的手绘展开 / 收起箭头。
+        const summary = node.children.find(
+          (child): child is Element => child.type === "element" && child.tagName === "summary"
+        );
+        if (summary) {
+          classnames(summary, DISCLOSURE_SUMMARY_CLASS_NAME);
+        }
       }
     });
   };
