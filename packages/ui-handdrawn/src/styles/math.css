@@ -1,0 +1,83 @@
+/*
+ * 数学公式：KaTeX 排版样式与字体随包提供，宿主无需联网加载。
+ * 构建工具会把 katex.min.css 中 url() 引用的字体复制为本地资源。
+ */
+@import "katex/dist/katex.min.css";
+
+/* 行内公式跟随正文字号，避免 KaTeX 默认 1.21em 放大破坏行高。 */
+.scribdown-markdown .scribdown-math--inline .katex {
+  font-size: 1.1em;
+}
+
+/* 块级公式：复制按钮固定在右上角，超宽公式在内部容器横向滚动。 */
+.scribdown-markdown .scribdown-math--display {
+  position: relative;
+  margin: 0 0 var(--scribdown-space-3);
+}
+
+.scribdown-markdown .scribdown-math__scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* 为右侧复制按钮预留空间，同时给 KaTeX 上下标留出裁切余量。 */
+  padding: var(--scribdown-space-1) 44px var(--scribdown-space-1) 0;
+}
+
+.scribdown-markdown .scribdown-math__scroll > .katex-display {
+  margin: var(--scribdown-space-2) 0;
+}
+
+.scribdown-markdown .scribdown-math__copy {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  opacity: 0;
+  color: var(--scribdown-color-accent);
+  pointer-events: none;
+  transition: opacity var(--scribdown-duration-fast) var(--scribdown-easing-standard);
+}
+
+/* 鼠标进入公式或键盘焦点进入时展示；复制反馈期间保持可见。 */
+.scribdown-markdown .scribdown-math--display:hover > .scribdown-math__copy,
+.scribdown-markdown .scribdown-math--display:focus-within > .scribdown-math__copy,
+.scribdown-markdown .scribdown-math__copy[data-scribdown-copied="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .scribdown-markdown .scribdown-math__copy {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* 解析失败：保留可读原文，用危险色虚线提示局部错误，不打断全文阅读。 */
+.scribdown-markdown .scribdown-math--error.scribdown-math--inline {
+  font-family: var(--scribdown-font-code);
+  color: var(--scribdown-color-danger);
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.scribdown-markdown .scribdown-math--error.scribdown-math--display {
+  padding: var(--scribdown-space-2) var(--scribdown-space-3);
+  border: 1.5px dashed color-mix(in srgb, var(--scribdown-color-danger) 70%, transparent);
+  border-radius: var(--scribdown-radius-sm);
+  background: color-mix(in srgb, var(--scribdown-color-danger) 6%, var(--scribdown-color-surface));
+}
+
+.scribdown-markdown .scribdown-math--error .scribdown-math__source {
+  display: block;
+  width: max-content;
+  padding: 0;
+  background: none;
+  white-space: pre;
+}
+
+.scribdown-markdown .scribdown-math__message {
+  margin: var(--scribdown-space-1) 0 0;
+  color: var(--scribdown-color-danger);
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}

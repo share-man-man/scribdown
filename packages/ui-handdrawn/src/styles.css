@@ -58,6 +58,9 @@
 /* 9.1 语义提示块 */
 @import "./styles/callouts.css";
 
+/* 9.2 数学公式（KaTeX 样式与字体随包提供） */
+@import "./styles/math.css";
+
 /* 10. 行内装饰：删除线、链接、mark 高亮 */
 @import "./styles/inline.css";
 
