@@ -1,5 +1,5 @@
-/** 在 HTML 转换前保存表格与代码块源码，避免从可见文本反推丢失格式。 */
-import { MARKDOWN_SOURCE_HAST_PROPERTY } from "@scribdown/shared";
+/** 在 HTML 转换前保存表格、Mermaid 与块级公式源码，避免从可见文本反推丢失格式。 */
+import { MARKDOWN_SOURCE_HAST_PROPERTY, MATH_LANGUAGE_ID } from "@scribdown/shared";
 import type { Root } from "mdast";
 import type {} from "mdast-util-to-hast";
 import { visit } from "unist-util-visit";
@@ -12,7 +12,10 @@ import { visit } from "unist-util-visit";
 export function remarkMarkdownSource(markdownText: string): (tree: Root) => void {
   return (tree) => {
     visit(tree, (node) => {
-      if (node.type !== "table" && !(node.type === "code" && node.lang === "mermaid")) {
+      /** 是否为需要保留原文的围栏代码（Mermaid 图表或 ```math 公式）。 */
+      const isSourceCode =
+        node.type === "code" && (node.lang === "mermaid" || node.lang === MATH_LANGUAGE_ID);
+      if (node.type !== "table" && node.type !== "math" && !isSourceCode) {
         return;
       }
       /** 节点在原文中的起止位置。 */
@@ -22,7 +25,7 @@ export function remarkMarkdownSource(markdownText: string): (tree: Root) => void
       }
       // 保留首行容器前缀，使克隆后的引用或列表代码块仍可正确解析。
       const startOffset =
-        node.type === "code"
+        node.type === "code" || node.type === "math"
           ? position.start.offset - (position.start.column - 1)
           : position.start.offset;
       node.data ??= {};

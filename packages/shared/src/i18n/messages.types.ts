@@ -89,6 +89,10 @@ export interface Messages {
   /** 表格复制按钮 aria-label。 */
   "table.copy": string;
 
+  // ─── 数学公式（syntax/math.ts）───
+  /** 块级公式复制按钮 aria-label。 */
+  "math.copy": string;
+
   // ─── 图片查看器（media/images.ts、media/image-viewer.ts）───
   /** 图片查看器无标题时的兜底 aria-label。 */
   "image.viewFull": string;

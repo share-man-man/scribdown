@@ -10,6 +10,7 @@ import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
@@ -27,6 +28,7 @@ import { remarkDefinitionLists } from "./syntax/definition-lists";
 import { rehypeFrameClass } from "./syntax/frame";
 import { remarkFrontmatterMetadata } from "./syntax/frontmatter";
 import { remarkHighlightMark } from "./syntax/highlight-mark";
+import { hydrateMathBlocks, remarkMathBoundaries, typesetMarkdownMath } from "./syntax/math";
 import { hydrateMarkdownTables } from "./syntax/tables";
 import { hydrateToc, remarkTableOfContents } from "./syntax/toc";
 import { applyContentWidth, loadContentWidth, mountPageToolbar } from "./toolbar";
@@ -45,6 +47,8 @@ export async function renderMarkdown(markdownText: string): Promise<string> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkMath)
+    .use(remarkMathBoundaries, markdownText)
     .use(remarkFrontmatter)
     .use(remarkCallouts, markdownText)
     .use(remarkMarkdownSource, markdownText)
@@ -67,8 +71,11 @@ export async function renderMarkdown(markdownText: string): Promise<string> {
   // 关键步骤：rehype 清洗后再用 DOMPurify 做一次字符串级 sanitize，双重保险。
   const sanitizedHtml = sanitizeHtmlWithDomPurify(renderedHtml);
 
+  // 关键步骤：sanitize 之后用 KaTeX 排版公式，须先于 Shiki，避免公式块被当作代码高亮。
+  const typesetHtml = typesetMarkdownMath(sanitizedHtml);
+
   // 关键步骤：sanitize 之后再做 Shiki 高亮，把 token span 添加到信任过滤后的代码体内。
-  return highlightMarkdownCodeBlocks(sanitizedHtml);
+  return highlightMarkdownCodeBlocks(typesetHtml);
 }
 
 /**
@@ -111,7 +118,7 @@ function defaultScrollToHeading(targetElement: HTMLElement): void {
 
 /**
  * 对已渲染到 DOM 的 Markdown 内容执行交互 hydration。
- * 处理图片放大查看、视频占位、Mermaid、代码块复制等运行时行为。
+ * 处理图片放大查看、视频占位、Mermaid、代码块与公式复制等运行时行为。
  * 不挂载浮动工具栏；如需工具栏请额外调用 {@link mountMarkdownToolbar}。
  * @param rootElement 包含 Markdown 渲染结果的根节点。
  * @param options 可注入交互选项（如目录跳转滚动实现）。
@@ -126,6 +133,7 @@ export function hydrateMarkdown(
   hydrateMermaidBlocks(rootElement);
   hydrateCodeBlocks(rootElement);
   hydrateMarkdownTables(rootElement);
+  hydrateMathBlocks(rootElement);
   // 关键步骤：为行内 [TOC] 绑定折叠与标题跳转；滚动实现由宿主注入，缺省原生平滑。
   hydrateToc(rootElement, options.scrollToHeading ?? defaultScrollToHeading);
 }

@@ -250,4 +250,4 @@ function safeFromCodePoint(codePoint: number, fallback: string): string {
   }
 }
 
-export { highlightMarkdownCodeBlocks };
+export { decodeHtmlEntities, highlightMarkdownCodeBlocks };

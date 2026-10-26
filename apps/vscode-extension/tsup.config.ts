@@ -53,12 +53,13 @@ async function prepareWebviewUiAssets(isProductionBuild: boolean): Promise<void>
   await ensureWebviewBuildPrerequisites();
 
   // 关键步骤：用 esbuild 内联 ui-handdrawn 的 @import 分文件，
-  // 并把 url() 引用的 SVG 与字体拷贝到 dist/webview-ui/assets，供 Webview 单文件加载。
+  // 并把 url() 引用的 SVG 与字体（含 KaTeX 公式字体）拷贝到 dist/webview-ui/assets，供 Webview 单文件加载。
   await buildEsbuildBundle({
     entryPoints: [UI_HANDDRAWN_STYLES_ENTRY_FILE_PATH],
     outfile: WEBVIEW_STYLE_OUTPUT_FILE_PATH,
     bundle: true,
-    loader: { ".svg": "file", ".woff2": "file" },
+    // KaTeX 样式同时声明 woff2 / woff / ttf 字体回退，三者都需作为文件资源输出。
+    loader: { ".svg": "file", ".woff2": "file", ".woff": "file", ".ttf": "file" },
     assetNames: "assets/[name]",
     legalComments: "none",
     minify: isProductionBuild
