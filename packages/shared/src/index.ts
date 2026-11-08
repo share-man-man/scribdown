@@ -4,3 +4,4 @@ export * from "./enums.js";
 export * from "./i18n/index.js";
 export * from "./callouts.js";
 export * from "./math.js";
+export * from "./density.js";

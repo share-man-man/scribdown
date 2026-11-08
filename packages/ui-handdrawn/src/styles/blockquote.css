@@ -4,8 +4,9 @@
   box-sizing: border-box;
   width: 100%;
   color: var(--scribdown-color-blockquote-text);
-  margin: 0 0 var(--scribdown-space-3);
-  padding: var(--scribdown-space-2) 16px var(--scribdown-space-2) 24px;
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
+  padding: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1)) 16px
+    calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1)) 24px;
   background: var(--scribdown-color-blockquote-bg);
 }
 
@@ -24,7 +25,7 @@
 }
 
 .scribdown-markdown :is(blockquote, .scribdown-callout) p {
-  margin-bottom: var(--scribdown-space-1);
+  margin-bottom: calc(var(--scribdown-space-1) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown :is(blockquote, .scribdown-callout) p:last-child {

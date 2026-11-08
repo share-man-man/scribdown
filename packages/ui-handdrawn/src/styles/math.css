@@ -12,7 +12,7 @@
 /* 块级公式：复制按钮固定在右上角，超宽公式在内部容器横向滚动。 */
 .scribdown-markdown .scribdown-math--display {
   position: relative;
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-math__scroll {
@@ -23,7 +23,7 @@
 }
 
 .scribdown-markdown .scribdown-math__scroll > .katex-display {
-  margin: var(--scribdown-space-2) 0;
+  margin: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1)) 0;
 }
 
 .scribdown-markdown .scribdown-math__copy {
@@ -76,7 +76,7 @@
 }
 
 .scribdown-markdown .scribdown-math__message {
-  margin: var(--scribdown-space-1) 0 0;
+  margin: calc(var(--scribdown-space-1) * var(--scribdown-density-spacing, 1)) 0 0;
   color: var(--scribdown-color-danger);
   font-size: 0.875em;
   overflow-wrap: anywhere;

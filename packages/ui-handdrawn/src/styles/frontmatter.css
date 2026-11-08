@@ -2,7 +2,7 @@
    手绘边框由 .scribdown-frame 基底提供（渲染器输出时显式 opt-in），
    本文件仅负责底色、留白与键值列表排版。 */
 .scribdown-markdown .scribdown-frontmatter {
-  margin: 0 0 var(--scribdown-space-6);
+  margin: 0 0 calc(var(--scribdown-space-6) * var(--scribdown-density-spacing, 1));
   padding: var(--scribdown-space-3) var(--scribdown-space-4) var(--scribdown-space-4);
   background: var(--scribdown-color-surface);
   box-shadow: var(--scribdown-shadow-sm);
@@ -12,7 +12,7 @@
 .scribdown-markdown .scribdown-frontmatter__chrome {
   display: flex;
   align-items: center;
-  margin-bottom: var(--scribdown-space-2);
+  margin-bottom: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1));
 }
 
 /* 标签样式与 mermaid / 代码块语言标签保持一致的手写标注感。 */
