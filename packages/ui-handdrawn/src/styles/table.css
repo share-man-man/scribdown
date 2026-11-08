@@ -48,7 +48,7 @@
   min-width: 0;
   border-collapse: separate;
   border-spacing: 0;
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
   display: block;
   overflow-x: auto;
   box-shadow: none;
@@ -60,7 +60,7 @@
   position: relative;
   width: max-content;
   max-width: 100%;
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-table > table {
@@ -153,7 +153,8 @@
 .scribdown-markdown th,
 .scribdown-markdown td {
   border: 0;
-  padding: var(--scribdown-space-2) var(--scribdown-space-3);
+  padding: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1))
+    var(--scribdown-space-3);
   text-align: left;
   /* 关键步骤：列宽下限，压到此值仍超出则整表横向滚动，避免窄列被逐字挤压。 */
   min-width: 4rem;

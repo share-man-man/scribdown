@@ -3,7 +3,7 @@
 .scribdown-markdown .scribdown-details {
   width: fit-content;
   max-width: 100%;
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
   padding: 10px 16px;
   background: var(--scribdown-color-surface);
 }
@@ -21,7 +21,7 @@
 }
 
 .scribdown-markdown .scribdown-details > summary + * {
-  margin-top: var(--scribdown-space-3);
+  margin-top: calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-details > :last-child {

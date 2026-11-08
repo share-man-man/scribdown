@@ -1,7 +1,7 @@
 /* VideoRenderer：块级 video 转换为 figure，边框沿用 image-frame 同源 SVG 平铺。 */
 .scribdown-markdown .scribdown-video-figure {
   width: min(100%, 720px);
-  margin: 0 auto var(--scribdown-space-3);
+  margin: 0 auto calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-video-frame {
@@ -143,7 +143,7 @@
 
 /* 图标绘制见 fallback-icon.css，这里只负责与标题的间距。 */
 .scribdown-markdown .scribdown-video-fallback-icon {
-  margin-bottom: var(--scribdown-space-3);
+  margin-bottom: calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-video-fallback-text {
@@ -168,7 +168,7 @@
   width: 100%;
   max-width: 720px;
   height: auto;
-  margin: 0 auto var(--scribdown-space-3);
+  margin: 0 auto calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
   background: #000;
   border-radius: var(--scribdown-radius-md);
 }

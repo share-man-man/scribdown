@@ -21,9 +21,10 @@
   flex: 0 0 1em;
   width: 1em;
   height: 1em;
-  background-image: var(--scribdown-toc-toggle-icon);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  /* 单色资产仅提供形状，随正文文字色适配明暗主题。 */
+  background-color: currentColor;
+  -webkit-mask: var(--scribdown-toc-toggle-icon) center / contain no-repeat;
+  mask: var(--scribdown-toc-toggle-icon) center / contain no-repeat;
   transform: rotate(-5deg);
   transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
 }

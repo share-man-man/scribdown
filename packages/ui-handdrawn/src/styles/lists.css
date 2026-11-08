@@ -1,12 +1,12 @@
 /* ListRenderer：保留有序列表语义编号，只替换无序列表的浏览器默认 bullet。 */
 .scribdown-markdown ul:not(.scribdown-toc-list) {
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
   padding-left: 0;
   list-style: none;
 }
 
 .scribdown-markdown ol:not(.scribdown-toc-list) {
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
   padding-left: 0;
   list-style: none;
   /* 启用有序列表序号计数器，配合 ::before 渲染手绘字体的数字。 */
@@ -15,7 +15,7 @@
 
 .scribdown-markdown li:not(.scribdown-toc-item) {
   position: relative;
-  margin-bottom: var(--scribdown-space-1);
+  margin-bottom: calc(var(--scribdown-space-1) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown ul:not(.scribdown-toc-list) > li:not(.scribdown-toc-item) {
@@ -55,8 +55,8 @@
 
 .scribdown-markdown li:not(.scribdown-toc-item) > ul,
 .scribdown-markdown li:not(.scribdown-toc-item) > ol {
-  margin-top: var(--scribdown-space-2);
-  margin-bottom: var(--scribdown-space-2);
+  margin-top: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1));
+  margin-bottom: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1));
 }
 
 /* 无序列表 bullet 按嵌套深度三级轮换：墨点 → 圆圈 → 方块 → 墨点…；

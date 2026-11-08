@@ -46,7 +46,7 @@
     39px 34px;
   padding: var(--scribdown-space-3);
   font-size: 16px;
-  line-height: 1.65;
+  line-height: var(--scribdown-density-line-height, 1.65);
   font-weight: 400;
   color: var(--scribdown-color-text-primary);
   word-break: break-word;
@@ -124,8 +124,8 @@
   position: relative;
   isolation: isolate;
   font-family: var(--scribdown-font-heading);
-  margin-top: var(--scribdown-space-4);
-  margin-bottom: var(--scribdown-space-1);
+  margin-top: calc(var(--scribdown-space-4) * var(--scribdown-density-spacing, 1));
+  margin-bottom: calc(var(--scribdown-space-1) * var(--scribdown-density-spacing, 1));
   letter-spacing: 0;
 }
 
@@ -216,7 +216,7 @@
 
 /* ParagraphRenderer：段间距 space-3，紧凑版 */
 .scribdown-markdown p {
-  margin: 0 0 var(--scribdown-space-3);
+  margin: 0 0 calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown strong {
@@ -251,6 +251,6 @@
   mask-repeat: no-repeat;
   mask-size: 100% 8px;
   mask-mode: alpha;
-  margin: var(--scribdown-space-3) 0;
+  margin: calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1)) 0;
   transform: rotate(-0.3deg);
 }

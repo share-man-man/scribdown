@@ -22,6 +22,16 @@ export interface Messages {
   "toolbar.more": string;
   /** 「更多」菜单内「页面宽度」触发行文案。 */
   "toolbar.pageWidth": string;
+  /** 正文紧凑程度设置。 */
+  "toolbar.density": string;
+  /** 页面宽度和紧凑程度所属的排版分组。 */
+  "toolbar.layout": string;
+  /** 紧凑排版档位。 */
+  "toolbar.densityCompact": string;
+  /** 标准排版档位。 */
+  "toolbar.densityStandard": string;
+  /** 宽松排版档位。 */
+  "toolbar.densityRelaxed": string;
   /** 「更多」菜单内「回到顶部」项。 */
   "toolbar.backTop": string;
   /** 「更多」菜单内「语言」切换触发行。 */

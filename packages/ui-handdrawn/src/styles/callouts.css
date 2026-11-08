@@ -36,7 +36,7 @@
 .scribdown-markdown .scribdown-callout > .scribdown-callout__title {
   position: relative;
   padding-inline-start: 1.75em;
-  margin: 0 0 var(--scribdown-space-1);
+  margin: 0 0 calc(var(--scribdown-space-1) * var(--scribdown-density-spacing, 1));
   color: var(--scribdown-callout-color);
   font-weight: 700;
   line-height: 1.5;

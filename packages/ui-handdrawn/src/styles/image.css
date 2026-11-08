@@ -2,7 +2,7 @@
    通过 mask + background-color 让描边色由 token 接管。 */
 .scribdown-markdown .scribdown-image-figure {
   width: min(100%, 720px);
-  margin: 0 auto var(--scribdown-space-3);
+  margin: 0 auto calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-image-frame {
@@ -110,7 +110,7 @@
 }
 
 .scribdown-markdown .scribdown-image-caption {
-  margin-top: var(--scribdown-space-2);
+  margin-top: calc(var(--scribdown-space-2) * var(--scribdown-density-spacing, 1));
   color: var(--scribdown-color-text-primary);
   font-family: var(--scribdown-font-heading);
   font-size: 20px;
@@ -121,7 +121,7 @@
 
 .scribdown-markdown .scribdown-image-figure + p:has(> em:only-child) {
   width: min(100%, 720px);
-  margin: calc(0px - var(--scribdown-space-1)) auto var(--scribdown-space-3);
+  margin: calc(0px - var(--scribdown-space-1)) auto calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
   color: var(--scribdown-color-text-primary);
   font-size: 15px;
   line-height: 1.55;
@@ -172,7 +172,7 @@
 
 /* 图标绘制见 fallback-icon.css，这里只负责与标题的间距。 */
 .scribdown-markdown .scribdown-image-fallback-icon {
-  margin-bottom: var(--scribdown-space-3);
+  margin-bottom: calc(var(--scribdown-space-3) * var(--scribdown-density-spacing, 1));
 }
 
 .scribdown-markdown .scribdown-image-fallback-text {

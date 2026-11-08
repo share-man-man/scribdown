@@ -1,10 +1,19 @@
 /**
- * 浮动页面工具栏：目录侧栏、「更多」菜单（回到顶部 / 页面宽度 / 语言 / 关于）
+ * 浮动页面工具栏：目录侧栏、「更多」菜单（回到顶部 / 页面宽度 / 紧凑程度 / 语言 / 关于）
  * 与当前章节 scrollspy 指示器。
  */
 
 import {
   CONTENT_WIDTH_STORAGE_KEY,
+  CONTENT_DENSITY_MIN,
+  CONTENT_DENSITY_MAX,
+  CONTENT_DENSITY_STEP,
+  DEFAULT_CONTENT_DENSITY,
+  SCRIBDOWN_TOOLBAR_LAYOUT_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_LAYOUT_TITLE_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_DENSITY_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_DENSITY_SLIDER_CLASS_NAME,
+  SCRIBDOWN_TOOLBAR_DENSITY_LABELS_CLASS_NAME,
   getActiveLocale,
   LOCALE_PREFERENCE_OPTIONS,
   LocalePreference,
@@ -46,6 +55,12 @@ import {
   setActiveLocaleFromPreference,
   t
 } from "@scribdown/shared";
+
+import {
+  applyContentDensity,
+  loadContentDensity,
+  saveContentDensity
+} from "./core/content-density";
 
 import {
   collectTocHeadingsFromDom,
@@ -241,6 +256,12 @@ const TOOLBAR_WIDTH_ICON_SVG =
   '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
   '<path d="M3 6v6M15 6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
   '<path d="M5.5 9H3l2.5-2.5M3 9l2.5 2.5M12.5 9H15l-2.5-2.5M15 9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+  "</svg>";
+
+/** 紧凑程度菜单项图标：不同长度的横线与纵向间距箭头。 */
+const TOOLBAR_DENSITY_ICON_SVG =
+  '<svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">' +
+  '<path d="M8 4h7M8 9h5M8 14h7M3 4v10M1 6l2-2 2 2M1 12l2 2 2-2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
   "</svg>";
 
 /**
@@ -583,9 +604,7 @@ function mountPageToolbar(
   widthTrigger.appendChild(widthValueElement);
   widthTrigger.insertAdjacentHTML(
     "beforeend",
-    `<svg class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_CHEVRON_CLASS_NAME}" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">` +
-      '<path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
-      "</svg>"
+    `<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_CHEVRON_CLASS_NAME}" aria-hidden="true"></span>`
   );
 
   widthGroup.appendChild(widthTrigger);
@@ -638,6 +657,76 @@ function mountPageToolbar(
     widthTrigger.setAttribute("aria-expanded", String(opened));
   });
 
+  /** 页面宽度与紧凑程度共用的排版分组。 */
+  const layoutGroup = ownerDocument.createElement("div");
+  layoutGroup.className = SCRIBDOWN_TOOLBAR_LAYOUT_CLASS_NAME;
+  layoutGroup.setAttribute("role", "group");
+  layoutGroup.setAttribute("aria-label", t("toolbar.layout"));
+  /** 可见分组标题，明确两种阅读调整属于同一区域。 */
+  const layoutTitle = ownerDocument.createElement("div");
+  layoutTitle.className = SCRIBDOWN_TOOLBAR_LAYOUT_TITLE_CLASS_NAME;
+  layoutTitle.textContent = t("toolbar.layout");
+  layoutGroup.append(layoutTitle, widthGroup);
+
+  /** 包含文字与原生滑块的隐式 label，点击标题也能聚焦滑块。 */
+  const densityGroup = ownerDocument.createElement("label");
+  densityGroup.className = SCRIBDOWN_TOOLBAR_DENSITY_CLASS_NAME;
+  /** 滑块标题行，沿用页面宽度的图标与文字对齐。 */
+  const densityHeader = ownerDocument.createElement("span");
+  densityHeader.className = SCRIBDOWN_TOOLBAR_MENU_ITEM_CLASS_NAME;
+  densityHeader.innerHTML = `${TOOLBAR_DENSITY_ICON_SVG}<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_LABEL_CLASS_NAME}">${t("toolbar.density")}</span>`;
+  /** 当前数值，拖动过程中同步更新。 */
+  const densityValue = ownerDocument.createElement("span");
+  densityValue.className = SCRIBDOWN_TOOLBAR_MENU_SELECT_VALUE_CLASS_NAME;
+  densityHeader.appendChild(densityValue);
+  /** 原生滑块同时支持指针拖动、方向键和 Home/End。 */
+  const densitySlider = ownerDocument.createElement("input");
+  densitySlider.type = "range";
+  densitySlider.min = String(CONTENT_DENSITY_MIN);
+  densitySlider.max = String(CONTENT_DENSITY_MAX);
+  densitySlider.step = String(CONTENT_DENSITY_STEP);
+  densitySlider.value = String(loadContentDensity(ownerDocument));
+  densitySlider.setAttribute("aria-label", t("toolbar.density"));
+  /** 同步数值与正文排版，无需重新渲染 Markdown。 */
+  const updateDensity = (): void => {
+    /** 浏览器已按范围和步进校验的滑块值。 */
+    const density = densitySlider.valueAsNumber;
+    /** 标准位置附加说明，便于恢复原始排版。 */
+    const text =
+      density === DEFAULT_CONTENT_DENSITY
+        ? `${density}% · ${t("toolbar.densityStandard")}`
+        : `${density}%`;
+    densityValue.textContent = text;
+    densitySlider.setAttribute("aria-valuetext", text);
+    applyContentDensity(ownerDocument, density);
+  };
+  updateDensity();
+  densitySlider.addEventListener("input", () => {
+    // 关键步骤：拖动和键盘调整均实时预览，菜单保持打开。
+    updateDensity();
+  });
+  densitySlider.addEventListener("change", () => {
+    // 关键步骤：结束一次调整后保存，避免拖动期间持续写入存储。
+    saveContentDensity(ownerDocument, densitySlider.valueAsNumber);
+  });
+  /** 滑块两端的方向说明。 */
+  const densityLabels = ownerDocument.createElement("span");
+  densityLabels.className = SCRIBDOWN_TOOLBAR_DENSITY_LABELS_CLASS_NAME;
+  densityLabels.setAttribute("aria-hidden", "true");
+  /** 左端为更紧凑的排版。 */
+  const compactLabel = ownerDocument.createElement("span");
+  compactLabel.textContent = t("toolbar.densityCompact");
+  /** 右端为更宽松的排版。 */
+  const relaxedLabel = ownerDocument.createElement("span");
+  relaxedLabel.textContent = t("toolbar.densityRelaxed");
+  densityLabels.append(compactLabel, relaxedLabel);
+  /** 手绘轨道独立于原生 input，避免轨道的 SVG mask 裁切拖动手柄。 */
+  const densitySliderFrame = ownerDocument.createElement("span");
+  densitySliderFrame.className = SCRIBDOWN_TOOLBAR_DENSITY_SLIDER_CLASS_NAME;
+  densitySliderFrame.appendChild(densitySlider);
+  densityGroup.append(densityHeader, densitySliderFrame, densityLabels);
+  layoutGroup.appendChild(densityGroup);
+
   // 菜单项：语言切换（下拉选择）。
   /** 语言下拉分组容器（包裹触发行与可折叠的语言列表）。 */
   const languageGroup = ownerDocument.createElement("div");
@@ -665,9 +754,7 @@ function mountPageToolbar(
   languageTrigger.appendChild(languageValueElement);
   languageTrigger.insertAdjacentHTML(
     "beforeend",
-    `<svg class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_CHEVRON_CLASS_NAME}" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">` +
-      '<path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
-      "</svg>"
+    `<span class="${SCRIBDOWN_TOOLBAR_MENU_SELECT_CHEVRON_CLASS_NAME}" aria-hidden="true"></span>`
   );
   languageGroup.appendChild(languageTrigger);
 
@@ -762,9 +849,9 @@ function mountPageToolbar(
     closeMoreMenu();
   });
 
-  // 关键步骤：菜单项按可见顺序追加 —— 回到顶部 → 页面宽度 → 语言 → 关于。
+  // 关键步骤：菜单项按可见顺序追加 —— 回到顶部 → 排版（页面宽度、紧凑程度）→ 语言 → 关于。
   menu.appendChild(backTopItem);
-  menu.appendChild(widthGroup);
+  menu.appendChild(layoutGroup);
   menu.appendChild(languageGroup);
   menu.appendChild(aboutItem);
 

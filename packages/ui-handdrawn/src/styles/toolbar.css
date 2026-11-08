@@ -273,13 +273,22 @@
 }
 
 .scribdown-toolbar-menu-select-chevron {
+  /* 与目录和折叠块复用同一手绘圆框箭头，通过 mask 跟随宿主主题色。 */
+  display: block;
   flex-shrink: 0;
+  width: 18px;
+  height: 18px;
   color: var(--scribdown-color-text-secondary);
+  background-color: currentColor;
+  -webkit-mask: var(--scribdown-toc-toggle-icon) center / contain no-repeat;
+  mask: var(--scribdown-toc-toggle-icon) center / contain no-repeat;
+  /* 原始 SVG 指向右侧，收起时向下，展开后向上。 */
+  transform: rotate(90deg);
   transition: transform var(--scribdown-duration-fast) var(--scribdown-easing-standard);
 }
 
 .scribdown-toolbar-menu-group.is-open .scribdown-toolbar-menu-select-chevron {
-  transform: rotate(180deg);
+  transform: rotate(270deg);
   color: var(--scribdown-color-accent);
 }
 
@@ -619,4 +628,143 @@
   margin: 0;
   font-size: 13px;
   color: var(--scribdown-color-text-secondary);
+}
+
+/* 阅读排版共用一个分组，宽度选择与紧凑程度之间不再绘制分隔线。 */
+.scribdown-toolbar-layout {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--scribdown-color-border) 70%, transparent);
+}
+
+.scribdown-toolbar-layout-title {
+  padding: 4px 10px;
+  color: var(--scribdown-color-text-secondary);
+  font-size: 12px;
+}
+
+.scribdown-toolbar-layout > .scribdown-toolbar-menu-group {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.scribdown-toolbar-density {
+  display: block;
+  padding-bottom: 8px;
+  cursor: default;
+}
+
+.scribdown-toolbar-density .scribdown-toolbar-menu-item {
+  cursor: default;
+}
+
+/* 复用已有铅笔线与涂鸦圆点，外观与手绘列表、边框保持一致。 */
+.scribdown-toolbar-density-slider {
+  display: block;
+  position: relative;
+  width: calc(100% - 44px);
+  height: 28px;
+  margin: 0 10px 0 34px;
+}
+
+.scribdown-toolbar-density-slider::before {
+  content: "";
+  position: absolute;
+  /* 轨道起止点与 28px 手柄的中心对应，避免端点露出多余线段。 */
+  inset: 11px 14px;
+  background-color: var(--scribdown-color-text-secondary);
+  -webkit-mask: url("../assets/rough-line-horizontal.svg") center / 100% 6px no-repeat;
+  mask: url("../assets/rough-line-horizontal.svg") center / 100% 6px no-repeat;
+  pointer-events: none;
+}
+
+/* input 继续负责拖动、触摸和键盘交互，仅替换原生绘制。 */
+.scribdown-toolbar-density input[type="range"] {
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+}
+
+/* 不合并不同引擎的伪元素选择器，避免整条规则被另一引擎丢弃。 */
+.scribdown-toolbar-density input[type="range"]::-webkit-slider-runnable-track {
+  height: 28px;
+  border: 0;
+  background: transparent;
+}
+
+.scribdown-toolbar-density input[type="range"]::-moz-range-track {
+  height: 28px;
+  border: 0;
+  background: transparent;
+}
+
+.scribdown-toolbar-density input[type="range"]::-moz-range-progress {
+  background: transparent;
+}
+
+.scribdown-toolbar-density input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: var(--scribdown-color-accent);
+  -webkit-mask: var(--scribdown-list-bullet-icon-1) center / contain no-repeat;
+  mask: var(--scribdown-list-bullet-icon-1) center / contain no-repeat;
+}
+
+.scribdown-toolbar-density input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: var(--scribdown-color-accent);
+  mask: var(--scribdown-list-bullet-icon-1) center / contain no-repeat;
+}
+
+.scribdown-toolbar-density input[type="range"]:active {
+  cursor: grabbing;
+}
+
+.scribdown-toolbar-density input[type="range"]:focus-visible {
+  outline: 2px solid var(--scribdown-color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 高对比度模式使用系统颜色，保证自定义轨道与手柄仍清晰可辨。 */
+@media (forced-colors: active) {
+  .scribdown-toolbar-density-slider::before {
+    background-color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .scribdown-toolbar-density input[type="range"]::-webkit-slider-thumb {
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+
+  .scribdown-toolbar-density input[type="range"]::-moz-range-thumb {
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+}
+
+.scribdown-toolbar-density-labels {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 10px 0 34px;
+  color: var(--scribdown-color-text-secondary);
+  font-size: 12px;
 }

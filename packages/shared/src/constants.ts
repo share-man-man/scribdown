@@ -277,3 +277,18 @@ export const MARKDOWN_SOURCE_DATA_ATTRIBUTE = "data-scribdown-markdown-source";
 
 /** 原始 Markdown 的 HAST 属性名，供解析与安全清洗共用。 */
 export const MARKDOWN_SOURCE_HAST_PROPERTY = "dataScribdownMarkdownSource";
+
+/** 页面宽度与紧凑程度共用的排版分组。 */
+export const SCRIBDOWN_TOOLBAR_LAYOUT_CLASS_NAME = "scribdown-toolbar-layout";
+
+/** 排版分组标题。 */
+export const SCRIBDOWN_TOOLBAR_LAYOUT_TITLE_CLASS_NAME = "scribdown-toolbar-layout-title";
+
+/** 紧凑程度滑块区域。 */
+export const SCRIBDOWN_TOOLBAR_DENSITY_CLASS_NAME = "scribdown-toolbar-density";
+
+/** 手绘轨道与原生滑块共用的定位容器。 */
+export const SCRIBDOWN_TOOLBAR_DENSITY_SLIDER_CLASS_NAME = "scribdown-toolbar-density-slider";
+
+/** 紧凑程度滑块端点提示。 */
+export const SCRIBDOWN_TOOLBAR_DENSITY_LABELS_CLASS_NAME = "scribdown-toolbar-density-labels";
