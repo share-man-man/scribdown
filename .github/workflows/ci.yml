@@ -2,13 +2,18 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
+  # main 的校验由 Release 调用，确保校验和发布使用同一提交，避免重复运行。
+  workflow_call:
 
-# 同一分支只跑最新一次，自动取消旧的进行中任务
+# 校验只需读取仓库，不继承发布所需的写权限。
+permissions:
+  contents: read
+
+# 按调用方工作流区分并发组，避免与 Release 的串行发布组相互取消。
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # PR 只保留最新校验；Release 调用时由发布工作流负责串行执行。
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:

@@ -10,15 +10,23 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write # changesets 推送版本提交与 git tag
-  pull-requests: write # changesets 自动开 "Version Packages" PR
-  id-token: write # 关键：npm Trusted Publishing（OIDC）换取发布令牌，并生成 provenance
+  contents: read
 
 jobs:
+  # 关键步骤：调用当前提交的 CI，复用 lint、类型检查、测试、构建与打包冒烟。
+  verify:
+    uses: ./.github/workflows/ci.yml
+
   # 版本编排 + npm 发布：开 PR 轮只更新 Version PR；发布轮发 npm 并输出 app 版本变化标记
   release:
+    # CI 失败、取消或跳过时不执行版本编排与 npm 发布，后续商店发布也随之跳过。
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write # changesets 推送版本提交与 git tag
+      pull-requests: write # changesets 自动开 "Version Packages" PR
+      id-token: write # npm Trusted Publishing（OIDC）换取发布令牌，并生成 provenance
     outputs:
       vscode: ${{ steps.apps.outputs.vscode }}
       browser: ${{ steps.apps.outputs.browser }}
