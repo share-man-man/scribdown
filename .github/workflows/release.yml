@@ -26,9 +26,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # 需要历史，供下方 git diff 检测 app 版本变化
-          # 关键步骤：用 PAT 而非默认 GITHUB_TOKEN 推送 changeset-release 分支，
-          # 默认 token 创建/更新的 Version PR 不会自动触发 CI（防递归保护），每轮都需手动批准。
-          token: ${{ secrets.RELEASE_PAT }}
+          # 关键步骤：使用 GitHub 自动签发的 GITHUB_TOKEN 拉取代码并推送版本分支。
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v5
         with:
@@ -50,8 +49,9 @@ jobs:
           commit: "chore: 版本编排与发布"
           title: "chore: 版本编排与发布"
         env:
-          # 关键步骤：changesets/action 用 PAT 开 Version PR，使 PR 以真实用户身份创建、CI 自动触发。
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          # 关键步骤：仓库 Actions 设置需允许 GitHub Actions 创建 Pull Request。
+          # 使用 GITHUB_TOKEN 创建/更新 Version PR 后，每轮需手动批准该 PR 的 CI。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # 关键步骤：不注入 NPM_TOKEN —— changesets/action 检测到无令牌且 OIDC 可用时，
           # 会跳过写 .npmrc，由 npm 自身用 GitHub OIDC 令牌向 registry 换取短期发布令牌
           # （Trusted Publishing，需在 npm 包的 Access 页登记本仓库与 release.yml）。
